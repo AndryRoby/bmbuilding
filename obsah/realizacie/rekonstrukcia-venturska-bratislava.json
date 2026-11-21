@@ -1,0 +1,31 @@
+{
+  "id": "rekonstrukcia-venturska-bratislava",
+  "slug": "rekonstrukcia-venturska-bratislava",
+  "nazov": "Rekonštrukcia a nadstavba objektu Ventúrska č. 3",
+  "miesto": "Bratislava, Ventúrska ulica",
+  "rola": "Stavebný dozor, TDI",
+  "projektant": "",
+  "roky": "2013 až 2014",
+  "text": "Apartmánový dom na Ventúrskej ulici pozostáva z 10 apartmánov a štúdií. Navrhovaná budova je päťpodlažná a má jedno podzemné podlažie. Podzemné podlažie je určené pre technologické zabezpečenie domu. Ostatné podlažia sú určené pre štúdiá a byty.",
+  "investor": "VENTURIAN, s.r.o.",
+  "zhotovitel": "TINAMA, s.r.o.",
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-venturska-bratislava/01.jpg",
+      "alt": "Rekonštrukcia a nadstavba objektu Ventúrska č. 3, Bratislava, fotka 1 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-venturska-bratislava/02.jpg",
+      "alt": "Rekonštrukcia a nadstavba objektu Ventúrska č. 3, Bratislava, fotka 2 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-venturska-bratislava/03.jpg",
+      "alt": "Rekonštrukcia a nadstavba objektu Ventúrska č. 3, Bratislava, fotka 3 z 3"
+    }
+  ],
+  "zdroj": "web",
+  "fb_url": null,
+  "datum": "2013-12-08",
+  "poradie": 11,
+  "zverejnene": true
+}

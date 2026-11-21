@@ -1,0 +1,133 @@
+{
+ "_poznamka": "Kópia ops/weby-na-mieru/klienti/bmbuilding/seo/PRESMEROVANIA.json (20. 11. 2026) so zosúladenými cieľmi podľa slugov v obsah/realizacie. Cieľ realizácie, ktorá neexistuje alebo nie je zverejnená, build.py nahradí /realizacie/.",
+ "presmerovania": [
+  {
+   "stara": "/index.php",
+   "ciel": "/"
+  },
+  {
+   "stara": "/index.php/home",
+   "ciel": "/"
+  },
+  {
+   "stara": "/index.php/cinnost",
+   "ciel": "/#sluzby"
+  },
+  {
+   "stara": "/index.php/cinnost/12-cinnost",
+   "ciel": "/#sluzby"
+  },
+  {
+   "stara": "/index.php/stavebny-dozor",
+   "ciel": "/stavebny-dozor/"
+  },
+  {
+   "stara": "/index.php/stavebny-dozor/12-cinnost",
+   "ciel": "/stavebny-dozor/"
+  },
+  {
+   "stara": "/index.php/stavbyveduci",
+   "ciel": "/stavbyveduci/"
+  },
+  {
+   "stara": "/index.php/stavbyveduci/12-cinnost",
+   "ciel": "/stavbyveduci/"
+  },
+  {
+   "stara": "/index.php/stavebny-manazment",
+   "ciel": "/stavebny-manazment/"
+  },
+  {
+   "stara": "/index.php/stavebny-manazment/12-cinnost",
+   "ciel": "/stavebny-manazment/"
+  },
+  {
+   "stara": "/index.php/opravnenia",
+   "ciel": "/opravnenia/"
+  },
+  {
+   "stara": "/index.php/opravnenia/11-opravnenia",
+   "ciel": "/opravnenia/"
+  },
+  {
+   "stara": "/index.php/kontakt",
+   "ciel": "/kontakt/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty",
+   "ciel": "/realizacie/"
+  },
+  {
+   "stara": "/index.php/referencie/prave-realizovane-projekty",
+   "ciel": "/realizacie/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/3-rd-pezinok",
+   "ciel": "/realizacie/rd-pezinok/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/4-rd-kalvaria-bratislava",
+   "ciel": "/realizacie/rd-kalvaria-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/5-rezidencia-grunty-bratislava-karlova-ves",
+   "ciel": "/realizacie/rezidencia-grunty-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/6-polyfunkcny-objekt-ul-na-krizovatkach-bratislava",
+   "ciel": "/realizacie/polyfunkcny-objekt-na-krizovatkach-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/7-polyfunkcny-objekt-budatinska-ulica-bratislava",
+   "ciel": "/realizacie/polyfunkcny-objekt-budatinska-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/8-bytovy-dom-haanova-ulica-bratislava",
+   "ciel": "/realizacie/bytovy-dom-haanova-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/9-dom-betliarska-bratislava-petrzalka",
+   "ciel": "/realizacie/dom-betliarska-bratislava-petrzalka/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/11-bytove-domy-vtacnik-tupeho-ul-bratislava",
+   "ciel": "/realizacie/bytove-domy-vtacnik-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/12-bytovy-dom-ul-na-krizovatkach-bratislava",
+   "ciel": "/realizacie/bytovy-dom-na-krizovatkach-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/13-stavebne-upravy-filmoveho-klubu-na-spitalskej-ul-v-bratislava",
+   "ciel": "/realizacie/filmovy-klub-spitalska-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/14-rekonstrukcia-a-nadstavba-objektu-venturska-c-3-bratislava",
+   "ciel": "/realizacie/rekonstrukcia-venturska-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/19-rd-jarovce",
+   "ciel": "/realizacie/rd-jarovce-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/20-bytovy-dom-devinske-luky",
+   "ciel": "/realizacie/bytovy-dom-devinske-luky-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/21-rekonstrukcia-a-prestavba-povodnych-obchodnych-priestorov-spolocnosti-na-5-ambulancii-pre-lekarov",
+   "ciel": "/realizacie/rekonstrukcia-5-ambulancii-pre-lekarov/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/22-rd-ivanka-pri-dunaji",
+   "ciel": "/realizacie/rd-ivanka-pri-dunaji/"
+  },
+  {
+   "stara": "/index.php/referencie/realizovane-projekty/23-bytovy-dom-rosnicka",
+   "ciel": "/realizacie/bytovy-dom-rosnicka-bratislava/"
+  },
+  {
+   "stara": "/index.php/referencie/prave-realizovane-projekty/24-rekonstrukcia-objektu-nadstavba-a-pristavba-okanikova-ul-bratislava",
+   "ciel": "/realizacie/rekonstrukcia-okanikova-bratislava/"
+  }
+ ]
+}

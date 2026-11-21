@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; font-src 'self'; connect-src 'self'; style-src 'sha256-b6pVg+Kn6243XZ6THucdZt5KhYZk3qeLqz/5epjIMcM='; script-src 'sha256-uXE1sGqgHrERWx3z36cujGVcMkzFAe5pKHeIv9oXqjA='; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F6F5F2">
+<title>Ochrana osobných údajov | BM Building</title>
+<meta name="description" content="Ako BM Building, s.r.o. spracúva osobné údaje na webe bmbuilding.sk: kontakt, e-mail a telefón. Informácie o právach dotknutej osoby.">
+<link rel="canonical" href="https://bmbuilding.sk/ochrana-udajov/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="preload" href="../fonts/archivo-400-700.woff2" as="font" type="font/woff2" crossorigin>
+<meta property="og:locale" content="sk_SK">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BM Building">
+<meta property="og:title" content="Ochrana osobných údajov | BM Building">
+<meta property="og:description" content="Ako BM Building, s.r.o. spracúva osobné údaje na webe bmbuilding.sk: kontakt, e-mail a telefón. Informácie o právach dotknutej osoby.">
+<meta property="og:url" content="https://bmbuilding.sk/ochrana-udajov/">
+<meta property="og:image" content="https://bmbuilding.sk/og/bmbuilding.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ochrana osobných údajov | BM Building">
+<meta name="twitter:description" content="Ako BM Building, s.r.o. spracúva osobné údaje na webe bmbuilding.sk: kontakt, e-mail a telefón. Informácie o právach dotknutej osoby.">
+<meta name="twitter:image" content="https://bmbuilding.sk/og/bmbuilding.jpg">
+<style>@font-face{font-family:"BMB Text";src:url(../fonts/archivo-400-700.woff2) format("woff2");font-weight:400 700;font-style:normal;font-display:swap}
+@font-face{font-family:"BMB Nahrada";src:local("Arial"),local("ArialMT"),local("Liberation Sans"),local("Arimo");font-weight:400 549;size-adjust:99.23%;ascent-override:88.48%;descent-override:21.16%;line-gap-override:0%}
+@font-face{font-family:"BMB Nahrada";src:local("Arial Bold"),local("Arial-BoldMT"),local("Liberation Sans Bold"),local("Arimo Bold");font-weight:550 700;size-adjust:96.24%;ascent-override:91.23%;descent-override:21.82%;line-gap-override:0%}
+:root{--plocha:#F6F5F2;--plocha-2:#ECEBE6;--biela:#FFFFFF;--asfalt:#17191B;--tlmeny:#565B60;--linka:#CFCDC6;--bm:#194471;--bm-tmava:#10325A;--na-bm:#F6F5F2;--na-bm-2:#C9D4E3;--na-asfalte-2:#AFB4B9;--pismo:"BMB Text","BMB Nahrada",Arial,"Liberation Sans",sans-serif;--okraj:16px;--medzera:16px;--stlpce:4;--sirka:1280px;--hlavicka:56px;--rytmus:clamp(64px,8vw,128px);--t:150ms;--krivka:cubic-bezier(.2,0,0,1)}
+@media (min-width:640px){:root{--okraj:32px;--medzera:24px;--stlpce:8;--hlavicka:64px}}
+@media (min-width:1024px){:root{--okraj:48px;--stlpce:12;--hlavicka:72px}}
+@media (prefers-reduced-motion:reduce){:root{--t:0ms}@view-transition{navigation:none}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}@view-transition{navigation:auto}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:calc(var(--hlavicka) + 16px);color-scheme:light}
+body{margin:0;background:var(--plocha);color:var(--asfalt);font:400 clamp(1.0625rem,.98rem + .17vw,1.125rem)/1.6 var(--pismo);font-synthesis:none;font-kerning:normal;overflow-wrap:break-word}
+h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+h1,h2,h3{font-weight:600;text-wrap:balance;font-variant-numeric:lining-nums}
+p{text-wrap:pretty}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.2em;transition:text-decoration-color var(--t) var(--krivka)}
+:focus-visible{outline:2px solid var(--bm);outline-offset:3px}
+@media (hover:hover){a:hover{text-decoration-thickness:2px}}
+.cisla{font-variant-numeric:tabular-nums lining-nums}
+.skryte{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.obsah{width:min(var(--sirka),100% - 2*var(--okraj));margin-inline:auto}
+.mriezka{display:grid;grid-template-columns:repeat(var(--stlpce),minmax(0,1fr));column-gap:var(--medzera)}
+.mriezka>*{grid-column:1/-1}
+.preskocit{position:absolute;left:12px;top:-100px;z-index:30;background:var(--asfalt);color:var(--plocha);padding:12px 16px;font-weight:500}
+.preskocit:focus{top:12px}
+.sekcia{padding-block:var(--rytmus)}
+.sekcia+.sekcia,.hlava+.sekcia{padding-top:0}
+.h2{font-size:clamp(1.75rem,1.3rem + 1.6vw,2.75rem);line-height:1.1;letter-spacing:-.02em;margin-bottom:clamp(24px,2.2vw,32px)}
+.h3{font-size:clamp(1.25rem,1.1rem + .45vw,1.5rem);line-height:1.2;letter-spacing:-.01em;margin-bottom:12px}
+.tlacidlo{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:1px solid var(--bm);border-radius:2px;background:var(--bm);color:var(--biela);font:500 1rem/1 var(--pismo);text-decoration:none;transition:background-color var(--t) var(--krivka),color var(--t) var(--krivka),border-color var(--t) var(--krivka)}
+.tlacidlo svg{flex:none}
+.tlacidlo:active{transform:translateY(1px)}
+.tlacidlo-obrys{background:transparent;border-color:var(--asfalt);color:var(--asfalt)}
+@media (hover:hover){.tlacidlo:hover{background:var(--bm-tmava);border-color:var(--bm-tmava)}.tlacidlo-obrys:hover{background:var(--asfalt);border-color:var(--asfalt);color:var(--plocha)}}
+.odkaz{display:inline-flex;align-items:center;min-height:44px;font-weight:500}
+.hlavicka{position:sticky;top:0;z-index:20;background:var(--plocha);border-bottom:1px solid var(--linka)}
+.hlavicka-riadok{display:flex;align-items:center;gap:8px;min-height:var(--hlavicka)}
+.znak{display:inline-flex;align-items:center;gap:10px;min-height:44px;min-width:44px;margin-right:auto;text-decoration:none;font-weight:600;font-size:1.125rem;letter-spacing:-.01em}
+.znak-stvorec{flex:none;display:grid;place-content:center;justify-items:center;gap:3px;width:36px;height:36px;background:var(--bm);color:var(--biela);font-size:15px;font-weight:700;line-height:1;letter-spacing:.02em}
+.znak-stvorec::after{content:"";width:25px;height:1.5px;background:var(--biela)}
+.znak-meno{display:none}
+@media (min-width:420px){.znak-meno{display:inline}}
+.tel{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:2px;background:var(--bm);color:var(--biela);font-weight:600;font-size:clamp(.9375rem,.9rem + .1vw,1rem);text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums lining-nums;transition:background-color var(--t) var(--krivka)}
+@media (hover:hover){.tel:hover{background:var(--bm-tmava)}}
+.tel-dlhe{display:none}
+.menu-d{display:none}
+.menu-m>summary{display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 8px;font-weight:500;cursor:pointer;list-style:none}
+.menu-m>summary::-webkit-details-marker{display:none}
+.menu-ikona{display:grid;gap:4px;width:18px}
+.menu-ikona i{display:block;height:1.5px;background:currentColor}
+.menu-panel{position:absolute;left:0;right:0;top:100%;background:var(--plocha);border-bottom:1px solid var(--asfalt)}
+.menu-panel a{display:flex;align-items:center;min-height:48px;border-top:1px solid var(--linka);text-decoration:none;font-weight:500}
+.menu-panel a[aria-current]{text-decoration:underline;text-decoration-color:var(--bm);text-decoration-thickness:2px}
+@media (min-width:1024px){.menu-m{display:none}.menu-d{display:flex;gap:4px;margin-right:12px}.menu-d a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;text-decoration:none;font-weight:500}.menu-d a[aria-current]{text-decoration:underline;text-decoration-color:var(--bm);text-decoration-thickness:2px}.tel-kratke{display:none}.tel-dlhe{display:inline}}
+@media (min-width:1024px) and (hover:hover){.menu-d a:hover{text-decoration:underline}}
+.uvod{padding-block:24px 0}
+.uvod h1{font-size:clamp(2.25rem,1.2rem + 4.3vw,4.5rem);line-height:1.04;letter-spacing:-.025em}
+.uvod h1 span{display:block;margin-top:16px;font-size:clamp(1.125rem,1rem + .6vw,1.5rem);line-height:1.3;font-weight:400;letter-spacing:-.005em;color:var(--asfalt)}
+.uvod-veta{margin-top:16px;font-size:clamp(1.1875rem,1.05rem + .6vw,1.5rem);line-height:1.45;letter-spacing:-.005em;max-width:34ch}
+.uvod-akcie{display:grid;gap:4px;margin-top:24px}
+.uvod-akcie .odkaz{justify-self:start}
+.uvod-foto{margin-top:24px;margin-inline:calc(-1*var(--okraj))}
+.uvod-foto .foto,.uvod-foto .doska{aspect-ratio:3/2}
+.uvod-foto figcaption{padding-inline:var(--okraj)}
+.foto{position:relative;overflow:hidden;background:var(--plocha-2)}
+.foto img{width:100%;height:100%;object-fit:cover;object-position:50% 50%}
+.foto.na-vysku img{object-position:50% 35%}
+.pole-riadok{display:flex;flex-wrap:wrap;gap:0 16px;border-bottom:1px solid var(--linka);font-size:.875rem;color:var(--tlmeny)}
+.pole-riadok a{display:inline-flex;align-items:center;min-height:44px;color:var(--asfalt);font-weight:500}
+.pole-riadok span{display:inline-flex;align-items:center}
+.pole-riadok span span{display:inline}
+.pole-riadok .cisla{white-space:nowrap}
+.dovera{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:32px;border-top:1px solid var(--asfalt)}
+.dovera>div{padding:16px 16px 16px 0;border-bottom:1px solid var(--linka)}
+.dovera>div:nth-child(2n){padding-left:16px;border-left:1px solid var(--linka)}
+.dovera b{display:block;font-weight:600;font-size:clamp(2.5rem,1.8rem + 2.6vw,4rem);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums lining-nums}
+.dovera span{display:block;margin-top:8px;font-size:.875rem;line-height:1.4;color:var(--tlmeny)}
+.dovera a{display:block;text-decoration:none}
+@media (hover:hover){.dovera a:hover span{text-decoration:underline}}
+@media (min-width:640px){.uvod-akcie{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}.uvod-foto{margin-inline:0}.uvod-foto figcaption{padding-inline:0}.dovera{grid-template-columns:repeat(4,minmax(0,1fr))}.dovera>div{padding:24px 24px 24px 0}.dovera>div:nth-child(n+2){padding-left:24px;border-left:1px solid var(--linka)}}
+@media (min-width:1024px){.uvod{padding-top:48px}.uvod h1{grid-column:1/11;margin-bottom:32px}.uvod-text{grid-column:1/5;grid-row:2}.uvod-foto{grid-column:5/13;grid-row:2/4;margin-top:0}.dovera{grid-column:1/5;grid-row:3;align-self:start;grid-template-columns:repeat(2,minmax(0,1fr))}.dovera>div{padding:16px 16px 16px 0}.dovera>div:nth-child(n+2){padding-left:0;border-left:0}.dovera>div:nth-child(2n){padding-left:16px;border-left:1px solid var(--linka)}.dovera b{font-size:2.5rem}}
+.sluzby-zoznam>li{position:relative;display:grid;gap:12px;padding-block:24px;border-top:1px solid var(--asfalt);transition:background-color var(--t) var(--krivka)}
+.sluzby-zoznam>li:last-child{border-bottom:1px solid var(--asfalt)}
+.sluzby-zoznam h3{font-size:clamp(1.5rem,1.25rem + .55vw,2rem);line-height:1.15;letter-spacing:-.015em}
+.sluzby-zoznam h3 a{text-decoration:none}
+.sluzby-zoznam h3 a::after{content:"";position:absolute;inset:0}
+.sluzby-zoznam p{max-width:60ch}
+.sluzby-zoznam .priklady{margin-top:8px;color:var(--tlmeny);font-size:.9375rem}
+.sipka{display:inline-flex;align-items:center;gap:8px;font-weight:500;text-decoration:underline;text-underline-offset:.2em}
+a.sipka{min-height:44px}
+.sipka svg{flex:none;transition:transform 200ms var(--krivka)}
+.sluzby-zoznam>li:has(a:focus-visible){outline:2px solid var(--bm);outline-offset:4px}
+.sluzby-zoznam h3 a:focus-visible{outline:none}
+@media (hover:hover){.sluzby-zoznam>li:hover{background:var(--plocha-2)}.sluzby-zoznam>li:hover .sipka svg{transform:translateX(4px)}}
+@media (min-width:1024px){.sluzby-zoznam>li{grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--medzera);padding-block:32px}.sluzby-zoznam h3{grid-column:1/5}.sluzby-zoznam .sluzba-text{grid-column:5/10}.sluzby-zoznam .sipka{grid-column:10/13;justify-self:end;align-self:start}}
+.karty{display:grid;gap:32px}
+@media (min-width:640px){.karty{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 24px}}
+@media (min-width:1024px){.karty{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.karta{position:relative}
+.karta .foto{aspect-ratio:4/3}
+.karta-nazov{margin-top:16px;font-size:clamp(1.25rem,1.1rem + .45vw,1.5rem);line-height:1.2;letter-spacing:-.01em}
+.karta-nazov a{text-decoration:none}
+.karta-nazov a::after{content:"";position:absolute;inset:0}
+.karta:has(a:focus-visible){outline:2px solid var(--bm);outline-offset:4px}
+.karta-nazov a:focus-visible{outline:none}
+@media (hover:hover){.karta:hover .karta-nazov a{text-decoration:underline;text-decoration-thickness:2px}.karta:hover .pole{border-top-color:var(--bm)}}
+.pole{display:grid;grid-template-columns:minmax(6.5em,auto) minmax(0,1fr);margin-top:12px;border-top:1px solid var(--asfalt);transition:border-color var(--t) var(--krivka)}
+.pole dt,.pole dd{padding-block:8px;border-bottom:1px solid var(--linka);line-height:1.4}
+.pole dt{font-size:.875rem;color:var(--tlmeny);padding-right:12px}
+.pole dd{font-size:clamp(.9375rem,.9rem + .1vw,1rem);font-weight:500}
+.doska{position:relative;container-type:inline-size;display:flex;flex-direction:column;justify-content:space-between;padding:20px;background:var(--bm);color:var(--na-bm)}
+.doska::before,.doska::after{content:"";position:absolute;width:12px;height:12px;border:0 solid rgba(246,245,242,.5)}
+.doska::before{top:8px;left:8px;border-top-width:1px;border-left-width:1px}
+.doska::after{right:8px;bottom:8px;border-right-width:1px;border-bottom-width:1px}
+.doska-udaj{font-size:clamp(2rem,13cqi,3rem);font-weight:600;line-height:1.02;letter-spacing:-.03em;font-variant-numeric:tabular-nums lining-nums}
+.doska-rola{padding-top:12px;border-top:1.5px solid var(--na-bm);font-size:.9375rem;line-height:1.4;color:var(--na-bm-2)}
+@media (min-width:640px){.doska{padding:24px}}
+.viac{margin-top:32px}
+.kontakt-tel{display:inline-flex;align-items:center;min-height:48px;font-size:clamp(1.75rem,1.3rem + 1.6vw,2.75rem);font-weight:600;letter-spacing:-.02em;line-height:1.2;text-decoration:none;font-variant-numeric:tabular-nums lining-nums}
+.kontakt-mail{display:inline-flex;align-items:center;min-height:44px;font-size:1.125rem}
+.kontakt-akcie{display:grid;gap:12px;margin-top:24px}
+.kontakt-adresa{margin-top:24px;font-style:normal}
+.kontakt-mapy{display:flex;flex-wrap:wrap;gap:0 24px}
+@media (min-width:640px){.kontakt-akcie{grid-auto-flow:column;justify-content:start}}
+.blok-kontakt{border-top:1px solid var(--asfalt);padding-top:32px}
+.hlava{padding-block:24px clamp(32px,4vw,48px)}
+.hlava h1{font-size:clamp(2rem,1.35rem + 2.75vw,3.5rem);line-height:1.08;letter-spacing:-.02em;max-width:22ch}
+.hlava .uvod-veta{max-width:52ch}
+.omrvinky ol{display:flex;flex-wrap:wrap;gap:0 8px;font-size:.875rem;line-height:1.45;color:var(--tlmeny);margin-bottom:16px}
+.omrvinky li+li::before{content:"/";margin-right:8px}
+.omrvinky a{display:inline-flex;align-items:center;min-height:44px;color:var(--asfalt)}
+.omrvinky [aria-current]{display:inline-flex;align-items:center;min-height:44px}
+@media (max-width:639px){.omrvinky li:last-child:nth-child(n+3){display:none}}
+.text{max-width:68ch}
+.text p+p{margin-top:16px}
+.zoznam-cinnosti li{padding-block:12px;border-top:1px solid var(--linka);break-inside:avoid}
+@media (min-width:1024px){.zoznam-cinnosti{columns:2;column-gap:48px}}
+.sluzba{display:grid;gap:48px}
+@media (min-width:1024px){.sluzba{grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--medzera)}.sluzba-hlavne{grid-column:1/9;grid-row:1}.sluzba-bok{grid-column:9/13;grid-row:1;position:sticky;top:96px;align-self:start}}
+.sluzba-hlavne .h3{margin-top:48px}
+.bok-tlacidlo{display:flex;margin-top:24px}
+.doklady{display:grid;gap:48px}
+@media (min-width:1024px){.doklady{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--medzera)}}
+.doklad h3{font-size:1rem;line-height:1.4}
+.doklad h2{font-size:clamp(1.125rem,1.05rem + .3vw,1.25rem);line-height:1.3;letter-spacing:-.01em}
+.doklad .pole{grid-template-columns:minmax(9em,auto) minmax(0,1fr)}
+.poznamka{margin-top:24px;font-size:.875rem;line-height:1.45;color:var(--tlmeny);max-width:68ch}
+.otazky>div{padding-block:24px;border-top:1px solid var(--linka);max-width:68ch}
+.otazky h3{font-size:clamp(1.25rem,1.1rem + .45vw,1.5rem);line-height:1.2;letter-spacing:-.01em;margin-bottom:8px}
+.otazky .zdroj{margin-top:8px;font-size:.875rem;line-height:1.45;color:var(--tlmeny)}
+.otazky .zdroj a{display:inline-flex;align-items:center;min-height:44px;color:var(--asfalt)}
+.pole-siroke{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--asfalt)}
+.pole-siroke>div{padding:12px 12px 12px 0;border-bottom:1px solid var(--linka)}
+.pole-siroke dt{font-size:.875rem;color:var(--tlmeny);line-height:1.4}
+.pole-siroke dd{margin-top:4px;font-weight:500;line-height:1.4}
+.pole-siroke>.cele{grid-column:1/-1}
+@media (min-width:1024px){.pole-siroke{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.pole-siroke>div{padding:16px 16px 16px 0}}
+.realizacia-text{margin-top:32px}
+.galeria{display:grid;gap:24px;margin-top:48px}
+.galeria a{display:block;background:var(--plocha-2)}
+.galeria img{background:var(--plocha-2)}
+.galeria figcaption{margin-top:8px;font-size:.875rem;line-height:1.45;color:var(--tlmeny)}
+.galeria-dalsie{columns:1;column-gap:24px}
+.galeria-dalsie figure{margin-bottom:24px;break-inside:avoid}
+@media (min-width:640px){.galeria-dalsie{columns:2}}
+@media (min-width:1024px){.detail{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--medzera);align-items:start}.detail-hlavne{grid-column:1/9;grid-row:1}.detail-hlavne>:first-child{margin-top:0}.detail>.pole-siroke{grid-column:9/13;grid-row:1;grid-template-columns:minmax(0,1fr);position:sticky;top:96px}}
+.stitok{position:absolute;left:0;bottom:0;padding:6px 10px;background:var(--asfalt);color:var(--plocha);font-size:.8125rem;line-height:1.3;font-weight:500}
+.dalsie{margin-top:clamp(40px,4vw,56px)}
+.zoznam-dalsie{border-top:1px solid var(--asfalt)}
+.zoznam-dalsie li{display:grid;padding-block:8px 12px;border-bottom:1px solid var(--linka)}
+.dalsie-nazov{display:inline-flex;align-items:center;justify-self:start;min-height:44px;font-weight:600;font-size:clamp(1.0625rem,1rem + .2vw,1.1875rem);line-height:1.3}
+.dalsie-udaje{font-size:.875rem;line-height:1.45;color:var(--tlmeny)}
+@media (min-width:1024px){.zoznam-dalsie{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera)}}
+.nad-h1{margin-bottom:8px;font-size:.9375rem;line-height:1.4;font-weight:500;color:var(--tlmeny)}
+.nad-h1 .cisla,.dalsie-udaje .cisla{white-space:nowrap}
+.susedia{display:grid;gap:12px;margin-top:64px;border-top:1px solid var(--asfalt);padding-top:16px}
+.susedia a{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:48px;font-weight:500}
+.susedia span{display:block;font-size:.875rem;color:var(--tlmeny)}
+@media (min-width:640px){.susedia{grid-template-columns:1fr 1fr}.susedia .dalsia{grid-column:2;justify-self:end;align-items:flex-end;text-align:right}}
+.pata{background:var(--asfalt);color:var(--plocha);padding-block:64px 32px;font-size:.9375rem}
+.pata :focus-visible{outline-color:var(--plocha)}
+.pata h2{font-size:1rem;font-weight:600;margin-bottom:8px}
+.pata-stlpce{display:grid;gap:40px}
+.pata li a{display:inline-flex;align-items:center;min-height:44px}
+.pata .pole{border-top-color:var(--plocha)}
+.pata .pole dt{color:var(--na-asfalte-2)}
+.pata .pole dt,.pata .pole dd{border-bottom-color:rgba(246,245,242,.18)}
+.pata-spodok{display:flex;flex-wrap:wrap;gap:0 24px;margin-top:48px;padding-top:16px;border-top:1px solid rgba(246,245,242,.18);color:var(--na-asfalte-2)}
+.pata-spodok span{display:inline-flex;align-items:center;min-height:44px}
+.pata-spodok a{display:inline-flex;align-items:center;min-height:44px;color:var(--plocha)}
+@media (min-width:1024px){.pata-stlpce{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--medzera)}}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","ProfessionalService"],"@id":"https://bmbuilding.sk/#firma","name":"BM Building","legalName":"BM Building, s.r.o.","url":"https://bmbuilding.sk/","image":"https://bmbuilding.sk/og/bmbuilding.jpg","address":{"@type":"PostalAddress","streetAddress":"Podhorská 9","postalCode":"902 01","addressLocality":"Pezinok","addressCountry":"SK"},"areaServed":[{"@type":"City","name":"Bratislava"},{"@type":"City","name":"Pezinok"},{"@type":"AdministrativeArea","name":"Bratislava a okolie"}],"knowsAbout":["Stavebný dozor","Stavbyvedúci","Stavebný manažment","Technický dozor investora (TDI)"],"logo":"https://bmbuilding.sk/logo.png","telephone":"+421 903 794 738","email":"info@bmbuilding.sk","sameAs":["https://www.facebook.com/BmBuilding"],"vatID":"SK2022036929","foundingDate":"2005-07-27","employee":{"@type":"Person","name":"Ing. Mário Bulko","jobTitle":"konateľ"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Úvod","item":"https://bmbuilding.sk/"},{"@type":"ListItem","position":2,"name":"Ochrana osobných údajov","item":"https://bmbuilding.sk/ochrana-udajov/"}]},{"@type":"WebPage","@id":"https://bmbuilding.sk/ochrana-udajov/","url":"https://bmbuilding.sk/ochrana-udajov/","name":"Ochrana osobných údajov | BM Building","inLanguage":"sk","isPartOf":{"@id":"https://bmbuilding.sk/#web"}}]}</script>
+</head>
+<body>
+<a class="preskocit" href="#obsah">Preskočiť na obsah</a>
+<header class="hlavicka">
+<div class="obsah hlavicka-riadok">
+<a class="znak" href="../" aria-label="BM Building, úvod"><span class="znak-stvorec" aria-hidden="true">BM</span><span class="znak-meno" aria-hidden="true">BM Building</span></a>
+<nav class="menu-d" aria-label="Hlavná navigácia"><a href="../#sluzby">Služby</a><a href="../realizacie/">Realizácie</a><a href="../opravnenia/">Oprávnenia</a><a href="../kontakt/">Kontakt</a></nav>
+<a class="tel" href="tel:+421903794738"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2"/></svg><span class="skryte">Zavolať </span><span class="tel-kratke">0903 794 738</span><span class="tel-dlhe">+421 903 794 738</span></a>
+<details class="menu-m"><summary><span class="menu-ikona" aria-hidden="true"><i></i><i></i><i></i></span>Menu</summary><nav class="menu-panel" aria-label="Hlavná navigácia v menu"><div class="obsah"><a href="../stavebny-dozor/">Stavebný dozor</a><a href="../stavbyveduci/">Stavbyvedúci</a><a href="../stavebny-manazment/">Stavebný manažment</a><a href="../realizacie/">Realizácie</a><a href="../opravnenia/">Oprávnenia</a><a href="../kontakt/">Kontakt</a></div></nav></details>
+</div>
+</header>
+<main id="obsah">
+<div class="obsah hlava"><nav class="omrvinky" aria-label="Omrvinky"><ol><li><a href="../">Úvod</a></li><li><span aria-current="page">Ochrana osobných údajov</span></li></ol></nav><h1>Ochrana osobných údajov</h1></div>
+<div class="obsah"><div class="text"><h2 class="h3 realizacia-text">Prevádzkovateľ</h2><p>BM Building, s.r.o., Podhorská 9, 902 01 Pezinok, IČO 35 947 519. Spoločnosť je zapísaná v obchodnom registri Mestského súdu Bratislava III, oddiel Sro, vložka č. 36965/B.</p><p>Kontakt na prevádzkovateľa: e-mailom na info@bmbuilding.sk alebo telefonicky na +421 903 794 738.</p><h2 class="h3 realizacia-text">Čo tento web nerobí</h2><p>Web nepoužíva cookies, analytiku ani iné sledovacie nástroje a nemá žiadne formuláre. Nevkladá obsah tretích strán: mapy, Facebook ani písma z cudzích serverov sa nenačítavajú. Písmo je uložené priamo na tomto webe.</p><p>Odkazy na Mapy Google, Mapy.cz a Facebook otvoria stránku tretej strany až po kliknutí. Na tej stránke platia pravidlá jej prevádzkovateľa.</p><h2 class="h3 realizacia-text">Hosting</h2><p>Web je statický a beží na službe GitHub Pages spoločnosti GitHub, Inc. Pri návšteve webu GitHub podľa svojej dokumentácie zaznamenáva a ukladá IP adresu návštevníka na bezpečnostné účely. Tieto technické záznamy spracúva GitHub, nie BM Building.</p><p>GitHub, Inc. sídli v USA. Podľa svojho vyhlásenia o ochrane osobných údajov spracúva osobné údaje aj v USA a pri prenose z Európskej únie do krajín, ktorým Európska komisia nepriznala primeranú úroveň ochrany, sa spravidla opiera o štandardné zmluvné doložky Európskej komisie.</p><h2 class="h3 realizacia-text">Ak nás kontaktujete</h2><p>Ak nám napíšete e-mail alebo zavoláte, údaje, ktoré nám pritom poskytnete, použijeme len na vybavenie vašej požiadavky.</p><p>Právnym základom je čl. 6 ods. 1 písm. b) nariadenia (EÚ) 2016/679, ak ide o opatrenia pred uzatvorením zmluvy na vašu žiadosť, napríklad dopyt na stavebný dozor. Pri ostatných otázkach je ním čl. 6 ods. 1 písm. f), teda náš oprávnený záujem odpovedať na správu, ktorú ste nám poslali.</p><p>Údaje uchovávame len tak dlho, ako je potrebné na vybavenie požiadavky. Ak z nej vznikne zmluva, uchovávame ich po dobu, ktorú vyžadujú právne predpisy.</p><h2 class="h3 realizacia-text">Vaše práva</h2><p>Podľa nariadenia (EÚ) 2016/679 (GDPR) máte právo na prístup k svojim osobným údajom, na ich opravu, vymazanie a obmedzenie spracúvania, právo namietať a právo na prenosnosť údajov. Uplatniť ich môžete e-mailom na info@bmbuilding.sk alebo telefonicky na +421 903 794 738 alebo písomne na adrese Podhorská 9, 902 01 Pezinok.</p><p>Máte tiež právo podať sťažnosť Úradu na ochranu osobných údajov Slovenskej republiky.</p><p class="poznamka">Zdroje: <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#data-collection">GitHub Pages, Data collection</a>, <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>, <a href="https://dataprotection.gov.sk/">Úrad na ochranu osobných údajov SR</a>. Písmo Archivo (The Archivo Project Authors), licencia SIL Open Font License 1.1: <a href="../fonts/OFL.txt">fonts/OFL.txt</a>.</p></div></div>
+<section class="sekcia" aria-labelledby="kontakt-nadpis"><div class="obsah blok-kontakt"><h2 class="h2" id="kontakt-nadpis">Kontakt</h2>
+<a class="kontakt-tel" href="tel:+421903794738">+421 903 794 738</a><br>
+<a class="kontakt-mail" href="mailto:info@bmbuilding.sk">info@bmbuilding.sk</a>
+<div class="kontakt-akcie"><a class="tlacidlo" href="tel:+421903794738"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Zavolať</a><a class="tlacidlo tlacidlo-obrys" href="mailto:info@bmbuilding.sk">Napísať e-mail</a></div>
+<address class="kontakt-adresa">BM Building, s.r.o., Ing. Mário Bulko, konateľ<br>Podhorská 9, 902 01 Pezinok<br><span class="kontakt-mapy"><a class="odkaz" href="https://www.google.com/maps/search/?api=1&amp;query=Podhorsk%C3%A1+9%2C+902+01+Pezinok">Otvoriť v Mapách Google</a><a class="odkaz" href="https://mapy.cz/zakladni?q=Podhorsk%C3%A1%209%2C%20902%2001%20Pezinok">Otvoriť na Mapy.cz</a></span></address></div></section>
+</main>
+<footer class="pata">
+<div class="obsah">
+<div class="pata-stlpce">
+<div><h2>Kontakt</h2><ul><li><a href="tel:+421903794738">+421 903 794 738</a></li><li><a href="mailto:info@bmbuilding.sk">info@bmbuilding.sk</a></li></ul><p>Podhorská 9, 902 01 Pezinok</p></div>
+<nav aria-label="Stránky v päte"><h2>Stránky</h2><ul><li><a href="../stavebny-dozor/">Stavebný dozor</a></li><li><a href="../stavbyveduci/">Stavbyvedúci</a></li><li><a href="../stavebny-manazment/">Stavebný manažment</a></li><li><a href="../realizacie/">Realizácie</a></li><li><a href="../opravnenia/">Oprávnenia</a></li><li><a href="../kontakt/">Kontakt</a></li></ul></nav>
+<div><h2>Firma</h2><dl class="pole"><dt>Obchodné meno</dt><dd>BM Building, s.r.o.</dd><dt>Sídlo</dt><dd>Podhorská 9, 902 01 Pezinok</dd><dt>IČO</dt><dd class="cisla">35 947 519</dd><dt>IČ DPH</dt><dd class="cisla">SK2022036929</dd><dt>Zápis</dt><dd>Spoločnosť je zapísaná v obchodnom registri Mestského súdu Bratislava III, oddiel Sro, vložka č. 36965/B.</dd></dl></div>
+</div>
+<div class="pata-spodok"><span>© 2026 BM Building, s.r.o.</span><a href="https://www.facebook.com/BmBuilding">Facebook</a><a href="../ochrana-udajov/">Ochrana osobných údajov</a></div>
+</div>
+</footer>
+</body>
+</html>

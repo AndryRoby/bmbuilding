@@ -1,0 +1,31 @@
+{
+  "id": "bytovy-dom-rosnicka-bratislava",
+  "slug": "bytovy-dom-rosnicka-bratislava",
+  "nazov": "Bytový dom Rosnička",
+  "miesto": "Bratislava",
+  "rola": "Stavebný dozor, TDI",
+  "projektant": "",
+  "roky": "2015 až 2016",
+  "text": "V bytovom dome Rosnička je navrhovaných 44 bytov, 9 apartmánov a 1 komerčný priestor. Objekt má štyri nadzemné podlažia, piate ustúpené a jedno podzemné podlažie. V suteréne sú technické priestory, samostatne predajné garážové státia a pivničné kobky.",
+  "investor": "BD Rosnička s.r.o.",
+  "zhotovitel": "HANT BA, a.s.",
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/01.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 1 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/02.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 2 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/03.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 3 z 3"
+    }
+  ],
+  "zdroj": "web",
+  "fb_url": null,
+  "datum": "2017-07-13",
+  "poradie": 7,
+  "zverejnene": true
+}

@@ -1,0 +1,109 @@
+# Obsah webu z arling-obsah: stiahne realizácie a fotky do obsah/, uloží zmenu do main, zostaví web a nasadí GitHub Pages.
+# Premenná repozitára OBSAH_API, napríklad https://arling-obsah.<subdoména>.workers.dev/api/bmbuilding (verejné API, bez tajomstva).
+name: Obsah
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      povol_prazdne:
+        description: "Povoliť 0 realizácií z API (klient zámerne zmazal všetky)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: obsah
+  cancel-in-progress: false
+
+jobs:
+  obsah:
+    runs-on: ubuntu-latest
+    # Úloha len sťahuje a commituje obsah; Pages a OIDC nepotrebuje (užšie ako spoločné oprávnenia vyššie).
+    permissions:
+      contents: write
+    outputs:
+      zmena: ${{ steps.ulozit.outputs.zmena }}
+      sha: ${{ steps.ulozit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Stiahnuť obsah z arling-obsah
+        env:
+          OBSAH_API: ${{ vars.OBSAH_API }}
+          POVOL_PRAZDNE: ${{ inputs.povol_prazdne }}
+        run: |
+          if [ "$POVOL_PRAZDNE" = "true" ]; then
+            python .github/obsah/stiahni.py --api "$OBSAH_API" --obsah obsah --povol-prazdne
+          else
+            python .github/obsah/stiahni.py --api "$OBSAH_API" --obsah obsah
+          fi
+
+      - name: Uložiť zmenu obsahu do main
+        id: ulozit
+        run: |
+          git add -A obsah
+          if git diff --cached --quiet -- obsah; then
+            echo "zmena=nie" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            # Push vstavaným tokenom úlohy nový beh nespustí; [skip ci] je druhá poistka proti slučke push a workflow.
+            git commit -m "obsah: aktualizácia z arling-obsah [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+            echo "zmena=ano" >> "$GITHUB_OUTPUT"
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  nasadenie:
+    needs: obsah
+    if: github.event_name != 'schedule' || needs.obsah.outputs.zmena == 'ano'
+    runs-on: ubuntu-latest
+    # Nasadenie nič nepushuje: obsah len na čítanie, Pages a OIDC pre deploy-pages.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.nasadit.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.obsah.outputs.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # build.py potrebuje Pillow (zmenšenie fotiek na webp, obrázok Open Graph); verzia rovnaká ako pri lokálnej zostave.
+      - name: Nainštalovať Pillow
+        run: python -m pip install --disable-pip-version-check "pillow==11.3.0"
+
+      - name: Zostaviť web
+        run: python build.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Nasadiť GitHub Pages
+        id: nasadit
+        uses: actions/deploy-pages@v4

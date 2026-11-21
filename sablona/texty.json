@@ -1,0 +1,132 @@
+{
+ "_poznamka": "Texty stránok mimo realizácií. Zdroj: ops/weby-na-mieru/klienti/bmbuilding/stary-web/*.md (texty služieb upravené pre čitateľnosť), FAKTY-WEB.md, seo/ORSR.md, seo/DOPYT.md (title, description, H1, otázky so zdrojom v zákone č. 25/2025 Z. z.). Nové fakty sem len so zdrojom.",
+ "zakon": {
+  "nazov": "Slov-Lex, zákon č. 25/2025 Z. z. (stavebný zákon), znenie účinné od 1. 11. 2025",
+  "url": "https://www.slov-lex.sk/static/pdf/2025/25/ZZ_2025_25_20251101.pdf"
+ },
+ "otazky": {
+  "co-robi-dozor": {
+   "otazka": "Čo robí stavebný dozor?",
+   "odpoved": "Osoba, ktorú stavebník poverí stavebným dozorom, podľa stavebného zákona najmä sleduje postup stavebných prác z hľadiska súladu s overeným projektom a technickými predpismi, kontroluje vhodnosť stavebných výrobkov na zabudovanie do stavby, bezodkladne informuje stavebníka o závažných okolnostiach výstavby a kontroluje vedenie stavebného denníka.",
+   "zdroj": "§ 36 ods. 1 písm. a), c), e), h)"
+  },
+  "rozdiel": {
+   "otazka": "Aký je rozdiel medzi stavebným dozorom a stavbyvedúcim?",
+   "odpoved": "Stavebný dozor vykonáva osoba poverená stavebníkom a stavbu kontroluje. Stavbyvedúci stavbu riadi: organizuje, riadi, koordinuje a kontroluje stavebné práce, spravuje stavenisko a vedie stavebný denník. Oboje sú podľa zákona vyhradené činnosti vo výstavbe.",
+   "zdroj": "§ 36 ods. 1, § 37 ods. 1 a § 34 ods. 2 písm. b) a c)"
+  },
+  "kolaudacia": {
+   "otazka": "Kto je pri kolaudácii?",
+   "odpoved": "Pri kolaudačnej obhliadke vyhradenej stavby správny orgán prizve aj osobu, ktorá na stavbe uskutočňovala stavebný dozor.",
+   "zdroj": "§ 66 ods. 3"
+  }
+ },
+ "uvod": {
+  "title": "Stavebný dozor Bratislava a Pezinok | BM Building",
+  "description": "BM Building, s.r.o. z Pezinka: stavebný dozor, technický dozor investora (TDI), stavbyvedúci a stavebný manažment v Bratislave a okolí.",
+  "h1": "Stavebný dozor, stavbyvedúci a stavebný manažment",
+  "h1_miesto": "v Bratislave a okolí",
+  "veta": "Podporné služby investorom a developerom pri realizácii ich projektov, od prípravy stavby po kolaudáciu.",
+  "o_firme_nadpis": "O firme",
+  "o_firme": [
+   "BM Building, s.r.o. je stavebno-manažérska spoločnosť so sídlom v Pezinku. Investorom a developerom poskytuje podporné služby pri realizácii ich projektov: stavebný dozor, výkon stavbyvedúceho a stavebný manažment.",
+   "Firmu vedie konateľ Ing. Mário Bulko. Slovenská komora stavebných inžinierov mu vydala osvedčenie pre činnosť stavbyvedúceho v roku 2003 a pre stavebný dozor v roku 2010. V obchodnom registri je spoločnosť zapísaná od 27. 7. 2005."
+  ]
+ },
+ "sluzby": {
+  "stavebny-dozor": {
+   "menu": "Stavebný dozor",
+   "title": "Stavebný dozor a TDI v Bratislave | BM Building",
+   "description": "Stavebný dozor a technický dozor investora (TDI) pre rodinné domy, bytové domy a rekonštrukcie v Bratislave a okolí. BM Building, Pezinok.",
+   "h1": "Stavebný dozor a technický dozor investora (TDI)",
+   "veta": "Dohľad nad stavbou za investora od odovzdania staveniska po kolaudačné konanie.",
+   "priklady": "Kontrola zakrytých častí diela, preberanie prác, kontrola odstránenia vád a nedorobkov.",
+   "odseky": [
+    "Pri stavebnom dozore kontrolujeme za investora, či sa stavba uskutočňuje podľa podmienok rozhodnutia o stavebnom zámere (pri stavbách povolených podľa skoršieho stavebného zákona podľa stavebného povolenia a územného rozhodnutia), podľa projektu, časového plánu výstavby a zmlúv. Sledujeme kvalitu a ukladanie stavebných materiálov, preberáme vykonané práce a kontrolujeme odstránenie vád a nedorobkov.",
+    "Investora bezodkladne informujeme o všetkých závažných okolnostiach na stavbe. Na konci sa zúčastníme na kolaudačnom konaní.",
+    "V referenciách túto činnosť uvádzame aj ako technický dozor investora (TDI). Vykonávali sme ju pri rodinných domoch, bytových domoch aj rekonštrukciách v Bratislave a okolí."
+   ],
+   "cinnosti_nadpis": "Čo pri stavebnom dozore robíme",
+   "otazky": ["co-robi-dozor", "rozdiel", "kolaudacia"],
+   "kluce": ["dozor", "tdi"],
+   "realizacie_nadpis": "Realizácie: stavebný dozor",
+   "opravnenie": ["stavebný dozor"],
+   "typ_sluzby": "Stavebný dozor"
+  },
+  "stavbyveduci": {
+   "menu": "Stavbyvedúci",
+   "title": "Stavbyvedúci Bratislava a Pezinok | BM Building",
+   "description": "Stavbyvedúci pre stavby v Bratislave a okolí: riadenie stavebných prác, stavebný denník, kontrola materiálov. Osvedčenie SKSI z roku 2003. BM Building.",
+   "h1": "Stavbyvedúci: riadenie stavebných prác a stavebný denník",
+   "veta": "Riadenie a koordinácia stavebných prác na stavenisku a vedenie stavebného denníka.",
+   "priklady": "Poradie prác, kontrola výrobkov a materiálov, organizácia staveniska.",
+   "odseky": [
+    "Ako stavbyvedúci riadime a koordinujeme stavebné práce a iné činnosti na stavenisku a na stavbe a vedieme o nich evidenciu v stavebnom denníku.",
+    "Stavbyvedúci určuje, kedy sa jednotlivé činnosti na stavbe začnú a skončia, koordinuje poradie stavebných prác, kontroluje výrobky a materiály pred zabudovaním a organizuje pohyb osôb na stavenisku. Ak sa vyskytne prekážka, pre ktorú je ďalšia práca neprípustná, dá príkaz práce okamžite zastaviť.",
+    "Osvedčenie o vykonaní odbornej skúšky pre činnosť stavbyvedúceho, odborné zameranie pozemné stavby, vydala Slovenská komora stavebných inžinierov Ing. Máriovi Bulkovi 5. 11. 2003."
+   ],
+   "cinnosti_nadpis": "Činnosti stavbyvedúceho",
+   "otazky": ["rozdiel"],
+   "kluce": ["stavbyved"],
+   "realizacie_nadpis": "Realizácie: stavbyvedúci",
+   "opravnenie": ["stavbyvedúci"],
+   "typ_sluzby": "Stavbyvedúci"
+  },
+  "stavebny-manazment": {
+   "menu": "Stavebný manažment",
+   "title": "Stavebný manažment stavby | BM Building, Pezinok",
+   "description": "Stavebný manažment a projektový manažment stavby pre investorov a developerov: koordinácia profesií, riadenie a kontrola stavby po kolaudáciu.",
+   "h1": "Stavebný manažment a projektový manažment stavby",
+   "veta": "Koordinácia všetkých profesií od prípravy po kolaudáciu v požadovanej kvalite, termíne a nákladoch.",
+   "priklady": "Zadanie stavebných prác, výber dodávateľa, uzatvorenie zmlúv a ich právna kontrola.",
+   "odseky": [
+    "BM Building, s.r.o. je stavebno-manažérska spoločnosť. Investorom a developerom poskytujeme podporné služby pri realizácii ich projektov a zabezpečíme bezproblémový prechod z projektovej do realizačnej fázy.",
+    "Stavebný manažment chápeme ako ucelený proces. Zahŕňa koordináciu všetkých profesií a riadenie a kontrolu stavby počas prípravy a realizácie až po kolaudáciu, a to na základe definovaných právnych, ekonomických a technických podmienok. Cieľom je včas odhaliť a obmedziť riziká, nájsť riešenia a využiť všetky poskytnuté príležitosti.",
+    "Ciele investora alebo užívateľa splníme v požadovanej kvalite, v určenom termíne a za vopred určené náklady.",
+    "Za klienta prevezmeme riadenie a koordináciu procesu zadania stavebných prác. Po výbere dodávateľa stavby zabezpečíme uzatvorenie zmlúv a koordinujeme aj ich právnu kontrolu.",
+    "V referenciách je táto činnosť uvedená ako projektový manažment alebo stavebný manažment."
+   ],
+   "cinnosti_nadpis": "Čo stavebný manažment zahŕňa",
+   "otazky": ["kolaudacia"],
+   "kluce": ["manažment", "manažér"],
+   "realizacie_nadpis": "Realizácie: projektový a stavebný manažment",
+   "opravnenie": ["stavbyvedúci", "stavebný dozor"],
+   "typ_sluzby": "Stavebný manažment"
+  }
+ },
+ "realizacie": {
+  "title": "Realizácie stavebného dozoru a manažmentu | BM Building",
+  "description": "Referencie BM Building: bytové domy, rodinné domy a rekonštrukcie v Bratislave, Pezinku a okolí, od stavebného dozoru po projektový manažment.",
+  "h1": "Realizácie a referencie",
+  "veta": "Stavby, na ktorých BM Building pracoval. Pri každej uvádzame jeho rolu, projektanta a roky realizácie, ak sú známe."
+ },
+ "opravnenia": {
+  "title": "Oprávnenia SKSI: stavebný dozor, stavbyvedúci | BM Building",
+  "description": "Osvedčenia Slovenskej komory stavebných inžinierov: stavebný dozor (evid. č. 09903, 2010) a stavbyvedúci, pozemné stavby (evid. č. 00912*10*, 2003).",
+  "h1": "Oprávnenia a osvedčenia SKSI",
+  "veta": "Osvedčenia Slovenskej komory stavebných inžinierov (SKSI) vydané konateľovi Ing. Máriovi Bulkovi.",
+  "poznamka": "Údaje sú prepísané z osvedčení. Obrázky osvedčení nezverejňujeme, lebo obsahujú osobné údaje.",
+  "register_nadpis": "Obchodný register",
+  "register": "V obchodnom registri má spoločnosť zapísaný výkon činnosti stavbyvedúceho od 27. 7. 2005 a výkon činnosti stavebného dozoru od 4. 12. 2012.",
+  "register_zdroj": "https://www.orsr.sk/vypis.asp?ID=60136&SID=2&P=0"
+ },
+ "kontakt": {
+  "title": "Kontakt | BM Building, Podhorská 9, Pezinok",
+  "description": "BM Building, s.r.o., Podhorská 9, 902 01 Pezinok. Telefón +421 903 794 738, e-mail info@bmbuilding.sk. Konateľ Ing. Mário Bulko. IČO 35 947 519.",
+  "h1": "Kontakt",
+  "veta": "Zavolajte alebo napíšte e-mail. Pôsobíme v Bratislave a okolí."
+ },
+ "ochrana": {
+  "title": "Ochrana osobných údajov | BM Building",
+  "description": "Ako BM Building, s.r.o. spracúva osobné údaje na webe bmbuilding.sk: kontakt, e-mail a telefón. Informácie o právach dotknutej osoby.",
+  "h1": "Ochrana osobných údajov",
+  "github_url": "https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#data-collection",
+  "github_privacy_url": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+  "uoou_url": "https://dataprotection.gov.sk/"
+ },
+ "chyba": {
+  "title": "Stránka sa nenašla | BM Building",
+  "h1": "Stránka sa nenašla",
+  "veta": "Adresa mohla patriť starému webu alebo obsahuje preklep. Pokračujte na úvod, na realizácie alebo nám zavolajte."
+ }
+}

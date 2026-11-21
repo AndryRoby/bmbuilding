@@ -1,0 +1,9 @@
+{
+ "_poznamka": "Nastavenia zostavy (nie obsah). uvod_realizacia: slug realizácie, ktorej prvá fotka na šírku s aspoň 960 px ide do úvodu (DIZAJN 6.2 odporúča Vtáčnik; pravidlo podľa poradia by vybralo Okánikovu s pôvodným stavom, grafitmi a ŠPZ). zaklad_nahladu: cesta náhľadu na github.io (repozitár bmbuilding), použije sa len v 404.html. uvod_pocet_dalsich: koľko realizácií bez fotky ukáže úvod v zozname Ďalšie realizácie. vydanie: deň poslednej zmeny šablóny alebo textov stránok (RRRR-MM-DD), ide do lastmod v sitemap; pri zmene sablona/ ho posuň.",
+ "domena": "https://bmbuilding.sk",
+ "uvod_realizacia": "bytove-domy-vtacnik-bratislava",
+ "uvod_pocet_realizacii": 6,
+ "uvod_pocet_dalsich": 3,
+ "vydanie": "2026-11-21",
+ "zaklad_nahladu": "/bmbuilding/"
+}

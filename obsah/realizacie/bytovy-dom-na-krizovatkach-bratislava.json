@@ -1,0 +1,31 @@
+{
+  "id": "bytovy-dom-na-krizovatkach-bratislava",
+  "slug": "bytovy-dom-na-krizovatkach-bratislava",
+  "nazov": "Bytový dom, ulica Na Križovatkách",
+  "miesto": "Bratislava, ulica Na Križovatkách",
+  "rola": "Projektový manažér",
+  "projektant": "Koneval / Manikova architekti",
+  "roky": "2014 až 2016",
+  "text": "Bytový dom pozostáva z 95 bytov a 2 nebytových priestorov. Objekt má 2 až 6 obytných nadzemných podlaží a polozapustený suterén, v ktorom je parkovanie, pivničné priestory a technické zabezpečenie budovy.",
+  "investor": "IN DEVELOP s.r.o.",
+  "zhotovitel": "HANT BA, a.s.",
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/bytovy-dom-na-krizovatkach-bratislava/01.jpg",
+      "alt": "Bytový dom na ulici Na Križovatkách, Bratislava, fotka 1 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-na-krizovatkach-bratislava/02.jpg",
+      "alt": "Bytový dom na ulici Na Križovatkách, Bratislava, fotka 2 z 3"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-na-krizovatkach-bratislava/03.jpg",
+      "alt": "Bytový dom na ulici Na Križovatkách, Bratislava, fotka 3 z 3"
+    }
+  ],
+  "zdroj": "web",
+  "fb_url": null,
+  "datum": "2013-01-09",
+  "poradie": 8,
+  "zverejnene": true
+}

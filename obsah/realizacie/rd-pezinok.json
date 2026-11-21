@@ -1,0 +1,23 @@
+{
+  "id": "rd-pezinok",
+  "slug": "rd-pezinok",
+  "nazov": "RD Pezinok",
+  "miesto": "Pezinok",
+  "rola": "Stavebný dozor",
+  "projektant": "Koneval / Manikova architekti",
+  "roky": "2011 až 2012",
+  "text": "Stavba rodinného domu v Pezinku.",
+  "investor": "súkromný investor",
+  "zhotovitel": "TATRASOD spol. s.r.o.",
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/rd-pezinok/01.jpg",
+      "alt": "RD Pezinok, fotka 1 z 1"
+    }
+  ],
+  "zdroj": "web",
+  "fb_url": null,
+  "datum": "2013-01-09",
+  "poradie": 15,
+  "zverejnene": true
+}
