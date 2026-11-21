@@ -95,7 +95,11 @@ jobs:
       - name: Nainštalovať Pillow
         run: python -m pip install --disable-pip-version-check "pillow==11.3.0"
 
+      # Ostrý web až po prepnutí domény: premenná repozitára BMB_OSTRY=ano (gh variable set BMB_OSTRY --body ano).
+      # Bez nej build.py v Actions zostaví náhľad s noindex (PRESUN-DOMENY.md, kontrola 21. 11. 2026).
       - name: Zostaviť web
+        env:
+          BMB_OSTRY: ${{ vars.BMB_OSTRY }}
         run: python build.py
 
       - uses: actions/configure-pages@v5
