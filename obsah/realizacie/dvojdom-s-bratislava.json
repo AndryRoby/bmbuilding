@@ -1,5 +1,5 @@
 {
-  "id": "dvojdom-s-bratislava",
+  "id": "web-bmbuilding-dvojdom-s-bratislava",
   "slug": "dvojdom-s-bratislava",
   "nazov": "Dvojdom S",
   "miesto": "Bratislava",
@@ -7,8 +7,8 @@
   "projektant": "Ing. arch. Pavel Kosnáč, Kosi Architects",
   "roky": "2021 až 2022",
   "text": "Dvojdom S v Bratislave. BM Building tu zabezpečoval projektový manažment a stavebný dozor. Realizácia prebehla v rokoch 2021 až 2022.",
-  "investor": "",
-  "zhotovitel": "",
+  "investor": null,
+  "zhotovitel": null,
   "fotky": [],
   "zdroj": "fb",
   "fb_url": null,
