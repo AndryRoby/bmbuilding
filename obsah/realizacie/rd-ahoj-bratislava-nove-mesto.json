@@ -1,11 +1,11 @@
 {
-  "id": "rd-ahoj-bratislava-nove-mesto",
+  "id": "web-bmbuilding-rd-ahoj-bratislava-nove-mesto",
   "slug": "rd-ahoj-bratislava-nove-mesto",
   "nazov": "RD Ahoj",
   "miesto": "Bratislava, Nové Mesto",
   "rola": "Stavebný dozor",
   "projektant": "Ing. arch. Ilja Skoček",
-  "roky": "",
+  "roky": null,
   "text": "Rodinný dom RD Ahoj v Bratislave, v mestskej časti Nové Mesto. BM Building tu vykonával stavebný dozor.",
   "investor": "",
   "zhotovitel": "",
