@@ -476,13 +476,20 @@
       var s = sirkyZ(a);
       return a.getAttribute('data-plna') || a.getAttribute('href') || suborZ(a, s[s.length - 1]);
     };
+    // Odkaz galérie s náhľadom (build.py lb_data nahlad) nemá data-srcset ani data-avif: srcset WebP a zdroj AVIF
+    // sú tie isté ako pri náhľade v odkaze, berú sa z neho (overenie zostavy bmb-presnost, menšie HTML).
+    var nahladZ = function (a, vyber) {
+      if (a.hasAttribute('data-sirky')) return '';
+      var el = a.querySelector(vyber);
+      return (el && el.getAttribute('srcset')) || '';
+    };
     var srcsetZ = function (a) {
-      var s = a.getAttribute('data-srcset');
+      var s = a.getAttribute('data-srcset') || nahladZ(a, 'img');
       if (s) return s;
       return sirkyZ(a).map(function (w) { return suborZ(a, w) + ' ' + w + 'w'; }).join(', ');
     };
     var avifZ = function (a) {
-      var s = a.getAttribute('data-avif');
+      var s = a.getAttribute('data-avif') || (a.hasAttribute('data-srcset') ? '' : nahladZ(a, 'source[type="image/avif"]'));
       if (s) return s;
       return sirkyZ(a, 'data-sirky-avif').map(function (w) { return suborZ(a, w, 'avif') + ' ' + w + 'w'; }).join(', ');
     };

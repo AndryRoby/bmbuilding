@@ -24,6 +24,9 @@
   --stlpce:4;
   --rytmus:clamp(88px,11vw,176px);
   --krivka:cubic-bezier(.65,0,.35,1);
+  /* jedna škála medzier (linka bmb-presnost): 4, 8, 12, 16, 24, 32, 48, 64 a 96 px; karty, osvedčenia, tabuľky údajov,
+     činnosti, cenník, fázy a susedia berú medzery len z nej, rovnocenné časti tak majú rovnaké odstupy */
+  --m-4:4px;--m-8:8px;--m-12:12px;--m-16:16px;--m-24:24px;--m-32:32px;--m-48:48px;--m-64:64px;--m-96:96px;
   /* výška hlavičky nad úvodom (84 px od 1024 px; v ukážke 128 px aj s pásom „Ukážka webu od ARLing“, ten tu nie je) */
   --hore:84px;
 }
@@ -256,9 +259,11 @@ picture{display:contents}
   .prace:not(.pripnute) .navod-mys{display:none}
   .prace:not(.pripnute) .navod-mobil{display:inline}
 }
-.pas{list-style:none;margin:clamp(32px,5vh,56px) 0 0;padding:0 var(--okraj) 18px;display:flex;gap:clamp(16px,2.2vw,40px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--okraj);overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--tlmeny) transparent}
+/* --karta: šírka karty pásu (stĺpec mriežky pásu, bez subgrid základ flex), mení sa podľa šírky okna a v pripnutom páse */
+.pas{--karta:min(80vw,420px);list-style:none;margin:clamp(32px,5vh,56px) 0 0;padding:0 var(--okraj) 18px;display:flex;gap:clamp(16px,2.2vw,40px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--okraj);overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--tlmeny) transparent}
 .pas:focus-visible{outline-offset:-2px}
-.projekt{flex:0 0 min(80vw,420px);scroll-snap-align:start}
+.projekt{scroll-snap-align:start}
+.pas>.projekt,.pas>.projekt-dalsi{flex:0 0 var(--karta)}
 .projekt figure{margin:0}
 .projekt a{scroll-margin-inline:var(--okraj)}
 .projekt-foto{position:relative;aspect-ratio:4/5;overflow:hidden;background:#2a2b2b}
@@ -268,17 +273,20 @@ img[data-src],img.nacitava{opacity:0}
 .prace .kota{color:var(--modra-svetla);background-image:linear-gradient(currentColor,currentColor)}
 .prace .kota::before,.prace .kota::after{background:currentColor}
 .prace .kota-text{background:var(--grafit)}
-/* názvy BM majú 1 až 3 riadky: tlačidlo Fotky hore pri prvom riadku a názov aspoň na dva riadky, aby údaje kariet
-   začínali čo najviac v rovnakej výške (overenie kolo 1) */
-.projekt-riadok{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:14px}
+/* názvy BM majú 1 až 3 riadky: tlačidlo Fotky hore pri prvom riadku a názov aspoň na dva riadky (overenie kolo 1);
+   rovnakú výšku údajov naprieč kartami drží subgrid (úsek KARTY V SPOLOČNÝCH RIADKOCH, linka bmb-presnost) */
+.projekt-riadok{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--m-12);margin-top:var(--m-12)}
 .projekt h3{font-size:clamp(1.25rem,1.5vw,1.5rem);line-height:1.15;letter-spacing:-.025em;font-weight:450;min-height:calc(2 * 1.15em)}
+/* nadpis v riadku s tlačidlom Fotky na celú výšku riadka: rovnaká škatuľa nadpisu pri 2 aj 3 riadkoch názvu
+   (brána bmb-presnost pokus 1, nález 6) */
+.projekt-riadok>h3{align-self:stretch}
 .projekt h3 a{text-decoration:none}
 .projekt h3 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
-.projekt-udaje{margin-top:4px;font-size:14px;line-height:1.5;color:var(--modra-svetla);font-variant-numeric:tabular-nums}
-.projekt-text{margin-top:10px;color:var(--na-tmavom-2);font-size:16px;line-height:1.55}
+.projekt-udaje{margin-top:var(--m-4);font-size:14px;line-height:1.5;color:var(--modra-svetla);font-variant-numeric:tabular-nums}
+.projekt-text{margin-top:var(--m-8);color:var(--na-tmavom-2);font-size:16px;line-height:1.55}
 .prepinac{flex:none;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px 0 12px;border:1px solid rgba(244,244,241,.5);border-radius:2px;background:transparent;color:var(--vapno);font:450 14px/1 var(--pismo);text-decoration:none;cursor:pointer;transition:background-color .25s var(--krivka),border-color .25s var(--krivka),color .25s var(--krivka)}
 .prepinac:hover{border-color:var(--vapno);text-decoration:none}
-.projekt-dalsi{flex:0 0 min(80vw,420px);scroll-snap-align:start;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;border:1px solid rgba(244,244,241,.22);padding:28px;aspect-ratio:4/5}
+.projekt-dalsi{scroll-snap-align:start;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;border:1px solid rgba(244,244,241,.22);padding:28px;aspect-ratio:4/5}
 .projekt-dalsi p{font-size:clamp(1.4rem,2vw,1.9rem);line-height:1.15;letter-spacing:-.025em;font-weight:380}
 .projekt-dalsi .tlacidlo{align-self:flex-start;background:var(--vapno);color:var(--grafit);border-color:var(--vapno)}
 @media (hover:hover) and (pointer:fine){
@@ -298,26 +306,29 @@ img[data-src],img.nacitava{opacity:0}
 .postup-foto figcaption,.atelier-foto figcaption{margin-top:10px;font-size:14px;line-height:1.5;color:var(--tlmeny)}
 .atelier-foto figcaption a{color:var(--grafit)}
 .fazy{list-style:none;margin:clamp(48px,7vw,96px) 0 0;padding:0;display:grid}
-.faza{position:relative;padding:0 0 40px 28px;border-left:1px solid var(--modra-ciara)}
+.faza{position:relative;padding:0 0 var(--m-48) var(--m-24);border-left:1px solid var(--modra-ciara)}
 .faza::before{content:"";position:absolute;left:-1px;top:0;width:1px;height:16px;background:var(--modra-ciara);transform:translate(0,-50%) rotate(45deg)}
 .faza:last-child{padding-bottom:0}
 .faza:last-child::after{content:"";position:absolute;left:-1px;bottom:0;width:1px;height:16px;background:var(--modra-ciara);transform:translate(0,50%) rotate(45deg)}
 .faza-dlzka{display:inline-block;font:400 14px/1.2 var(--mono);color:var(--modra);background:var(--vapno);padding:0 8px 0 0;transform:translateY(-.6em);font-variant-numeric:tabular-nums}
-.faza h3{margin-top:6px;font-size:clamp(1.45rem,2vw,1.9rem);line-height:1.1;letter-spacing:-.03em;font-weight:420}
-.faza p{margin-top:10px;max-width:30em}
-.faza .vystup{margin-top:12px;font-size:15px;line-height:1.5;color:var(--tlmeny)}
+.faza h3{margin-top:var(--m-8);font-size:clamp(1.45rem,2vw,1.9rem);line-height:1.1;letter-spacing:-.03em;font-weight:420}
+.faza p{margin-top:var(--m-12);max-width:30em}
+.faza .vystup{margin-top:var(--m-12);font-size:15px;line-height:1.5;color:var(--tlmeny)}
 .faza .vystup a{color:var(--modra)}
 
 /* Činnosť (Služby a ceny v ukážke), bez cien: v stĺpci ceny počet realizácií a rok osvedčenia */
 .sluzby-hlava,.cennik,.cennik-pozn,.kalkulacka{grid-column:1/-1}
 .cennik{list-style:none;margin:clamp(40px,6vw,80px) 0 0;padding:0;border-top:1px solid var(--grafit)}
-.sluzba{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 20px;padding:22px 0 24px;border-bottom:1px solid var(--beton)}
+/* názov a cena (alebo zdroj) na jednej základnej čiare pri každej šírke, nielen od 1024 px (linka bmb-presnost) */
+.sluzba{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--m-8) var(--m-24);align-items:baseline;padding:var(--m-24) 0;border-bottom:1px solid var(--beton)}
 .sluzba h3{font-size:clamp(1.2rem,1.5vw,1.45rem);line-height:1.2;letter-spacing:-.02em;font-weight:500}
 .sluzba h3 a{text-decoration:none}
 .sluzba h3 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
 .sluzba-opis{grid-column:1/-1;color:var(--tlmeny);font-size:16px;line-height:1.55;max-width:36em}
 .cena{grid-column:2;grid-row:1;text-align:right;font-size:clamp(1.35rem,2.2vw,2.1rem);line-height:1.05;letter-spacing:-.025em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cena small{display:block;margin-top:6px;font-size:14px;line-height:1.4;letter-spacing:0;color:var(--modra)}
+/* popis pod číslom sa zalamuje: pri 1024 px „ako projektový alebo stavebný manažment“ v jednom riadku pretiekol stĺpec
+   aj okraj stránky o 6 px (linka bmb-presnost, meranie scrollWidth) */
+.cena small{display:block;margin-top:var(--m-8);font-size:14px;line-height:1.4;letter-spacing:0;color:var(--modra);white-space:normal}
 .cennik-pozn{margin-top:20px;max-width:46em;font-size:15px;color:var(--tlmeny)}
 .cennik-pozn a{color:var(--modra)}
 .kalkulacka{margin-top:clamp(40px,5vw,64px);padding:clamp(20px,3vw,36px);border:1px solid var(--grafit);background:rgba(244,244,241,.8);display:grid;gap:14px}
@@ -335,7 +346,8 @@ img[data-src],img.nacitava{opacity:0}
 .atelier-text .fakty{margin-top:28px}
 .firma-odkaz{margin-top:18px}
 .fakty{border-top:1px solid var(--grafit)}
-.fakty>div{display:grid;grid-template-columns:minmax(7.5em,32%) minmax(0,1fr);gap:14px;padding:12px 0;border-bottom:1px solid var(--beton)}
+/* štítok (14 px) a hodnota (16 až 18 px) na jednej základnej čiare prvého riadka (linka bmb-presnost) */
+.fakty>div{display:grid;grid-template-columns:minmax(7.5em,32%) minmax(0,1fr);gap:var(--m-16);align-items:baseline;padding:var(--m-12) 0;border-bottom:1px solid var(--beton)}
 .fakty dt{font-size:14px;line-height:1.7;color:var(--tlmeny)}
 .fakty dd{margin:0;font-variant-numeric:tabular-nums}
 .fakty dd a{color:var(--modra)}
@@ -351,8 +363,11 @@ img[data-src],img.nacitava{opacity:0}
 .kontakt-fakty dd{font-size:16px}
 .kontakt-pozn{display:flex;flex-wrap:wrap;gap:0 24px;margin-top:14px;font-size:15px;color:var(--tlmeny)}
 .mapa-karta{margin:0;background:var(--vapno);border:1px solid var(--beton)}
-.mapa-spodok{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:0 clamp(16px,2.4vw,28px) 24px}
-.vizitka{display:grid;grid-template-columns:64px minmax(0,1fr);gap:20px;padding:clamp(20px,2.6vw,32px);font-size:17px;line-height:1.45}
+/* vizitka a jej spodok s tlačidlom Navigovať s rovnakým vnútorným okrajem --karta-okraj: logo a tlačidlo majú jednu
+   ľavú hranu (pri 390 px boli 37 a 33 px, linka bmb-presnost) */
+.mapa-karta{--karta-okraj:clamp(var(--m-16),2.4vw,var(--m-32))}
+.mapa-spodok{display:flex;flex-wrap:wrap;align-items:center;gap:var(--m-12) var(--m-24);padding:0 var(--karta-okraj) var(--m-24)}
+.vizitka{display:grid;grid-template-columns:64px minmax(0,1fr);gap:var(--m-24);padding:var(--karta-okraj);font-size:17px;line-height:1.45}
 .vizitka-logo{width:64px;height:64px}
 .vizitka-riadky{display:grid}
 .vizitka-riadky>span{padding:7px 0;border-bottom:1px solid var(--beton)}
@@ -477,23 +492,29 @@ img[data-src],img.nacitava{opacity:0}
 .karty{list-style:none;display:grid;grid-template-columns:minmax(0,1fr);gap:48px var(--medzera)}
 .projekt-svetly .projekt-foto{display:block;background:var(--vapno-2)}
 .projekt-svetly .projekt-foto img{transition:opacity .45s var(--krivka),transform .6s var(--krivka)}
-.projekt-svetly .kota{margin-top:14px}
-.projekt-svetly .dlazdica-nazov,.projekt-svetly .novinka-nazov{margin-top:12px;font-size:clamp(1.2rem,1.4vw,1.4rem);line-height:1.15;letter-spacing:-.025em;font-weight:450}
+.projekt-svetly .kota{margin-top:var(--m-16)}
+.projekt-svetly .dlazdica-nazov,.projekt-svetly .novinka-nazov{margin-top:var(--m-12);font-size:clamp(1.2rem,1.4vw,1.4rem);line-height:1.15;letter-spacing:-.025em;font-weight:450}
 .projekt-svetly .dlazdica-nazov a,.projekt-svetly .novinka-nazov a{text-decoration:none}
 .projekt-svetly .projekt-udaje{color:var(--modra)}
-.projekt-svetly .projekt-text{margin-top:6px;color:var(--tlmeny);font-size:15px;line-height:1.5}
+.projekt-svetly .projekt-text{margin-top:var(--m-8);color:var(--tlmeny);font-size:15px;line-height:1.5}
 /* ilustračná fotka novinky bez vlastnej fotky: popis pod nadpisom písmom Mono (oprava po bráne, bod 2) */
-.projekt-ilustr{margin-top:6px;font:400 12px/1.45 var(--mono);color:var(--tlmeny)}
+.projekt-ilustr{margin-top:var(--m-8);font:400 12px/1.45 var(--mono);color:var(--tlmeny)}
 /* novinka bez použiteľnej fotky: logo firmy v ráme 4 : 5 (nie cudzia fotka) */
 .projekt-svetly .projekt-znak{display:grid;place-items:center;border:1px solid var(--beton)}
 .projekt-foto .karta-znak{width:32%;height:auto;object-fit:contain}
+/* karta s malým zdrojom (build.py img_karty, brána bmb-presnost pokus 1, nález 1): celá fotka 4 : 3 alebo 3 : 4
+   v strede rámu 4 : 5 na podklade, od okraja rámu aspoň 24 px a široká najviac 360 CSS px (trieda cap-N menej), aby
+   prehliadač pri hustote 2 nezväčšoval zdroj viac než 1,2-krát; rám, kóta, nadpis a údaje karty ostávajú v riadkoch */
+.projekt-foto img.foto-cela{position:absolute;inset:0;margin:auto;width:min(100% - 2 * var(--m-24),var(--cap,360px));height:auto;aspect-ratio:4/3;object-fit:cover;outline:1px solid rgba(30,31,31,.14);outline-offset:-1px}
+.projekt-foto img.foto-cela.na-vysku{aspect-ratio:3/4}
+.cap-160{--cap:160px}.cap-168{--cap:168px}.cap-176{--cap:176px}.cap-184{--cap:184px}.cap-192{--cap:192px}.cap-200{--cap:200px}.cap-208{--cap:208px}.cap-216{--cap:216px}.cap-224{--cap:224px}.cap-232{--cap:232px}.cap-240{--cap:240px}.cap-248{--cap:248px}.cap-256{--cap:256px}.cap-264{--cap:264px}.cap-272{--cap:272px}.cap-280{--cap:280px}.cap-288{--cap:288px}.cap-296{--cap:296px}.cap-304{--cap:304px}.cap-312{--cap:312px}.cap-320{--cap:320px}.cap-328{--cap:328px}.cap-336{--cap:336px}.cap-344{--cap:344px}.cap-352{--cap:352px}
 @media (hover:hover) and (pointer:fine){
   .projekt-svetly .dlazdica-nazov a:hover,.projekt-svetly .novinka-nazov a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
   .projekt-svetly:hover .projekt-foto img:not(.karta-znak){transform:scale(1.03)}
 }
-/* stovky realizácií: karty mimo obrazu sa nevykresľujú, kým k nim človek nepríde */
-.karty[data-zoznam] .dlazdica:nth-child(n+17){content-visibility:auto;contain-intrinsic-size:auto 640px}
-.sekcia-karty .karty{margin-top:8px}
+/* karty bez content-visibility (linka bmb-presnost): tá zapína layout containment a karta by prestala byť subgrid,
+   karty za tlačidlom Zobraziť ďalšie by stratili spoločné riadky; zobrazuje sa naraz len realizacie_naraz kariet */
+.sekcia-karty .karty{margin-top:var(--m-8)}
 .dalsie{margin-top:56px}
 .dalsie-nadpis{font-size:15px;font-weight:500;padding-bottom:10px;border-bottom:1px solid var(--grafit)}
 .zoznam-dalsie{list-style:none}
@@ -513,8 +534,9 @@ img[data-src],img.nacitava{opacity:0}
 .cinnosti-sekcia .sekcia-hlava .uvodny{max-width:40em}
 .cinnosti-sekcia .fazy{margin:0 0 clamp(56px,7vw,96px)}
 .cinnosti{list-style:none;border-top:1px solid var(--grafit)}
-.cinnosti li{display:grid;grid-template-columns:2.8em minmax(0,1fr);gap:8px;padding:14px 0;border-bottom:1px solid var(--beton);break-inside:avoid}
-.cinnost-c{font:400 13px/1.2 var(--mono);color:var(--modra);padding-top:.4em}
+/* číslo „01“ a text na jednej základnej čiare (align-items:baseline namiesto odhadu padding-top, linka bmb-presnost) */
+.cinnosti li{display:grid;grid-template-columns:2.8em minmax(0,1fr);gap:var(--m-8);align-items:baseline;padding:var(--m-16) 0;border-bottom:1px solid var(--beton);break-inside:avoid}
+.cinnost-c{font:400 13px/1.2 var(--mono);color:var(--modra)}
 
 /* Detail realizácie a novinky: dvojstrana ako úvod (pohľad A vľavo, kóta a text vpravo) */
 .detail{row-gap:32px;padding-bottom:clamp(40px,6vw,88px)}
@@ -546,7 +568,9 @@ img[data-src],img.nacitava{opacity:0}
 /* Susedia (Novšia, Staršia): čiara hore so šikmou značkou ako fázy postupu */
 .susedia-obal{padding-top:clamp(40px,6vw,80px)}
 .susedia{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:0 var(--medzera)}
-.susedia a{position:relative;display:grid;gap:6px;padding:18px 0 18px;border-top:1px solid var(--modra-ciara);text-decoration:none}
+/* align-content:start: kratší odkaz (názov na 1 riadok) sa natiahne na výšku dlhšieho, voľné miesto ide pod text,
+   nie do riadkov mriežky; „Novšia“ a „Staršia“ ostanú na jednej čiare (linka bmb-presnost) */
+.susedia a{position:relative;display:grid;align-content:start;gap:var(--m-8);padding:var(--m-16) 0;border-top:1px solid var(--modra-ciara);text-decoration:none}
 .susedia a::before{content:"";position:absolute;left:0;top:-1px;width:1px;height:14px;background:var(--modra-ciara);transform:translate(-50%,-50%) rotate(45deg)}
 .susedia .dalsia::before{left:auto;right:0;transform:translate(50%,-50%) rotate(45deg)}
 .susedia-smer{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--tlmeny)}
@@ -556,14 +580,19 @@ img[data-src],img.nacitava{opacity:0}
 
 /* Oprávnenia, texty, 404 */
 .stranka-text{padding-bottom:var(--rytmus)}
-.doklady{display:grid;gap:48px var(--medzera)}
-.doklady .doklad-h{font-size:clamp(1.3rem,1.8vw,1.7rem);line-height:1.15;letter-spacing:-.025em;font-weight:420;margin-bottom:18px}
-/* zakrytý obrázok osvedčenia: celý doklad, nikdy širší než súbor (528 px), otvorí sa v lightboxe */
-.doklad-obr{margin:0 0 24px}
-.doklad-odkaz{display:inline-block;max-width:100%;vertical-align:top;border:1px solid var(--beton);background:#fff;cursor:zoom-in}
-.doklad-odkaz img{display:block;max-width:100%;height:auto}
-.doklad-popis{margin-top:10px;max-width:528px;font-size:15px;line-height:1.45;color:var(--tlmeny)}
-.doklad-register{margin-top:12px}
+.doklady{display:grid;gap:var(--m-48) var(--medzera)}
+.doklady .doklad-h{font-size:clamp(1.3rem,1.8vw,1.7rem);line-height:1.15;letter-spacing:-.025em;font-weight:420;margin-bottom:var(--m-16)}
+/* zakrytý obrázok osvedčenia v ráme A4 (210 : 297, linka bmb-presnost): oba rámy majú rovnaký pomer, šírku a výšku,
+   sken orezaný na hranu papiera (build.py OREZ_DOKLADU, 520 x 747 a 503 x 722 px, pomer strán oboch do 0,002 pod
+   vnútrom rámu) vypĺňa vnútro rámu cez object-fit:cover, papier oboch osvedčení má rovnakú hornú hranu aj výšku
+   (brána pokus 2, nález 1: contain dal skenom s iným pomerom iný biely pás); rám najviac --doklad-max široký
+   (554 = 528 px + 2 x 12 px okraj + 2 x 1 px čiara), otvorí sa v lightboxe */
+.doklady{--doklad-max:554px}
+.doklad-obr{margin:0 0 var(--m-24)}
+.doklad-odkaz{position:relative;display:block;width:100%;max-width:var(--doklad-max);aspect-ratio:210/297;border:1px solid var(--beton);background:#fff;cursor:zoom-in}
+.doklad-odkaz img{position:absolute;left:var(--m-12);top:var(--m-12);width:calc(100% - 2 * var(--m-12));height:calc(100% - 2 * var(--m-12));max-width:none;object-fit:cover}
+.doklad-popis{margin-top:var(--m-12);max-width:var(--doklad-max);font-size:15px;line-height:1.45;color:var(--tlmeny)}
+.doklad-register{margin-top:var(--m-12)}
 .register{margin-top:clamp(56px,7vw,96px)}
 .register .nadpis-maly{font-size:clamp(1.2rem,1.5vw,1.45rem);font-weight:500;letter-spacing:-.02em}
 .register .cena{font-size:15px;white-space:normal;text-align:left}
@@ -601,16 +630,50 @@ img[data-src],img.nacitava{opacity:0}
   .hlava-mriezka .nadpis-stranky{grid-column:1/9}
   .hlava-bok{grid-column:9/-1;align-self:end}
   .hlava-detail .nadpis-stranky{grid-column:1/8}
-  .hlava-detail .hlava-bok{grid-column:8/-1;align-self:end}
+  /* údaje v hlave od 9. stĺpca ako text pod nimi (.detail-text 9/-1) a bok ostatných podstránok: jedna ľavá hrana
+     pravého stĺpca od hlavy po text (pri 8/-1 bola o stĺpec a medzeru vľavo, linka bmb-presnost) */
+  .hlava-detail .hlava-bok{grid-column:9/-1;align-self:end}
   .karty{grid-template-columns:repeat(4,minmax(0,1fr))}
   .otazky-nadpis{grid-column:1/6}
   .otazky-sekcia .otazky{grid-column:7/-1}
   .sluzba-obal .sluzba-hlavne{grid-column:1/7}
   .sluzba-obal .sluzba-bok{grid-column:8/-1}
-  .detail .detail-foto{grid-column:1/8}
+  /* najviac 1000 CSS px ako v sizes (SIZES_DETAIL): pri 1920 px má 7 stĺpcov 1016,7 px a prehliadač by súbor 2000 px
+     zväčšoval 1,02-krát (brána bmb-presnost pokus 1, nález 5) */
+  .detail .detail-foto{grid-column:1/8;max-width:1000px}
   .detail .detail-text{grid-column:9/-1}
+  /* čiara kóty vpravo na úrovni hornej hrany fotky vľavo: kóta je 16 px vysoká s čiarou v polovici (linka bmb-presnost) */
+  .detail:not(.detail-bez-fotky) .detail-text>.kota:first-child{margin-top:calc(-1 * var(--m-8))}
   .detail-bez-fotky .detail-text{grid-column:1/9}
   .stranka-text .text,.stranka-text>.poznamka{max-width:46em}
+}
+/* KARTY A OSVEDČENIA V SPOLOČNÝCH RIADKOCH (linka bmb-presnost, nulová tolerancia): karta v mriežke preberá riadky
+   mriežky cez subgrid (fotka, kóta, nadpis, [popis ilustračnej fotky,] druh a miesto, rola), takže každá časť začína
+   v jednom riadku kariet v rovnakej výške a karty sú rovnako vysoké pri názve na 1 až 4 riadky aj pri chýbajúcej časti
+   (prázdny riadok sa rezervuje, text sa neoreže). Medzera medzi riadkami kariet je margin karty, nie row-gap: ten by
+   sa zdedil aj medzi časti karty. Osvedčenia rovnako: nadpis, rám, popis, každý riadok tabuľky a odkaz do registra
+   v spoločných riadkoch oboch stĺpcov (riadkov-N = počet riadkov tabuľky, build.py doklady). */
+@supports (grid-template-rows:subgrid){
+  .karty{row-gap:0;margin-bottom:calc(-1 * var(--m-48))}
+  .karty>.projekt{display:grid;grid-template-rows:subgrid;grid-row:span 5;margin-bottom:var(--m-48)}
+  .karty>.novinka-karta{grid-row:span 6}
+  .karty>.projekt>figure{display:grid;grid-template-rows:subgrid;grid-row:1/-1}
+  .karty>.projekt figcaption{display:grid;grid-template-rows:subgrid;grid-row:2/-1}
+  .karty .projekt-foto{width:100%}
+  .karty figcaption>.projekt-ilustr{grid-row:3}
+  .karty figcaption>.projekt-udaje{grid-row:-3}
+  .karty figcaption>.projekt-text{grid-row:-2}
+  @media (min-width:640px){
+    .doklady{row-gap:0;margin-bottom:calc(-1 * var(--m-48))}
+    .doklady>.doklad{display:grid;grid-template-rows:subgrid;margin-bottom:var(--m-48)}
+    .doklady>.riadkov-1{grid-row:span 5}.doklady>.riadkov-2{grid-row:span 6}.doklady>.riadkov-3{grid-row:span 7}
+    .doklady>.riadkov-4{grid-row:span 8}.doklady>.riadkov-5{grid-row:span 9}.doklady>.riadkov-6{grid-row:span 10}
+    .doklady>.riadkov-7{grid-row:span 11}
+    .doklady>.doklad>.doklad-h{grid-row:1}
+    .doklady>.doklad>.doklad-obr{display:grid;grid-template-rows:subgrid;grid-row:2/span 2}
+    .doklady>.doklad>.fakty{display:grid;grid-template-rows:subgrid;grid-row:4/-2}
+    .doklady>.doklad>.doklad-register{grid-row:-2}
+  }
 }
 /* @podstranky-koniec */
 
@@ -711,7 +774,7 @@ img[data-src],img.nacitava{opacity:0}
     .plan-siroky .vrstva{--c-obrys:1.8;--c-tenka:1;--c-srafa:.75;--c-znacka:1.5;--c-popis:19.5px;--c-plocha:17px;--c-kota:18px}
     .plan-siroky .plan-kota{font-size:calc(100cqi * 18 / 1480)}
   }
-  .projekt,.projekt-dalsi{flex-basis:42vw}
+  .pas{--karta:42vw}
   /* lišta fáz pod schémou opakuje kótu fáz, ktorá je v širokej kompozícii (od 768 px) priamo vo výkrese;
      úzka kompozícia na mobile kótu fáz nemá, tam lišta ostáva (overenie kolo 1) */
   .uvod-plan .mierka{display:none}
@@ -724,6 +787,10 @@ img[data-src],img.nacitava{opacity:0}
   .kontakt-text{grid-column:1/5;grid-row:1}
   .kontakt-udaje{grid-column:1/5;grid-row:2}
   .kontakt-mapa{grid-column:5/-1;grid-row:1/span 2;align-self:start;position:sticky;top:24px}
+  /* horná čiara karty na hornej hrane verzálky nadpisu sekcie, nie na hrane jeho škatule: Geist pri line-height 1
+     má verzálku 0,145 em pod škatuľou ((1 - 1,3) / 2 + 1,005 - 0,71), veľkosť ako .nadpis (pred 4 až 11 px zo
+     snímky, nález 1 brány pokus 3, linka bmb-presnost) */
+  .kontakt-mapa{margin-top:calc(.145 * clamp(2.4rem,5.2vw,5rem))}
   .lista{display:none}
   .pata{padding-bottom:48px}
   .pata-mriezka>.pata-zaver{grid-column:1/5}
@@ -793,13 +860,20 @@ img[data-src],img.nacitava{opacity:0}
   .postup-hlava>div{grid-column:1/6;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
   .postup-foto{grid-column:7/-1}
   /* Pás bez pripnutia (Firefox bez časovej osi, obmedzený pohyb): karta aj s popisom vo výške okna */
-  .projekt,.projekt-dalsi{flex-basis:max(260px,min(30vw,440px,calc((100svh - 250px) * .8)))}
+  .pas{--karta:max(260px,min(30vw,440px,calc((100svh - 250px) * .8)))}
   .fazy{grid-template-columns:repeat(4,minmax(0,1fr))}
   .faza{border-left:0;border-top:1px solid var(--modra-ciara);padding:0 var(--medzera) 0 0}
   .faza::before{left:0;top:-1px;transform:translate(-50%,-50%) rotate(45deg)}
   .faza:last-child::after{left:auto;right:0;top:-1px;bottom:auto;transform:translate(50%,-50%) rotate(45deg)}
   .faza-dlzka{display:block;width:max-content;margin:-.62em auto 0;padding:0 10px;transform:none}
-  .faza h3{margin-top:28px}
+  .faza h3{margin-top:var(--m-24)}
+  /* štyri fázy v spoločných riadkoch (číslo, nadpis, text, Činnosť): nadpis na 2 riadky ani dlhší text neposunú
+     riadok Činnosť susednej fázy, ten stojí vo všetkých fázach na jednej čiare (linka bmb-presnost) */
+  @supports (grid-template-rows:subgrid){
+    .fazy{grid-template-rows:repeat(4,auto)}
+    .faza{display:grid;grid-template-rows:subgrid;grid-row:1/-1}
+    .faza .vystup{grid-row:4}
+  }
   .sluzby-hlava{grid-column:1/7;grid-row:1;align-self:end}
   .cennik{grid-row:2}
   .cennik-pozn{grid-row:3}
@@ -851,10 +925,29 @@ img[data-src],img.nacitava{opacity:0}
 .prace.pripnute .prace-lepidlo{position:sticky;top:0;height:100vh;height:100svh;overflow:clip;display:flex;align-items:center;padding-block:clamp(24px,5vh,56px)}
 .prace.pripnute .prace-posuvne{display:flex;align-items:center;gap:clamp(48px,6vw,112px);width:max-content;padding-inline:var(--okraj);will-change:transform}
 .prace.pripnute .prace-hlava{flex:0 0 clamp(300px,27vw,460px);width:auto;margin:0}
-.prace.pripnute .pas{align-items:flex-start;margin:0;padding:0;overflow:visible;scroll-snap-type:none}
-.prace.pripnute .projekt,.prace.pripnute .projekt-dalsi{flex-basis:calc(min(56vh,600px) * .8)}
+/* karty natiahnuté na rovnakú výšku (aj bez subgrid), nie zarovnané hore s rôznou výškou (linka bmb-presnost) */
+.prace.pripnute .pas{--karta:calc(min(56vh,600px) * .8);align-items:stretch;margin:0;padding:0;overflow:visible;scroll-snap-type:none}
 .prace.pripnute .navod-mobil{display:none}
 .prace.pripnute .navod-pocitac{display:inline}
+
+/* Karty pásu v spoločných riadkoch (linka bmb-presnost): pás je mriežka so stĺpcom šírky --karta na kartu a piatimi
+   riadkami (fotka, kóta, nadpis s tlačidlom Fotky, druh a miesto, rola). Karta ich preberá cez subgrid, takže kóty,
+   nadpisy, tlačidlá, údaje a role kariet začínajú v rovnakej výške a karty sú rovnako vysoké pri názve na 1 až 3
+   riadky; karta Ďalšie realizácie má výšku kariet. Pri obmedzenom pohybe mriežka kariet po riadkoch ako .karty. */
+@supports (grid-template-rows:subgrid){
+  .pas{display:grid;grid-auto-flow:column;grid-auto-columns:var(--karta);grid-template-rows:repeat(5,auto);row-gap:0}
+  .pas>.projekt{display:grid;grid-template-rows:subgrid;grid-row:1/-1}
+  .pas>.projekt-dalsi{grid-row:1/-1;aspect-ratio:auto}
+  .pas>.projekt>figure{display:grid;grid-template-rows:subgrid;grid-row:1/-1}
+  .pas>.projekt figcaption{display:grid;grid-template-rows:subgrid;grid-row:2/-1}
+  .pas .projekt-foto{width:100%}
+  .pas figcaption>.projekt-udaje{grid-row:-3}
+  .pas figcaption>.projekt-text{grid-row:-2}
+  @media (prefers-reduced-motion:reduce){
+    .pas{grid-auto-flow:row;grid-template-rows:none;row-gap:0;margin-bottom:calc(-1 * var(--m-48))}
+    .pas>.projekt,.pas>.projekt-dalsi{grid-row:span 5;margin-bottom:var(--m-48)}
+  }
+}
 
 /* atribút hidden má prednosť pred display prvkov (filter bez JS skrytý, šípky pásu, tlačidlá lightboxu pri 1 fotke) */
 .filtre[hidden],.prazdne[hidden],.viac-obal[hidden],.sipky[hidden],.lightbox-tl[hidden],.dlazdica[hidden],.lista[hidden],.lb-zoznam[hidden],.lightbox-stitok[hidden]{display:none}

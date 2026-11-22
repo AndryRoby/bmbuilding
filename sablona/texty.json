@@ -54,10 +54,10 @@
   "preskocit": "Preskočiť realizácie"
  },
  "postup": {
-  "_poznamka": "Postup ako fázy ukážky. Texty len zo starého webu, zlúčené a učesané: stary-web/stavebny-dozor.md r. 8 až 26, stavbyveduci.md r. 8, stavebny-manazment.md r. 8 až 10. Fotka: nastavenia.json postup_foto (typ R v fotky-pravidla.json, rozostavaná stavba).",
+  "_poznamka": "Postup ako fázy ukážky. Texty len zo starého webu, zlúčené a učesané: stary-web/stavebny-dozor.md r. 8 až 26, stavbyveduci.md r. 8, stavebny-manazment.md r. 8 až 10. Fotka: nastavenia.json postup_foto (rozostavaná stavba, zdroj dosť veľký na pole pri 1920 px, nastavenia.json _postup_firma_foto).",
   "nadpis": "Ako prebieha stavebný dozor a manažment",
   "uvodny": "Štyri fázy od prípravy po kolaudáciu. Pri každej je, ktorá naša činnosť ju pokrýva.",
-  "foto_popis": "Bytové domy Vtáčnik, Tupého ulica, Bratislava, počas výstavby",
+  "foto_popis": "Novostavba rodinného domu, Nitrianske Hrnčiarovce, počas výstavby",
   "fazy": [
    {"nazov": "Príprava", "text": "Oboznámime sa s podkladmi: projekt, zmluvy, stavebné povolenie a územné rozhodnutie. Za investora riadime a koordinujeme zadanie stavebných prác. Po výbere dodávateľa stavby zabezpečíme uzatvorenie zmlúv a koordinujeme aj ich právnu kontrolu.", "sluzby": ["stavebny-manazment", "stavebny-dozor"]},
    {"nazov": "Odovzdanie staveniska", "text": "Odovzdáme stavenisko a zabezpečíme zápis o tom do stavebného denníka. Zhotoviteľovi protokolárne odovzdáme základné smerové a výškové vytýčenie stavby.", "sluzby": ["stavebny-dozor"]},

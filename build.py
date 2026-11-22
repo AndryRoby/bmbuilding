@@ -32,7 +32,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from html.parser import HTMLParser
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont, ImageMath, ImageOps, features
+from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFilter, ImageFont, ImageMath, ImageOps, features
 
 KOREN = Path(__file__).resolve().parent
 SABLONA = KOREN / 'sablona'
@@ -739,8 +739,16 @@ def otvor_rgb(p, max_vstup=MAX_VSTUP):
     return out
 
 
-def zmensi(im, sirka, vyska, pomer=None):
-    """Výrez zo stredu s pomerom (orezy kariet a mobilného rámu) a zmena na sirka x vyska filtrom Lanczos."""
+def box_px(box, w, h):
+    """Rámik (x0, y0, x1, y1 v podieloch fotky 0 až 1) v px fotky w x h."""
+    return (round(box[0] * w), round(box[1] * h), round(box[2] * w), round(box[3] * h))
+
+
+def zmensi(im, sirka, vyska, pomer=None, box=None):
+    """Výrez zo stredu s pomerom (orezy kariet a mobilného rámu) a zmena na sirka x vyska filtrom Lanczos. box: najprv
+    len táto časť fotky (rámik v podieloch, karta_foto vyrez), výrez s pomerom potom zo stredu rámika."""
+    if box:
+        im = im.crop(box_px(box, im.width, im.height))
     if pomer:
         cw, ch = orez_rozmer(im.width, im.height, pomer)
         x, y = (im.width - cw) // 2, (im.height - ch) // 2
@@ -765,19 +773,29 @@ def kodovany(im, fmt, kvalita):
     return buf.getvalue()
 
 
-def webp_bajty(p, sirka, vyska, pomer=None):
-    """Fotka z obsahu zmenšená na sirka x vyska ako WebP s kvalitou KVALITA['webp']; s pomerom najprv výrez zo stredu."""
-    return kodovany(zmensi(otvor_rgb(p), sirka, vyska, pomer), 'webp', KVALITA['webp'])
+def webp_bajty(p, sirka, vyska, pomer=None, box=None):
+    """Fotka z obsahu zmenšená na sirka x vyska ako WebP s kvalitou KVALITA['webp']; s pomerom najprv výrez zo stredu
+    (s rámikom box zo stredu rámika)."""
+    return kodovany(zmensi(otvor_rgb(p), sirka, vyska, pomer, box), 'webp', KVALITA['webp'])
 
 
-def avif_bajty(p, sirka, vyska, pomer=None):
+def avif_bajty(p, sirka, vyska, pomer=None, box=None):
     """To isté ako webp_bajty vo formáte AVIF s kvalitou KVALITA['avif']."""
-    return kodovany(zmensi(otvor_rgb(p), sirka, vyska, pomer), 'avif', KVALITA['avif'])
+    return kodovany(zmensi(otvor_rgb(p), sirka, vyska, pomer, box), 'avif', KVALITA['avif'])
 
 
 # orezy (PLAN-1-1.md časť 8): karta pásu 4 : 5 a mobilný rám pohľadu A 5 : 4; súbor NN-<šírka>-<kód>.webp
-OREZY = {'45': (4, 5), '54': (5, 4)}
+OREZY = {'45': (4, 5), '54': (5, 4), '43': (4, 3), '34': (3, 4)}
 SIRKY_OREZU = (480, 720, 960)
+# karta s malým zdrojom (brána bmb-presnost pokus 1, nález 1): výrez 4 : 5 karty mriežky, služby a novinky musí mať
+# aspoň KARTA_MIN_OREZ px zdroja, aby pri najširšej karte (422 CSS px pri 1920 px, hustota 2: 844 px obrazovky) na 1 px
+# zdroja nepripadalo viac než 1,25 px obrazovky (844 / 1,25 = 675,2). Menší zdroj nejde cez celý rám: celá fotka
+# (výrez 4 : 3, fotka na výšku 3 : 4) stojí v strede rámu 4 : 5 na podklade, široká najviac KARTA_CELA_MAX CSS px
+# a najviac KARTA_CELA_ZVACSENIE x šírku výrezu zdroja / 2 (trieda cap-N), takže zväčšenie ostáva do 1,2
+KARTA_MIN_OREZ = 676
+KARTA_CELA_MAX = 360
+KARTA_CELA_ZVACSENIE = 1.2
+KARTA_CELA_MIN = 160
 
 
 def orez_rozmer(w, h, pomer):
@@ -795,17 +813,72 @@ def sirky_orezu(cw):
     return sorted(out) or [SIRKY_OREZU[-1]]
 
 
-# osvedčenia SKSI (stránka Oprávnenia): text dokladu ostáva čitateľný (vyššia kvalita), len zmenšenie, nikdy väčší
-# než zdroj; súbor opravnenia/<meno>-<šírka>.webp
-SIRKY_DOKLADU = (360,)
-VERZIA_DOKLADU = 'doklad-1|webp-q90-m6|lanczos'
+# osvedčenia SKSI (stránka Oprávnenia): text dokladu ostáva čitateľný (vyššia kvalita); súbor
+# opravnenia/<meno>-<šírka>.webp. Sken má len 528 a 522 px, stránka a lightbox ho pri hustote 2 kreslia na 1056 px
+# (presnost/meranie/fotky-pred.md časť 11), preto aj zväčšené súbory do ZVACSENIE_DOKLADU x zdroj, len bez AI:
+# Lanczos a jemné doostrenie (UnsharpMask polomer 1,0, 40 %, prah 2). Kalibrácia v ops/weby-na-mieru/klienti/
+# bmbuilding/presnost/oprava-fotky.md: zmenšené späť na rozmer skenu sa od skenu líšia rovnako ako čistý Lanczos
+# (najväčší rozdiel jasu 17,6 a 26,6 z 255, priemer 0,45 a 0,66), zakryté miesta ostávajú jednofarebné. Ostrejší
+# doklad dá len nový sken. Zdroj v sablona/opravnenia/ sa nemení.
+SIRKY_DOKLADU = (360, 720)
+ZVACSENIE_DOKLADU = 2
+DOOSTRENIE_DOKLADU = (1.0, 40, 2)
+# vnútro rámu dokladu v CSS px (styl.css .doklady --doklad-max 554 px = 528 + 2 x 12 px okraj + 2 x 1 px čiara):
+# užší sken (522 px) sa v ráme zobrazí na 528 px (zmerané: box 528 x 757,5 CSS px pri 1440 a 1920), preto najväčší
+# súbor má 2 x max(šírka skenu, 528), inak by prehliadač pri hustote 2 súbor 1044 px zväčšoval (z_súbor 1,011)
+SIRKA_RAMU_DOKLADU = 528
+# pomer strán vnútra rámu pri najväčšej šírke: 528 x (554 x 297 / 210 - 2 x 12 - 2 x 1) = 528 x 757,51 CSS px
+POMER_RAMU_DOKLADU = SIRKA_RAMU_DOKLADU / (554 * 297 / 210 - 26)
+# orez zakrytého skenu na hranu papiera (ľavý, horný, pravý, dolný okraj výrezu v px skenu; brána bmb-presnost pokus 2,
+# nález 1): object-fit contain dal skenom s iným pomerom strán (528 x 755 a 522 x 729) iný biely pás v ráme, papier
+# vedľa seba bol o 7 px inde a o 16 px inak vysoký (1440 px). Výrez odstráni biely okraj skenera (ľavý sken vľavo 3,
+# hore 4, vpravo 4 a dole 4 px, k tomu 1 px papiera vpravo; pravý sken vľavo 2, hore 3 a dole 4 px, vpravo svetlý tieň
+# skenera 4 px) a pri pravom skene ešte 6 px (vľavo) a 7 px (vpravo) prázdneho papiera, aby mali oba výrezy pomer strán
+# do 0,002 pod vnútrom rámu (520 / 747 = 0,6961, 503 / 722 = 0,6967, rám 0,6970); styl.css ich kreslí cez object-fit cover, papier vypĺňa celé vnútro rámu v oboch. Odstránená plocha nemá
+# ornament ani písmo (presnost/nastroje/oprava2_orez_kontrola.py, test_build.py TestOpravnenia), zdroj sa nemení.
+OREZ_DOKLADU = {'osvedcenie-sksi-stavbyveduci-2003': (3, 4, 523, 751),
+                'osvedcenie-sksi-stavebny-dozor-2010': (8, 3, 511, 725)}
+VERZIA_DOKLADU = 'doklad-3|webp-q90-m6|lanczos|zvacsenie-2x-lanczos-usm-1.0-40-2|orez-papier'
+
+
+def sken_dokladu(p):
+    """Zakrytý sken osvedčenia ako RGB, orezaný na hranu papiera podľa OREZ_DOKLADU (bez orezu, keď meno nie je
+    v zozname). Výrez musí ležať v skene a mať pomer strán najviac o 0,002 pod vnútrom rámu (nie nad ním, aby cover
+    pri 528 px rámu kreslil súbor 1056 px na celú šírku)."""
+    im = otvor_rgb(p)
+    box = OREZ_DOKLADU.get(Path(p).stem)
+    if not box:
+        return im
+    l, t, r, b = box
+    if not (0 <= l < r <= im.width and 0 <= t < b <= im.height):
+        raise ChybaZostavy(f'{Path(p).name}: orez {box} mimo skenu {im.width} x {im.height}')
+    pomer = (r - l) / (b - t)
+    if not (POMER_RAMU_DOKLADU - 0.002 <= pomer <= POMER_RAMU_DOKLADU):
+        raise ChybaZostavy(f'{Path(p).name}: orez {box} má pomer strán {pomer:.4f}, rám {POMER_RAMU_DOKLADU:.4f}')
+    return im.crop(box)
+
+
+def sirky_dokladu(w):
+    """Šírky súborov dokladu so skenom širokým w px: SIRKY_DOKLADU pod najväčšou šírkou, sken a najväčšia šírka
+    ZVACSENIE_DOKLADU x max(w, SIRKA_RAMU_DOKLADU)."""
+    hore = ZVACSENIE_DOKLADU * max(w, SIRKA_RAMU_DOKLADU)
+    return sorted({s for s in SIRKY_DOKLADU if s != w and s < hore} | {w, hore})
 
 
 def doklad_webp_bajty(p, sirka, vyska):
-    """Zakrytý obrázok osvedčenia ako WebP: rovnaká veľkosť (len prevod formátu) alebo zmenšenie, nikdy zväčšenie."""
-    im = otvor_rgb(p)
-    if sirka > im.width or vyska > im.height:
-        raise ChybaZostavy(f'{p.name}: doklad sa nezväčšuje ({im.width} x {im.height} -> {sirka} x {vyska})')
+    """Zakrytý obrázok osvedčenia ako WebP: rovnaká veľkosť (len prevod formátu), zmenšenie Lanczos, alebo zväčšenie
+    Lanczosom s jemným doostrením najviac na ZVACSENIE_DOKLADU x max(sken, SIRKA_RAMU_DOKLADU) (bez AI, nové
+    detaily nevznikajú). Sken je najprv orezaný na hranu papiera (sken_dokladu)."""
+    im = sken_dokladu(p)
+    strop = ZVACSENIE_DOKLADU * max(im.width, SIRKA_RAMU_DOKLADU)
+    if sirka > strop or vyska > round(im.height * strop / im.width) + 1:
+        raise ChybaZostavy(f'{p.name}: doklad sa nezväčšuje nad {strop} px '
+                           f'({im.width} x {im.height} -> {sirka} x {vyska})')
+    if sirka > im.width:
+        # vždy cez 2-násobok s doostrením (kalibrované), medzišírka (720) jeho zmenšením Lanczos
+        polomer, percento, prah = DOOSTRENIE_DOKLADU
+        im = im.resize((im.width * ZVACSENIE_DOKLADU, im.height * ZVACSENIE_DOKLADU), Image.LANCZOS)
+        im = im.filter(ImageFilter.UnsharpMask(radius=polomer, percent=percento, threshold=prah))
     if im.size != (sirka, vyska):
         im = im.resize((sirka, vyska), Image.LANCZOS)
     buf = io.BytesIO()
@@ -1079,6 +1152,12 @@ def png_bajty(im):
 # 4 od 1024 px (obsah najviac 1760 px: (1760 - 3 x 24) / 4 = 422)
 SIZES_KARTA = ('(min-width: 1024px) min(23vw, 425px), (min-width: 640px) 31vw, (min-width: 480px) 47vw, '
                'calc(100vw - 32px)')
+
+
+def sizes_karty_cela(cap):
+    """sizes celej fotky karty s malým zdrojom (KARTA_MIN_OREZ): šírka rámu karty mínus 2 x 24 px, najviac cap CSS px."""
+    return (f'(min-width: 1024px) min(23vw - 48px, {cap}px), (min-width: 640px) min(31vw - 48px, {cap}px), '
+            f'(min-width: 480px) min(47vw - 48px, {cap}px), min(100vw - 80px, {cap}px)')
 # fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px, inak celá šírka
 SIZES_DETAIL = '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
 # pás, pohľad A, Postup a O firme podľa ukážky Olovnica (PLAN-1-1.md časť 8); pripnutý pás prepne app.js na min(45vh, 480px)
@@ -1096,6 +1175,51 @@ POCET_STAVIEB = {1: 'Jedna stavba', 2: 'Dve stavby', 3: 'Tri stavby', 4: 'Štyri
 SIZES_HRDINA = '(min-width:1024px) min(56vw, 1000px), (min-width:768px) 92vw, calc(100vw - 32px)'
 SIZES_GALERIA_PRVA = '(min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)'
 SIZES_GALERIA = '(min-width:640px) min(30vw, 570px), 46vw'
+# rám pohľadu A detailu a bunka galérie majú pomer 3 : 2 (styl.css aspect-ratio:3/2; zmerané v
+# ops/weby-na-mieru/klienti/bmbuilding/presnost/meranie/fotky-pred.md: 358 x 239, 765 x 510, 1017 x 678 a 427 x 285
+# CSS px); object-fit: cover fotky širšej než rám ukáže len časť jej šírky (sizes_pre_cover)
+POMER_RAMU_COVER = 1.5
+
+
+def _casti_sizes(sizes):
+    """Položky atribútu sizes rozdelené čiarkami mimo zátvoriek (min(30vw, 570px) ostane celé)."""
+    out, hlbka, kus = [], 0, ''
+    for z in sizes:
+        if z == ',' and hlbka == 0:
+            out.append(kus.strip())
+            kus = ''
+            continue
+        hlbka += (z == '(') - (z == ')')
+        kus += z
+    out.append(kus.strip())
+    return [x for x in out if x]
+
+
+def sizes_pre_cover(sizes, w, h, ram=POMER_RAMU_COVER):
+    """sizes pre fotku w x h v ráme s pomerom ram (šírka / výška) pri object-fit: cover. Fotka širšia než rám je
+    orezaná po stranách, takže prehliadač potrebuje súbor širší o k = (w / h) / ram; bez toho vyberie súbor podľa šírky
+    boxu, ktorý je na výšku malý, a zväčší ho (fotky-pred.md časť 9: Devín 01 z_súbor 1,55 pri 390 px). Každá dĺžka sa
+    vynásobí k (zaokrúhlené nahor na stotiny) cez calc(); užšia alebo rovnako široká fotka má sizes bez zmeny."""
+    if not w or not h:
+        return sizes
+    k = (w / h) / ram
+    if k <= 1.005:
+        return sizes
+    k = -(-round(k * 1000) // 10) / 100
+    out = []
+    for kus in _casti_sizes(sizes):
+        media, dlzka = '', kus
+        if kus.startswith('('):
+            hlbka = 0
+            for i, z in enumerate(kus):
+                hlbka += (z == '(') - (z == ')')
+                if hlbka == 0:
+                    media, dlzka = kus[:i + 1] + ' ', kus[i + 1:].strip()
+                    break
+        vnutro = dlzka[5:-1] if dlzka.startswith('calc(') and dlzka.endswith(')') else dlzka
+        out.append(f'{media}calc(({vnutro}) * {k:g})' if ' ' in vnutro.strip() and not vnutro.startswith(('min(', 'max('))
+                   else f'{media}calc({vnutro} * {k:g})')
+    return ', '.join(out)
 # najväčšie bunky galérie v CSS px (styl.css: --sirka 1760 px, medzera 24 px, bunka 3 : 2): mriežka 3 stĺpce,
 # galeria-malo 2 stĺpce, prvá veľká 2 stĺpce a 2 riadky. Fotka, ktorú by object-fit:cover v takej bunke zväčšil nad
 # 1,25 násobok súboru, je v galérii „malá“: bez srcset a s object-fit:scale-down, nikdy väčšia než súbor
@@ -1243,6 +1367,8 @@ class Web:
         # (plán pre nastroje/predlohy_web.py) a počty: z fotky-web, zakódované z obsahu
         self.potreba = {}
         self.zdroje = {}
+        # rámik výrezu 4 : 5 karty (karta_foto vyrez): sha256 zdroja -> (x0, y0, x1, y1) v podieloch fotky
+        self.vyrezy = {}
         self.pocty_fotiek = {'fotky-web': 0, 'obsah': 0}
         self.texty = json.loads((SABLONA / 'texty.json').read_text(encoding='utf-8'))
         css = (SABLONA / 'styl.css').read_text(encoding='utf-8').replace('\r\n', '\n')
@@ -1353,6 +1479,50 @@ class Web:
                       or next((f for f in skutocne if not self.povodny_stav(f)), None)
                       or (skutocne[0] if skutocne else None)
                       or (r['galeria'][0] if viz_obal and r['galeria'] else None))
+        self.karta_z_nastaveni(r)
+
+    def karta_z_nastaveni(self, r):
+        """Fotka karty realizácie (pás, mriežka, titulná fotka detailu) určená v sablona/nastavenia.json karta_foto
+        (slug -> súbor, linka bmb-presnost: ostrejšia fotka s väčším zdrojom z vlastnej galérie, obsah sa nemení).
+        Len skutočná fotka z galérie (nie rozmazaná, nie vizualizácia ani pôvodný stav); inak varovanie a karta podľa
+        pravidiel vyššie. Novinky sa neriadia týmto nastavením (ich fotky sú v obsah/obrazky/novinky/)."""
+        mapa = self.nastavenia.get('karta_foto')
+        slug = r.get('slug', '')
+        if not isinstance(mapa, dict) or slug not in mapa or any(f['rel'].startswith('novinky/') for f in r['fotky']):
+            return
+        volba = mapa.get(slug)
+        # {"subor": ..., "detail": false}: len karta mriežky a služieb (karta_len), titulná fotka detailu a pás ostávajú
+        # (brána bmb-presnost pokus 1, nález 2: Kalvária 02 má v rohu neostré listy, 01 bez nich je na detail malá)
+        len_karta = isinstance(volba, dict) and volba.get('detail') is False
+        subor = jeden_riadok(volba.get('subor') if isinstance(volba, dict) else volba)
+        f = next((x for x in r['galeria'] if x['rel'] == f'{slug}/{subor}'), None)
+        if f is None or f.get('viz') or self.povodny_stav(f):
+            varuj(f'nastavenia karta_foto: fotka {subor} realizácie {slug} nie je v galérii, je rozmazaná, vizualizácia '
+                  'alebo pôvodný stav, karta ostáva podľa pravidiel')
+            return
+        # {"subor": ..., "vyrez": [x0, y0, x1, y1]}: výrez 4 : 5 karty len z tohto rámika fotky (podiely 0 až 1), napr.
+        # viac domu a menej holej hliny (brána bmb-presnost pokus 1, nález 9); výrez musí mať aspoň 768 px zdroja
+        vyrez = volba.get('vyrez') if isinstance(volba, dict) else None
+        if vyrez is not None:
+            ok = (isinstance(vyrez, list) and len(vyrez) == 4 and all(isinstance(x, (int, float)) for x in vyrez)
+                  and 0 <= vyrez[0] < vyrez[2] <= 1 and 0 <= vyrez[1] < vyrez[3] <= 1)
+            if ok:
+                x0, y0, x1, y1 = box_px(vyrez, f['w'], f['h'])
+                ok = orez_rozmer(x1 - x0, y1 - y0, OREZY['45'])[0] >= 768
+            if ok:
+                f['vyrez45'] = tuple(float(x) for x in vyrez)
+                self.vyrezy[f['sha']] = f['vyrez45']
+            else:
+                varuj(f'nastavenia karta_foto: výrez {vyrez!r} realizácie {slug} nie je rámik 0 až 1 s výrezom 4 : 5 '
+                      'aspoň 768 px zdroja, karta ide zo stredu fotky')
+        if len_karta:
+            r['karta_len'] = f
+            return
+        # nahradená fotka karty (malý zdroj, preto ju karta_foto vymenilo) nesmie byť prvou veľkou fotkou galérie
+        # (galeria(), overenie zostavy bmb-presnost: inak by sa mäkká fotka ukázala cez celú šírku galérie)
+        if r.get('karta') is not f:
+            r['karta_nahradena'] = r.get('karta')
+        r['karta'] = f
 
     def ilustracna_fotka(self, n):
         """Novinka bez vlastnej použiteľnej fotky (karta None): skutočná ostrá fotka stavby z realizácie podľa
@@ -1427,7 +1597,11 @@ class Web:
         if orez:
             if fmt == 'avif' and not f['sirky_avif']:
                 return []
-            cw, _ = orez_rozmer(f['zaklad'][0], f['zaklad'][1], OREZY[orez])
+            zw, zh = f['zaklad']
+            if orez == '45' and f.get('vyrez45'):
+                x0, y0, x1, y1 = box_px(f['vyrez45'], zw, zh)
+                zw, zh = x1 - x0, y1 - y0
+            cw, _ = orez_rozmer(zw, zh, OREZY[orez])
             sirky = sirky_orezu(cw)
         else:
             sirky = f['sirky_avif'] if fmt == 'avif' else f['sirky']
@@ -1446,19 +1620,24 @@ class Web:
             v = vyska_pre(f['zaklad'][0], f['zaklad'][1], s)
         self.potreba.setdefault(f['sha'], {})[kluc_variantu(orez, s, fmt)] = (s, v, orez, fmt)
         self.zdroje[f['sha']] = f['zdroj']
+        box = f.get('vyrez45') if orez == '45' else None
         hotovy = self.fotky_web.subor(f['sha'], orez, s, fmt) if f.get('fw') else None
-        if hotovy and (hotovy.get('w'), hotovy.get('h')) == (s, v):
+        # výrez z rámika (karta_foto vyrez) len zo súboru fotky-web s tým istým rámikom, inak z obsahu
+        if hotovy and (hotovy.get('w'), hotovy.get('h')) == (s, v) and hotovy.get('vyrez') == (list(box) if box else None):
             odt = hashlib.sha256(f'fotky-web|{hotovy["sha256"]}'.encode('utf-8')).hexdigest()
             self.obrazky[cesta] = (odt, (lambda x=hotovy: FotkyWeb.citaj(x)))
             self.pocty_fotiek['fotky-web'] += 1
         else:
-            odt = hashlib.sha256('|'.join((f['sha'], VERZIA_OBR, fmt, str(KVALITA[fmt]), str(s), str(v), orez))
-                                 .encode('utf-8')).hexdigest()
+            odt = hashlib.sha256('|'.join((f['sha'], VERZIA_OBR, fmt, str(KVALITA[fmt]), str(s), str(v), orez)
+                                          + ((repr(box),) if box else ())).encode('utf-8')).hexdigest()
             pm = OREZY[orez] if orez else None
+            # rámik len keď je (testy a nástroje nahrádzajú kódovanie funkciou so 4 parametrami)
             if fmt == 'avif':
-                self.obrazky[cesta] = (odt, (lambda p=f['zdroj'], s=s, v=v, pm=pm: avif_bajty(p, s, v, pm)))
+                self.obrazky[cesta] = (odt, (lambda p=f['zdroj'], s=s, v=v, pm=pm, box=box:
+                                             avif_bajty(p, s, v, pm, box) if box else avif_bajty(p, s, v, pm)))
             else:
-                self.obrazky[cesta] = (odt, (lambda p=f['zdroj'], s=s, v=v, pm=pm: webp_bajty(p, s, v, pm)))
+                self.obrazky[cesta] = (odt, (lambda p=f['zdroj'], s=s, v=v, pm=pm, box=box:
+                                             webp_bajty(p, s, v, pm, box) if box else webp_bajty(p, s, v, pm)))
             self.pocty_fotiek['obsah'] += 1
         return cesta
 
@@ -1904,18 +2083,41 @@ class Web:
         return (f'<img class="karta-znak" src="{esc(pre)}logo.svg" width="160" height="160" alt="" loading="lazy" '
                 'decoding="async">')
 
+    @staticmethod
+    def foto_karty(r):
+        """Fotka svetlej karty realizácie (mriežka, služby): karta_len z nastavenia karta_foto s "detail": false,
+        inak fotka karty (tá je aj titulnou fotkou detailu a kartou pásu)."""
+        return r.get('karta_len') or r.get('karta')
+
+    @staticmethod
+    def mala_karta(f):
+        """Výrez 4 : 5 zdroja je menší než KARTA_MIN_OREZ: na karte mriežky by bola fotka mäkká (brána bmb-presnost)."""
+        return bool(f) and orez_rozmer(f['w'], f['h'], OREZY['45'])[0] < KARTA_MIN_OREZ
+
+    def img_karty(self, pre, r, f, alt, lcp=False):
+        """Fotka svetlej karty: výrez 4 : 5 cez celý rám, pri malom zdroji (mala_karta) celá fotka 4 : 3 (na výšku
+        3 : 4) v strede rámu na podklade, najviac KARTA_CELA_MAX CSS px a zväčšenie do KARTA_CELA_ZVACSENIE (trieda cap-N).
+        Rám karty ostáva 4 : 5, takže karty v riadku majú rovnakú výšku a polohu kóty, nadpisu a údajov."""
+        if not self.mala_karta(f):
+            return self.img(pre, r, f, SIZES_KARTA, lcp=lcp, alt=alt, orez='45')
+        kod = '43' if f['w'] >= f['h'] else '34'
+        vw, _ = orez_rozmer(f['w'], f['h'], OREZY[kod])
+        cap = max(KARTA_CELA_MIN, min(KARTA_CELA_MAX, int(vw * KARTA_CELA_ZVACSENIE / 2) // 8 * 8))
+        trieda = 'foto-cela' + (' na-vysku' if kod == '34' else '') + (f' cap-{cap}' if cap < KARTA_CELA_MAX else '')
+        return self.img(pre, r, f, sizes_karty_cela(cap), lcp=lcp, alt=alt, orez=kod, trieda=trieda)
+
     def dlazdica(self, pre, r, nadpis='h3', data=False, poradie=0, lcp=False):
         """Svetlá karta realizácie v mriežke (karta pásu ukážky na svetlom podklade, PLAN-1-1.md časť 5): fotka 4 : 5
         (výrez zo stredu fotky karty: obal, inak prvá ostrá skutočná, vizualizácia len pri obal_vizualizacia so
         štítkom), kóta s rokmi stavby alebo rokom príspevku, nadpis s odkazom, druh a miesto, rola. data: atribúty
         pre filter a zoradenie v app.js (pevné kľúče a čísla)."""
         url = esc(self.rel(pre, f'realizacie/{r["slug"]}/'))
-        f = r['karta']
+        f = self.foto_karty(r)
         nm = self.nazov_s_miestom(r)
         stitok = ''
         if f:
             # lcp: prvá karta prehľadu je LCP, bez loading=lazy a s fetchpriority=high (Lighthouse lcp-discovery, kolo 1)
-            foto = self.img(pre, r, f, SIZES_KARTA, lcp=lcp, alt=self.alt_bez_cisla(f) or nm, orez='45')
+            foto = self.img_karty(pre, r, f, self.alt_bez_cisla(f) or nm, lcp=lcp)
             if f.get('viz'):
                 stitok = '<span class="stitok-viz">Vizualizácia</span>'
         else:
@@ -1939,8 +2141,9 @@ class Web:
         """Zakrytý obrázok osvedčenia SKSI pre stránku Oprávnenia (zadanie bmb-fb-uplnost, Navyše; FAKTY-WEB.md časť
         Oprávnenia: osvedčenia SKSI). Zdroj len zo šablóny: nastavenia.json opravnenia_obrazky (evidenčné číslo ->
         súbor v sablona/opravnenia/, kópia zakrytej verzie z ops/weby-na-mieru/klienti/bmbuilding/opravnenia/;
-        originály s rodným číslom nikdy). Výstup opravnenia/<meno>-<šírka>.webp len zmenšením alebo prevodom
-        formátu, nikdy väčší než zdroj (bez AI zväčšenia). None, keď obrázok nie je určený alebo chýba."""
+        originály s rodným číslom nikdy). Výstup opravnenia/<meno>-<šírka>.webp zmenšením, prevodom formátu alebo
+        zväčšením najviac 2-krát Lanczosom s jemným doostrením (bez AI, linka bmb-presnost). None, keď obrázok nie
+        je určený alebo chýba."""
         mapa = self.nastavenia.get('opravnenia_obrazky')
         rel = mapa.get(o['cislo']) if isinstance(mapa, dict) and o['cislo'] else None
         if not rel:
@@ -1953,15 +2156,17 @@ class Web:
         if not p.is_file():
             varuj(f'sablona/{rel} chýba, osvedčenie {o["cislo"]} bez obrázka')
             return None
-        with Image.open(p) as im:
-            w, h = im.size
+        w, h = sken_dokladu(p).size
         meno = Path(rel).stem
-        sirky = sorted({s for s in SIRKY_DOKLADU if s < w} | {w})
+        # aj zväčšené súbory pre hustotu 2 (sirky_dokladu, doklad_webp_bajty: Lanczos a jemné doostrenie, bez AI);
+        # w a h ostávajú rozmerom skenu orezaného na hranu papiera (atribúty img a data-sirka: lightbox doklad nezväčší
+        # nad šírku skenu v CSS px)
+        sirky = sirky_dokladu(w)
         cesty = {}
         for s in sirky:
             v = max(1, round(h * s / w))
             cesta = f'opravnenia/{meno}-{s}.webp'
-            odt = odtlacok_suboru(p, VERZIA_DOKLADU, s, v)
+            odt = odtlacok_suboru(p, VERZIA_DOKLADU, OREZ_DOKLADU.get(meno), s, v)
             self.obrazky[cesta] = (odt, (lambda p=p, s=s, v=v: doklad_webp_bajty(p, s, v)))
             cesty[s] = (cesta, v)
         return {'w': w, 'h': h, 'cesty': cesty}
@@ -1969,14 +2174,28 @@ class Web:
     def doklady(self, pre, cinnosti=None, nadpis='h3', obrazky=False):
         out = []
         n_obr = 0
-        for o in self.firma['opravnenia']:
-            if cinnosti and o['cinnost'] not in cinnosti:
-                continue
+
+        def riadky_dokladu(o):
+            return [('Vydala', o['organizacia']), ('Doklad', o['nazov']), ('Meno', o['osoba']), ('Činnosť', o['cinnost']),
+                    ('Odborné zameranie', o['zameranie']), ('Evidenčné číslo', o['cislo']), ('Vydané', o['datum'])]
+        vybrane = [o for o in self.firma['opravnenia'] if not (cinnosti and o['cinnost'] not in cinnosti)]
+        # stránka Oprávnenia (obrazky): doklady stoja vedľa seba, tabuľky majú rovnaké riadky v rovnakom poradí, aby
+        # riadky oboch tabuliek ležali v spoločných riadkoch mriežky (styl.css riadkov-N, linka bmb-presnost); riadok,
+        # ktorý má aspoň jeden doklad, majú všetky, chýbajúca hodnota je „v osvedčení neuvedené“ (osvedčenie stavebného
+        # dozoru 2010 odborné zameranie neuvádza, zakrytý sken sablona/opravnenia/osvedcenie-sksi-stavebny-dozor-2010.png)
+        spolocne = None
+        if obrazky and len(vybrane) > 1:
+            spolocne = {k for o in vybrane for k, v in riadky_dokladu(o) if v}
+        neuvedene = self.texty['opravnenia'].get('neuvedene', 'v osvedčení neuvedené')
+        for o in vybrane:
             # nadpis = činnosť a zameranie, aby sa dva doklady SKSI dali rozlíšiť (brána dizajnu pokus 1, nález 10)
             hlavicka = ', '.join(x for x in (zaciatok_velky(o['cinnost']), o['zameranie']) if x) or o['nazov'] or 'Osvedčenie'
-            riadky = [('Vydala', o['organizacia']), ('Doklad', o['nazov']), ('Meno', o['osoba']), ('Činnosť', o['cinnost']),
-                      ('Odborné zameranie', o['zameranie']), ('Evidenčné číslo', o['cislo']), ('Vydané', o['datum'])]
-            dl = ''.join(f'<div><dt>{T(k)}</dt><dd>{T(v)}</dd></div>' for k, v in riadky if v)
+            if spolocne is None:
+                riadky = [(k, v) for k, v in riadky_dokladu(o) if v]
+            else:
+                riadky = [(k, v or neuvedene) for k, v in riadky_dokladu(o) if k in spolocne]
+            dl = ''.join(f'<div><dt>{T(k)}</dt><dd>{T(v)}</dd></div>' for k, v in riadky)
+            trieda = f'doklad riadkov-{len(riadky)}' if obrazky and 1 <= len(riadky) <= 7 else 'doklad'
             figura = ''
             obr = self.obrazok_dokladu(o) if obrazky else None
             if obr:
@@ -2010,7 +2229,7 @@ class Web:
                 nap = self.texty['opravnenia'].get('register_overit', 'Overiť v registri SKSI')
                 overit = (f'<p class="doklad-register"><a class="odkaz-von" href="{esc(url)}" rel="noopener" '
                           f'aria-label="{esc(nap + ": " + o["cinnost"])}">{T(nap)} {SVG_VON}</a></p>')
-            out.append(f'<div class="doklad"><{nadpis} class="doklad-h">{T(hlavicka)}</{nadpis}>{figura}'
+            out.append(f'<div class="{trieda}"><{nadpis} class="doklad-h">{T(hlavicka)}</{nadpis}>{figura}'
                        f'<dl class="fakty">{dl}</dl>{overit}</div>')
         return out
 
@@ -2055,12 +2274,12 @@ class Web:
         f = n['karta']
         stitok = ilustr = ''
         if f:
-            foto = self.img(pre, n, f, SIZES_KARTA, alt=self.alt_bez_cisla(f) or n['nadpis'], orez='45')
+            foto = self.img_karty(pre, n, f, self.alt_bez_cisla(f) or n['nadpis'])
             if f.get('viz'):
                 stitok = '<span class="stitok-viz">Vizualizácia</span>'
         elif n.get('ilustracna_foto'):
             f = n['ilustracna_foto']
-            foto = self.img(pre, n['ilustracna_r'], f, SIZES_KARTA, alt=n['ilustracna'], orez='45')
+            foto = self.img_karty(pre, n['ilustracna_r'], f, n['ilustracna'])
             stitok = '<span class="stitok-viz stitok-ilustr">Ilustračná fotka</span>'
             ilustr = f'<p class="projekt-ilustr">{T(n["ilustracna"])}</p>'
         else:
@@ -2147,18 +2366,23 @@ class Web:
                     return nazov
         return ''
 
-    def lb_data(self, pre, r, f, i, n, nazov, popis_udaje, skupina=''):
+    def lb_data(self, pre, r, f, i, n, nazov, popis_udaje, skupina='', nahlad=False):
         """Odkaz na plnú fotku a jeho dáta pre lightbox (zmluva PRIPRAVA-BUILD.md bod 3, rozšírená o viac galérií
-        na stránke: data-galeria, data-alt; vizualizácia data-viz a data-autor)."""
+        na stránke: data-galeria, data-alt; vizualizácia data-viz a data-autor). nahlad: odkaz obsahuje náhľad
+        self.img celej fotky (galéria, nie malá fotka), ktorého srcset WebP a zdroj AVIF sú bajtovo rovnaké ako
+        data-srcset a data-avif; tie sa vtedy vynechajú a app.js ich vezme z náhľadu (overenie zostavy bmb-presnost,
+        menšie HTML detailu s galériou, meranie v ops/weby-na-mieru/klienti/bmbuilding/presnost/overenie-zostava.md)."""
         cesty = self.obrazok_cesty(r, f)
         plna = esc(pre + cesty[f['plna_w']])
         alt = self.alt_bez_cisla(f)
         alt = f'{alt}, fotka {i} z {n}' if alt and n > 1 else alt
         # data-avif: srcset AVIF pre zdroj type=image/avif v lightboxe (app.js), WebP ostáva v data-srcset
         avif = self.srcset(pre, r, f, 'avif')
-        data = {'data-plna': plna, 'data-srcset': self.srcset(pre, r, f)}
-        if avif:
-            data['data-avif'] = avif
+        data = {'data-plna': plna}
+        if not nahlad:
+            data['data-srcset'] = self.srcset(pre, r, f)
+            if avif:
+                data['data-avif'] = avif
         # data-sirka a data-vyska: plný súbor WebP (odkaz), lightbox fotku nezväčší nad jeho 1,25 násobok
         data.update({'data-sirka': str(f['plna_w']),
                 'data-vyska': str(f['plna_h']), 'data-nazov': esc(nazov),
@@ -2707,7 +2931,10 @@ class Web:
                 naraz = int(self.nastavenia.get('sluzba_pocet_kariet', 4))
                 # stránka služby odkazuje na každú realizáciu s danou rolou (brána pokus 2, správnosť 2): nad počet
                 # kariet ostatné ako kompaktný zoznam; karta vždy s fotkou (r['karta'])
-                s_obalom = [r for r in suvisiace if r['karta']][:naraz]
+                # karty s fotkou dosť veľkou na celý rám 4 : 5 majú prednosť (brána bmb-presnost pokus 1, nález 1:
+                # Vila X 640 x 480 px na karte Stavebného manažmentu); malé ostávajú v kompaktnom zozname nižšie
+                s_obalom = sorted((r for r in suvisiace if self.foto_karty(r)),
+                                  key=lambda r: self.mala_karta(self.foto_karty(r)))[:naraz]
                 zvysok = [r for r in suvisiace if r not in s_obalom]
                 real = (f'<section class="sekcia sekcia-karty" aria-labelledby="real-nadpis"><div class="obsah">'
                         f'<div class="sekcia-hlava"><h2 class="nadpis" id="real-nadpis">{T(t["realizacie_nadpis"])}'
@@ -2896,14 +3123,18 @@ class Web:
             # vizualizácia: pod náhľadom meno autora (projektant alebo autor z príspevku, obsah-zmeny.md), štítok na fotke
             popis = (('Vizualizácia, autor: ' + f['autor']) if f.get('autor') else '') if f.get('viz') else self.popis_fotky(r, f)
             # prvá veľká len keď nie je tou istou fotkou ako pohľad A nad galériou (detail_dvojstrana), inak by
-            # rovnaká fotka bola dvakrát veľká pod sebou
+            # rovnaká fotka bola dvakrát veľká pod sebou; ani fotka karty nahradená nastavením karta_foto (malý zdroj),
+            # galéria má potom tú istú stavbu ako pred zmenou karty (overenie zostavy bmb-presnost)
             prva = (i == 1 and len(fotky) >= 4 and f['w'] >= 960 and f['w'] >= f['h']
-                    and f is not r.get('karta') and self.nezvacsena(f, GALERIA_BUNKY['prva']))
+                    and f is not r.get('karta') and f is not r.get('karta_nahradena')
+                    and self.nezvacsena(f, GALERIA_BUNKY['prva']))
             # dáta lightboxu (lb_data, Stavba 1): alt nesie číslo podľa poradia v galérii (to isté ukáže počítadlo),
-            # data-galeria = slug, vizualizácia so štítkom na náhľade, v lightboxe aj v alt texte
-            plna, alt, atributy = self.lb_data(pre, r, f, i, len(fotky), nazov, popis_udaje, r.get('slug', ''))
+            # data-galeria = slug, vizualizácia so štítkom na náhľade, v lightboxe aj v alt texte; pri náhľade so
+            # srcset (nie malá fotka) berie app.js srcset a zdroj AVIF lightboxu z náhľadu (lb_data nahlad)
             sizes = SIZES_GALERIA_PRVA if prva or malo else SIZES_GALERIA
             mala = not prva and not self.nezvacsena(f, GALERIA_BUNKY['malo' if malo else 'mriezka'])
+            plna, alt, atributy = self.lb_data(pre, r, f, i, len(fotky), nazov, popis_udaje, r.get('slug', ''),
+                                               nahlad=not mala)
             if mala:
                 # malá fotka (GALERIA_BUNKY): len plný súbor bez srcset (prirodzená veľkosť = súbor v CSS px), CSS
                 # .galeria-odkaz.mala img object-fit:scale-down ju nikdy nezväčší. Len WebP: jeden malý súbor
@@ -2912,7 +3143,8 @@ class Web:
                 obr = (f'<img src="{plna}" width="{f["plna_w"]}" height="{f["plna_h"]}" '
                        f'alt="{esc(alt or f["alt"])}" loading="lazy" decoding="async">')
             else:
-                obr = self.img(pre, r, f, sizes, alt=alt or None)
+                # bunka 3 : 2 s object-fit: cover: širšia fotka potrebuje širší súbor (sizes_pre_cover)
+                obr = self.img(pre, r, f, sizes_pre_cover(sizes, f['w'], f['h']), alt=alt or None)
             stitok = '<span class="stitok-viz">Vizualizácia</span>' if f.get('viz') else ''
             polozky.append(f'<li class="galeria-polozka{" prva" if prva else ""}"><a class="galeria-odkaz{" mala" if mala else ""}" href="{plna}" '
                            f'data-lightbox {atributy}>{obr}{stitok}<span class="galeria-c cisla" aria-hidden="true">{i:02d}</span></a>'
@@ -3013,7 +3245,7 @@ class Web:
         if f:
             n = len(r['galeria'])
             stitok = '<span class="stitok-viz">Vizualizácia</span>' if f.get('viz') else ''
-            obr = self.img(pre, r, f, SIZES_DETAIL, lcp=True, alt=self.alt_bez_cisla(f) or nazov)
+            obr = self.img(pre, r, f, sizes_pre_cover(SIZES_DETAIL, f['w'], f['h']), lcp=True, alt=self.alt_bez_cisla(f) or nazov)
             popis = self.popis_fotky(r, f) if not f.get('viz') else (
                 'Vizualizácia' + (f', autor: {f["autor"]}' if f.get('autor') else ''))
             casti = [T(popis or nazov)]

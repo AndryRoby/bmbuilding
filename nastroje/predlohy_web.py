@@ -10,7 +10,8 @@ Postup pre každú fotku, ktorú web naozaj použije (plán z build.Web s rozmer
   2. Kvalita pre každý formát (AVIF, WebP): najmenšia, pri ktorej MS-SSIM jasu zakódovanej fotky voči predlohe
      zmenšenej na tú istú šírku drží prah PRAH (binárne hľadanie na jednej referenčnej šírke REF_SIRKA, potom
      kontrola na najmenšej šírke; ak tam prah nedrží, kvalita sa zvýši). Metóda a prah: ops/weby-na-mieru/klienti/
-     bmbuilding/fotky-kvalita/KODOVANIE.md.
+     bmbuilding/fotky-kvalita/KODOVANIE.md; titulné fotky PRAH_TITULNE a AI predloha len nad 1,25 x zdroj:
+     ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md.
   3. Všetky potrebné súbory (šírky, výrezy 45 a 54, AVIF aj WebP) tou kvalitou cez build.kodovany (rovnaký kóder
      ako build.py), uložené do fotky-web/<sha256 zdroja[:16]>/<šírka>[-<orez>].<formát>, záznam do manifest.json.
 
@@ -38,8 +39,25 @@ PREDLOHY = Path('D:/ARLing-media/klienti/bmbuilding/web-predlohy')
 VERZIA = 'fw-1|ms-ssim-jas|' + build.VERZIA_OBR
 # prah MS-SSIM jasu (0 až 1) a rozsah hľadanej kvality; kalibrácia v KODOVANIE.md
 PRAH = {'avif': 0.995, 'webp': 0.995}
+# titulné fotky (hrdina úvodu, fotka karty v páse, mriežke a na titulke detailu, ilustračné fotky noviniek, fotky
+# sekcií Postup a O firme) majú prísnejší prah (linka bmb-presnost, kalibrácia v
+# ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md časť 2)
+PRAH_TITULNE = {'avif': 0.997, 'webp': 0.997}
 ROZSAH = {'avif': (45, 90), 'webp': (60, 92)}
 REF_SIRKA = 1440
+# predloha z AI zväčšenia (Upscayl) slúži len na šírky nad ZDROJ_LANCZOS_MAX x šírka zdroja; šírky a výrezy do
+# tejto šírky sa robia zo zdroja v obsah/ Lanczosom (aj mierne zväčšenie), lebo AI textúru zmäkčuje
+# (presnost/meranie/fotky-pred.md časť 10: medián ostrosti 0,64 zdroja proti 0,97 bez AI). 1,25 je ten istý prah
+# ako pri výbere predlohy (fotky-kvalita/zvacsenie.md: pod 1,25 x zdroj len Lanczos) a v pravidle mäkkej fotky (A).
+MODELY_AI = ('high-fidelity-4x',)
+ZDROJ_LANCZOS_MAX = 1.25
+ZDROJ_DO_SIRKY = 'zdroj-do-1.25-sirky-2'
+# titulné fotky (PRAH_TITULNE) berú zdroj Lanczosom až do 1,6 x šírky zdroja: karta novinky Vianočný pozdrav
+# (Rosnička 14, výrez 734 px) brala pri 1920 px a hustote 2 súbor 960 px z AI s ostrosťou 0,39 zdroja (brána
+# bmb-presnost pokus 1, nález 4, návrh do 1,5 x); 1,6 pokryje aj súbor 720 px karty Kalvárie 01 (zdroj 450 px), ktorý
+# prehliadač berie na 528 px obrazovky. Nad 1,25 x je fotka hraničná alebo mäkká podľa pravidla A, AI tam nepomáha
+ZDROJ_LANCZOS_MAX_TITULNE = 1.6
+ZDROJ_DO_SIRKY_TITULNE = 'zdroj-do-1.6-sirky-titulne-1'
 
 
 # ---------------------------------------------------------------- miera zhody (numpy, scipy)
@@ -164,7 +182,26 @@ def plan(obsah, predlohy):
     for r in web.realizacie + web.novinky:
         for f in r['fotky']:
             rel[f['sha']] = f['rel']
-    return web.potreba, web.zdroje, rel
+    return web.potreba, web.zdroje, rel, titulne_fotky(web), dict(web.vyrezy)
+
+
+def titulne_fotky(web):
+    """sha256 zdrojov titulných fotiek (prísnejší prah PRAH_TITULNE): hrdina úvodu, fotka karty každej realizácie
+    a novinky (pás, mriežka, titulná fotka detailu), ilustračné fotky noviniek, fotky sekcií Postup a O firme."""
+    out = set()
+    with redirect_stderr(io.StringIO()):
+        _, f = web.hrdina_foto()
+        if f:
+            out.add(f['sha'])
+        for r in web.realizacie + web.novinky:
+            for kluc in ('karta', 'karta_len', 'ilustracna_foto'):
+                if r.get(kluc):
+                    out.add(r[kluc]['sha'])
+        for kluc in ('postup_foto', 'firma_foto'):
+            _, f = web.foto_nastavenia(kluc)
+            if f:
+                out.add(f['sha'])
+    return out
 
 
 # ---------------------------------------------------------------- práca na jednej fotke (proces)
@@ -188,6 +225,19 @@ def otvor_predlohu(uloha):
     return build.otvor_rgb(Path(uloha['zdroj']))
 
 
+def zaklad_variantu(master, zdroj_im, limit=ZDROJ_LANCZOS_MAX):
+    """Funkcia (šírka, orez) -> obrázok, z ktorého sa variant zmenší: zdroj z obsah/, keď je predloha z AI a variant
+    nie je širší než limit x zdroj (pri výreze x výrez zdroja; ZDROJ_LANCZOS_MAX, titulné ZDROJ_LANCZOS_MAX_TITULNE),
+    inak predloha."""
+    def zaklad(s, orez=''):
+        if zdroj_im is None:
+            return master
+        zw, zh = zdroj_im.size
+        cw = build.orez_rozmer(zw, zh, build.OREZY[orez])[0] if orez else zw
+        return zdroj_im if s <= cw * limit else master
+    return zaklad
+
+
 def spracuj(uloha):
     """Jedna fotka: kvalita (ak nie je známa) a súbory variantov. Vráti záznam manifestu a čas."""
     t0 = time.time()
@@ -195,6 +245,9 @@ def spracuj(uloha):
     if master.size != tuple(uloha['rozmer']):
         raise RuntimeError(f'{uloha["rel"]}: predloha má {master.size}, plán čaká {tuple(uloha["rozmer"])}')
     w, h = master.size
+    zdroj_im = build.otvor_rgb(Path(uloha['zdroj'])) if uloha.get('zo_zdroja') else None
+    limit = ZDROJ_LANCZOS_MAX_TITULNE if uloha.get('titulna') else ZDROJ_LANCZOS_MAX
+    zaklad = zaklad_variantu(master, zdroj_im, limit)
     kvalita = dict(uloha.get('kvalita') or {})
     hladanie = {}
     for fmt in ('avif', 'webp'):
@@ -202,13 +255,13 @@ def spracuj(uloha):
             continue
         sirky = sorted({v[0] for v in uloha['varianty'].values() if v[3] == fmt and not v[2]}) or [min(w, REF_SIRKA)]
         sr = max([s for s in sirky if s <= REF_SIRKA] or [sirky[0]])
-        ref = build.zmensi(master.copy(), sr, build.vyska_pre(w, h, sr))
+        ref = build.zmensi(zaklad(sr).copy(), sr, build.vyska_pre(w, h, sr))
         q, z, b, n = najmensia_kvalita(ref, fmt, uloha['prah'][fmt])
         # kontrola na najmenšej šírke (viac detailu na pixel): ak tam prah nedrží, hľadá sa ďalej od q nahor
         sm = sirky[0]
         kontrola = None
         if sm != sr:
-            ref_m = build.zmensi(master.copy(), sm, build.vyska_pre(w, h, sm))
+            ref_m = build.zmensi(zaklad(sm).copy(), sm, build.vyska_pre(w, h, sm))
             zm, _ = zhoda(ref_m, fmt, q)
             if zm < uloha['prah'][fmt]:
                 q2, zm, _, n2 = najmensia_kvalita(ref_m, fmt, uloha['prah'][fmt], (q, ROZSAH[fmt][1]))
@@ -221,19 +274,29 @@ def spracuj(uloha):
     priecinok = ciel / uloha['sha'][:16]
     priecinok.mkdir(parents=True, exist_ok=True)
     subory = dict(uloha.get('hotove') or {})
+    vyrez = tuple(uloha['vyrez']) if uloha.get('vyrez') else None
     for kluc, (s, v, orez, fmt) in sorted(uloha['varianty'].items()):
         if kluc in subory:
             continue
-        im = build.zmensi(master.copy(), s, v, build.OREZY[orez] if orez else None)
+        # výrez 4 : 5 karty z rámika (nastavenia karta_foto vyrez), build.py ho berie len so zhodným záznamom vyrez
+        box = vyrez if orez == '45' else None
+        im = build.zmensi(zaklad(s, orez).copy(), s, v, build.OREZY[orez] if orez else None, box)
         data = build.kodovany(im, fmt, kvalita[fmt])
         rel = f'{uloha["sha"][:16]}/{s}{"-" + orez if orez else ""}.{fmt}'
         tmp = ciel / (rel + '.tmp')
         tmp.write_bytes(data)
         os.replace(tmp, ciel / rel)
         subory[kluc] = {'subor': rel, 'w': s, 'h': v, 'bajty': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+        if box:
+            subory[kluc]['vyrez'] = list(box)
     zaznam = {'rel': uloha['rel'], 'kluc': uloha['kluc'],
               'predloha': {'w': w, 'h': h, 'model': uloha.get('model') or 'obsah', 'sha256': uloha.get('sha_predlohy') or ''},
               'kvalita': kvalita, 'zhoda': uloha['prah'], 'subory': dict(sorted(subory.items()))}
+    if uloha.get('titulna'):
+        zaznam['titulna'] = True
+    if zdroj_im is not None:
+        # šírky do tejto šírky (pri výreze do 1,25 x šírky výrezu zdroja) sú zo zdroja v obsah/, nie z AI predlohy
+        zaznam['zo_zdroja_do'] = int(zdroj_im.width * limit)
     if hladanie:
         zaznam['hladanie'] = hladanie
     elif uloha.get('hladanie'):
@@ -258,7 +321,10 @@ def zapis_manifest(ciel, d):
                       'fotky v obsah/; build.py záznam použije len pri zhode sha256 zdroja, inak fotku zakóduje sám. '
                       'Metóda a prah: ops/weby-na-mieru/klienti/bmbuilding/fotky-kvalita/KODOVANIE.md.')
     d['metoda'] = {'verzia': VERZIA, 'miera': 'MS-SSIM jasu voči predlohe zmenšenej na tú istú šírku', 'prah': PRAH,
-                   'rozsah': ROZSAH, 'ref_sirka': REF_SIRKA}
+                   'prah_titulne': PRAH_TITULNE, 'rozsah': ROZSAH, 'ref_sirka': REF_SIRKA,
+                   'ai_predloha': f'{", ".join(MODELY_AI)} len nad {ZDROJ_LANCZOS_MAX:g} x šírku zdroja, do nej zdroj '
+                                  f'z obsah/ Lanczosom ({ZDROJ_DO_SIRKY}); titulné fotky do {ZDROJ_LANCZOS_MAX_TITULNE:g} x '
+                                  f'({ZDROJ_DO_SIRKY_TITULNE})'}
     m = Path(ciel) / 'manifest.json'
     tmp = m.with_suffix('.json.tmp')
     tmp.write_text(json.dumps(d, ensure_ascii=False, indent=1, sort_keys=False) + '\n', encoding='utf-8', newline='\n')
@@ -296,7 +362,7 @@ def main(argv=None):
             print(f'VAROVANIE: predloha {p["subor"]} má iný sha256 než v predlohy.json, beriem zdroj z obsahu')
             del predlohy[sha]
             stare_predlohy += 1
-    potreba, zdroje, rel = plan(a.obsah, predlohy)
+    potreba, zdroje, rel, titulne, vyrezy = plan(a.obsah, predlohy)
     ciel = a.ciel.resolve()
     ciel.mkdir(parents=True, exist_ok=True)
     man = nacitaj_manifest(ciel)
@@ -310,7 +376,15 @@ def main(argv=None):
             rozmer, sha_pred = (p['w'], p['h']), p['sha_suboru']
         else:
             rozmer, sha_pred = build.rozmery_zdroja(Path(zdroje[sha])), ''
-        kluc = hashlib.sha256(f'{VERZIA}|{sha_pred or sha}|{rozmer}|{json.dumps(PRAH, sort_keys=True)}'.encode()).hexdigest()[:20]
+        prah = PRAH_TITULNE if sha in titulne else PRAH
+        zo_zdroja = bool(p and p.get('model') in MODELY_AI)
+        # kľúč bez zmeny pre fotky s pôvodným prahom a bez AI predlohy (nič sa nekóduje znova)
+        kluc_text = f'{VERZIA}|{sha_pred or sha}|{rozmer}|{json.dumps(prah, sort_keys=True)}'
+        if zo_zdroja:
+            kluc_text += '|' + (ZDROJ_DO_SIRKY_TITULNE if sha in titulne else ZDROJ_DO_SIRKY)
+        if vyrezy.get(sha):
+            kluc_text += '|vyrez45=' + json.dumps(list(vyrezy[sha]))
+        kluc = hashlib.sha256(kluc_text.encode()).hexdigest()[:20]
         stary = man['fotky'].get(sha)
         hotove = hotove_subory(ciel, stary) if stary and stary.get('kluc') == kluc else {}
         varianty = potreba[sha]
@@ -319,10 +393,12 @@ def main(argv=None):
             continue
         ulohy.append({'sha': sha, 'rel': rel.get(sha, ''), 'zdroj': str(zdroje[sha]), 'predloha': p['subor'] if p else '',
                       'model': p.get('model') if p else '', 'sha_predlohy': sha_pred, 'rozmer': list(rozmer),
-                      'varianty': varianty, 'prah': PRAH, 'kluc': kluc, 'ciel': str(ciel),
+                      'varianty': varianty, 'prah': prah, 'kluc': kluc, 'ciel': str(ciel),
+                      'titulna': sha in titulne, 'zo_zdroja': zo_zdroja, 'vyrez': list(vyrezy[sha]) if vyrezy.get(sha) else None,
                       'kvalita': stary.get('kvalita') if hotove else None, 'hladanie': stary.get('hladanie') if hotove else None,
                       'hotove': {k: v for k, v in hotove.items() if k in varianty}})
-    print(f'plán: {len(potreba)} fotiek na webe, z predlôh {sum(1 for s in potreba if s in predlohy)}, '
+    print(f'plán: {len(potreba)} fotiek na webe, titulných {len(titulne & set(potreba))}, '
+          f'z predlôh {sum(1 for s in potreba if s in predlohy)}, '
           f'hotových {preskocene}, na prácu {len(ulohy)}, procesy {a.procesy}, limit {a.limit_min} min')
     koniec = t0 + a.limit_min * 60
     hotovo = chyby = 0
@@ -350,6 +426,9 @@ def main(argv=None):
         pouzite = set(potreba)
         for sha in [s for s in man['fotky'] if s not in pouzite]:
             del man['fotky'][sha]
+        # aj varianty, ktoré web už nepoužije (napríklad výrez karty po zmene fotky karty v nastavenia.json karta_foto)
+        for sha, z in man['fotky'].items():
+            z['subory'] = {k: v for k, v in z['subory'].items() if k in potreba[sha]}
         drzat = {s['subor'] for z in man['fotky'].values() for s in z['subory'].values()}
         zmazanych = 0
         for p in sorted(ciel.rglob('*')):

@@ -129,7 +129,26 @@ def rozober(cesta):
     return r
 
 
-def rychla_webp(p, s, v, pomer=None):
+def lb_zdroje(prvky, k):
+    """Srcset WebP a AVIF lightboxu pre odkaz prvky[k] (a[data-lightbox]), ako ich vyberie app.js (srcsetZ, avifZ):
+    data-srcset a data-avif odkazu, inak srcset náhľadu (img a source type=image/avif) v odkaze (build.py lb_data
+    nahlad, overenie zostavy bmb-presnost). Vráti (webp, avif, z_nahladu)."""
+    a = prvky[k][1]
+    if 'data-srcset' in a:
+        return a['data-srcset'], a.get('data-avif', ''), False
+    img = src = None
+    for t, x in prvky[k + 1:]:
+        if t == 'source' and x.get('type') == 'image/avif' and src is None:
+            src = x
+        if t == 'img':
+            img = x
+            break
+        if t == 'a':
+            break
+    return (img or {}).get('srcset', ''), (src or {}).get('srcset', ''), True
+
+
+def rychla_webp(p, s, v, pomer=None, box=None):
     """Náhrada kódovania webp pre skutočný obsah (stovky fotiek, aj výrezy kariet): správne rozmery, žiadna kvalita."""
     buf = io.BytesIO()
     Image.new('RGB', (s, v), MODRA).save(buf, 'WEBP', quality=1, method=0)
@@ -192,7 +211,7 @@ def zhodne_orezy(obsah, prah=None):
     return zhodne, pocet
 
 
-def rychla_avif(p, s, v, pomer=None):
+def rychla_avif(p, s, v, pomer=None, box=None):
     """Náhrada kódovania AVIF pre skutočný obsah (linka bmb-fotky): správne rozmery, žiadna kvalita."""
     buf = io.BytesIO()
     Image.new('RGB', (s, v), MODRA).save(buf, 'AVIF', quality=1, speed=10)
@@ -1178,8 +1197,14 @@ class TestStranky(unittest.TestCase):
                 self.assertNotIn('bez-fotky', trieda, cesta)
                 self.assertNotIn('bez-foto', karta, cesta)
                 self.assertNotIn('karta-znak', karta, cesta)
-                self.assertRegex(karta, r'<img src="\.\./obrazky/[a-z0-9-]+/\d\d-\d+-45\.webp" srcset="[^"]*-45\.webp \d+w', cesta)
-                self.assertIn(f'sizes="{build.SIZES_KARTA}"', karta, cesta)
+                if 'foto-cela' in karta:
+                    # malý zdroj: celá fotka 4 : 3 alebo 3 : 4 v strede rámu (brána bmb-presnost pokus 1, nález 1)
+                    self.assertRegex(karta, r'<img class="foto-cela[^"]*" src="\.\./obrazky/[a-z0-9-]+/\d\d-\d+-(43|34)\.webp" '
+                                     r'srcset="[^"]*-(43|34)\.webp \d+w', cesta)
+                    self.assertIn('sizes="(min-width: 1024px) min(23vw - 48px, ', karta, cesta)
+                else:
+                    self.assertRegex(karta, r'<img src="\.\./obrazky/[a-z0-9-]+/\d\d-\d+-45\.webp" srcset="[^"]*-45\.webp \d+w', cesta)
+                    self.assertIn(f'sizes="{build.SIZES_KARTA}"', karta, cesta)
                 # prvá karta prehľadu je LCP (oprava 1, test_prva_karta_prehladu_bez_lazy), ostatné lenivé
                 if not (cesta == 'realizacie/' and i == 0):
                     self.assertIn('loading="lazy"', karta)
@@ -1195,7 +1220,7 @@ class TestStranky(unittest.TestCase):
         self.assertEqual(len(novinky), len(self.w.novinky))
         for (trieda, karta), n in zip(novinky, self.w.novinky):
             self.assertIn('<img', karta, n['slug'])
-            self.assertRegex(karta, r'-45\.webp', n['slug'])
+            self.assertRegex(karta, r'-(45|43|34)\.webp', n['slug'])
             self.assertNotIn('karta-znak', karta, n['slug'])
             self.assertNotIn('bez-fotky', trieda, n['slug'])
             self.assertEqual('Ilustračná fotka' in karta, not n['galeria'], n['slug'])
@@ -1210,7 +1235,9 @@ class TestStranky(unittest.TestCase):
             self.assertIn(kus, telo)
         for sirka, stlpce in (('480px', 2), ('640px', 3), ('1024px', 4)):
             self.assertRegex(self.css, rf'@media \(min-width:{sirka}\)\{{[^@]*\.karty\{{grid-template-columns:repeat\({stlpce},')
-        self.assertIn('.karty[data-zoznam] .dlazdica:nth-child(n+17){content-visibility:auto', self.css)
+        # karty bez content-visibility (linka bmb-presnost): layout containment by zrušil subgrid kariet za tlačidlom
+        # Zobraziť ďalšie; zobrazuje sa naraz len realizacie_naraz kariet (TestZarovnanie)
+        self.assertNotIn('.dlazdica:nth-child(n+17){content-visibility:auto', self.css)
 
     def test_filter_miesta(self):
         # filter miesta: každé mesto z obsahu s počtom; kľúč mesta je data-mesto kariet; app.js filtruje a píše do adresy
@@ -1292,7 +1319,7 @@ class TestStranky(unittest.TestCase):
             self.assertIn('fetchpriority="high"', foto, r['slug'])
             self.assertNotIn('loading="lazy"', foto, r['slug'])
             self.assertIn(f'obrazky/{r["slug"]}/{r["karta"]["nn"]}-', foto, r['slug'])
-            self.assertIn(f'sizes="{build.SIZES_DETAIL}"', foto)
+            self.assertIn(f'sizes="{build.sizes_pre_cover(build.SIZES_DETAIL, r["karta"]["w"], r["karta"]["h"])}"', foto)
             self.assertIn('<strong>Pohľad A:</strong>', foto)
             if len(r['galeria']) > 1:
                 self.assertIn('<a href="#galeria">Galéria', foto)
@@ -1406,7 +1433,9 @@ class TestStranky(unittest.TestCase):
             self.assertIn('<span class="faza-dlzka otoc" aria-hidden="true">', faza)
             self.assertIn(f'stlpec c{i} i1', faza)
             self.assertIn('<p class="vystup">Činnosť: <a href=', faza)
-        self.assertRegex(postup, r'<figure class="postup-foto">(?:<picture><source [^>]*>)?<img src="obrazky/bytove-domy-vtacnik-bratislava/')
+        nast = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8'))
+        self.assertRegex(postup, r'<figure class="postup-foto">(?:<picture><source [^>]*>)?<img src="obrazky/'
+                         + re.escape(nast['postup_foto']['slug']) + '/')
         cinnost = telo.split('id="sluzby"', 1)[1].split('</section>', 1)[0]
         h3 = re.findall(r'<li class="sluzba"><h3><a href="([a-z-]+)/">', cinnost)
         self.assertEqual(h3, self.texty['cinnost']['poradie'])
@@ -1587,15 +1616,20 @@ class TestStranky(unittest.TestCase):
         for slug, r in [(x['slug'], x) for x in self.w.realizacie if x['galeria']][:6]:
             cesta = self.ostry / 'realizacie' / slug / 'index.html'
             rz = rozober(cesta)
-            odkazy = [a for t, a in rz.prvky if t == 'a' and 'data-lightbox' in a]
+            indexy = [k for k, (t, a) in enumerate(rz.prvky) if t == 'a' and 'data-lightbox' in a]
+            odkazy = [rz.prvky[k][1] for k in indexy]
             self.assertEqual(len(odkazy), len(r['galeria']), slug)
-            for i, a in enumerate(odkazy, 1):
+            for i, (k, a) in enumerate(zip(indexy, odkazy), 1):
                 self.assertEqual(a['href'], a['data-plna'])
                 self.assertEqual(a['data-index'], str(i))
                 plna = (cesta.parent / a['data-plna']).resolve()
                 with Image.open(plna) as im:
                     self.assertEqual((str(im.width), str(im.height)), (a['data-sirka'], a['data-vyska']), slug)
-                for kus in a['data-srcset'].split(', '):
+                # srcset lightboxu: data-srcset, pri náhľade so srcset (nie malá fotka) srcset náhľadu v odkaze
+                webp, _avif, z_nahladu = lb_zdroje(rz.prvky, k)
+                self.assertEqual(z_nahladu, 'mala' not in a.get('class', ''), (slug, i))
+                self.assertTrue(webp, (slug, i))
+                for kus in webp.split(', '):
                     u, w = kus.split(' ')
                     self.assertTrue((cesta.parent / u).resolve().is_file(), u)
                     self.assertRegex(w, r'^\d+w$')
@@ -2391,8 +2425,10 @@ class TestFotkyPravidla(unittest.TestCase):
             self.assertNotIn('obrazky/len-zla/', s, p)
         zoznam = (web / 'realizacie' / 'index.html').read_text(encoding='utf-8')
         mix = zoznam.split('href="../realizacie/mix/"', 1)[1].split('</li>', 1)[0]
-        # karta: výrez 4 : 5 zo zvyšnej ostrej fotky (1000 x 700 dá výrez 560 x 700)
-        self.assertIn('src="../obrazky/mix/02-560-45.webp"', mix)
+        # karta zo zvyšnej ostrej fotky: 1000 x 700 dá výrez 4 : 5 len 560 x 700 (pod build.KARTA_MIN_OREZ), preto celá
+        # fotka 4 : 3 (933 x 700) v strede rámu (brána bmb-presnost pokus 1, nález 1)
+        self.assertIn('src="../obrazky/mix/02-720-43.webp"', mix)
+        self.assertIn('class="foto-cela"', mix)
         zla = zoznam.split('href="../realizacie/len-zla/"', 1)[1].split('</li>', 1)[0]
         # bez jedinej ostrej fotky: v ráme logo firmy, nikdy rozmazaná fotka
         self.assertIn('class="karta-znak"', zla)
@@ -2697,8 +2733,10 @@ class TestStovkyRealizacii(unittest.TestCase):
         for img in imgs:
             if 'fetchpriority="high"' not in img:
                 self.assertIn('loading="lazy"', img)
-            # výrez 4 : 5 z fotky 720 x 540 má najviac 432 px, väčšia šírka sa nevyrába
-            self.assertRegex(img, r'srcset="[^"]*-45\.webp \d+w')
+            # fotka 720 x 540: výrez 4 : 5 má len 432 px (pod build.KARTA_MIN_OREZ), karta ukáže celú fotku 4 : 3
+            # v strede rámu (brána bmb-presnost pokus 1, nález 1); väčšia šírka sa nevyrába
+            self.assertRegex(img, r'srcset="[^"]*-43\.webp \d+w')
+            self.assertIn('foto-cela', img)
             self.assertRegex(img, r'width="\d+" height="\d+"')
         self.assertLess(len(gzip.compress(s.encode('utf-8'), 9)), 40 * 1024)
         css = (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8')
@@ -3035,6 +3073,13 @@ ZAKRYTIE = {'osvedcenie-sksi-stavbyveduci-2003': (218, 309, 312, 330),
             'osvedcenie-sksi-stavebny-dozor-2010': (225, 307, 300, 323)}
 
 
+def zakrytie_v_oreze(meno):
+    """ZAKRYTIE v súradniciach skenu orezaného na hranu papiera (build.OREZ_DOKLADU, brána bmb-presnost pokus 2)."""
+    l, t = build.OREZ_DOKLADU.get(meno, (0, 0))[:2]
+    x0, y0, x1, y1 = ZAKRYTIE[meno]
+    return (x0 - l, y0 - t, x1 - l, y1 - t)
+
+
 class TestOpravnenia(unittest.TestCase):
     """Stránka Oprávnenia so zakrytými osvedčeniami SKSI (zadanie bmb-fb-uplnost, Navyše; FAKTY-WEB.md)."""
 
@@ -3092,21 +3137,27 @@ class TestOpravnenia(unittest.TestCase):
 
     def test_subory_len_zmensene_a_zakryte(self):
         vystup = sorted((self.ostry / 'opravnenia').glob('*.webp'))
-        self.assertEqual(len(vystup), 4)
+        # 360, 720, sken a 2-násobok skenu pre každé z dvoch osvedčení (linka bmb-presnost)
+        self.assertEqual(len(vystup), 8)
         self.assertFalse(list(self.ostry.rglob('osvedcenie-*.png')))
         for p in vystup:
             meno, sirka = p.stem.rsplit('-', 1)
             zdroj = KOREN / 'sablona' / 'opravnenia' / f'{meno}.png'
-            with Image.open(zdroj) as z, Image.open(p) as o:
-                # nikdy väčší než zdroj (bez AI zväčšenia), pomer strán zachovaný
-                self.assertLessEqual(o.width, z.width)
-                self.assertLessEqual(o.height, z.height)
+            # porovnáva sa so skenom orezaným na hranu papiera (build.OREZ_DOKLADU), zakrytie v jeho súradniciach
+            z = build.sken_dokladu(zdroj)
+            with Image.open(p) as o:
+                # najviac 2-násobok skenu, pri užšom skene 2-násobok vnútra rámu 528 px (Lanczos a jemné doostrenie,
+                # bez AI), pomer strán zachovaný
+                self.assertLessEqual(o.width, 2 * max(z.width, 528))
+                self.assertLessEqual(o.height, round(z.height * 2 * max(z.width, 528) / z.width) + 1)
                 self.assertEqual(o.width, int(sirka))
                 self.assertAlmostEqual(o.height / o.width, z.height / z.width, places=2)
-                if o.width == z.width:
-                    # pás zakrytia ostal jednofarebný (žiadne čitateľné rodné číslo ani dátum narodenia)
-                    box = ZAKRYTIE[meno]
-                    vyrez = o.convert('L').crop((box[0] + 3, box[1] + 3, box[2] - 3, box[3] - 3))
+                if o.width >= z.width:
+                    # pás zakrytia ostal jednofarebný (žiadne čitateľné rodné číslo ani dátum narodenia), aj zväčšený
+                    k = o.width / z.width
+                    box = [round(x * k) for x in zakrytie_v_oreze(meno)]
+                    m = round(3 * k)
+                    vyrez = o.convert('L').crop((box[0] + m, box[1] + m, box[2] - m, box[3] - m))
                     self.assertLess(max(vyrez.getextrema()) - min(vyrez.getextrema()), 24, p)
             # zdroj v šablóne je zakrytá verzia z ops (rovnaké bajty), nie originál
             zakryta = KOREN.parent.parent / 'ops' / 'weby-na-mieru' / 'klienti' / 'bmbuilding' / 'opravnenia' / f'{meno}.png'
@@ -3156,7 +3207,7 @@ class TestOpravnenia(unittest.TestCase):
 
     def test_na_webe_su_len_zakryte_osvedcenia_sha256(self):
         """Zdroje osvedčení v sablona/opravnenia/ majú pevné sha256 zakrytých verzií (rodné číslo a dátum narodenia
-        zakryté); web má len ich zmenšené WebP, nikdy PNG ani iný súbor osvedčenia."""
+        zakryté); web má len ich WebP (zmenšené alebo bez AI zväčšené), nikdy PNG ani iný súbor osvedčenia."""
         zakryte = {'osvedcenie-sksi-stavbyveduci-2003.png': '2b200e6cc0b4d62113b707872a0684fb8104920de958d560c37ea099c77c2d61',
                    'osvedcenie-sksi-stavebny-dozor-2010.png': '366b8fc9cce86860f0e6ad7dedd61d6c2b858d9e9b25b3a97e290edfdf5c9696'}
         zdroje = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (KOREN / 'sablona' / 'opravnenia').iterdir()}
@@ -3165,7 +3216,7 @@ class TestOpravnenia(unittest.TestCase):
             self.assertEqual(len(hodnota), 64)
         # obsah webu: iba opravnenia/<meno>-<šírka>.webp z týchto dvoch mien
         subory = sorted(p.name for p in (self.ostry / 'opravnenia').iterdir() if p.name != 'index.html')
-        self.assertEqual(len(subory), 4)
+        self.assertEqual(len(subory), 8)
         for n in subory:
             self.assertRegex(n, r'^osvedcenie-sksi-(stavbyveduci-2003|stavebny-dozor-2010)-\d+\.webp$')
         # nikde na webe nie je bajt po bajte súbor s týmto sha256 ani nezakrytý originál
@@ -3191,6 +3242,344 @@ class TestOpravnenia(unittest.TestCase):
             for p in d.rglob('*'):
                 if p.is_file() and p.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp', '.gif'):
                     self.assertNotIn(hashlib.sha256(p.read_bytes()).hexdigest(), originaly, p)
+
+    def test_orez_skenov_na_hranu_papiera(self):
+        """Brána bmb-presnost pokus 2, nález 1: oba skeny orezané na hranu papiera s pomerom strán do 0,002 pod vnútrom
+        rámu, takže pri object-fit cover vypĺňa papier oboch osvedčení celé vnútro rámu (rovnaká horná hrana aj výška
+        pri každej šírke). Orez odstráni len biely okraj skenera a prázdny papier (bez ornamentu a písma)."""
+        import numpy as np
+        mapa = build.Web(KOREN / 'obsah', False).nastavenia['opravnenia_obrazky']
+        mena = sorted(Path(v).stem for v in mapa.values())
+        self.assertEqual(sorted(build.OREZ_DOKLADU), mena)
+        pomery = []
+        for meno in mena:
+            zdroj = KOREN / 'sablona' / 'opravnenia' / f'{meno}.png'
+            l, t, r, b = build.OREZ_DOKLADU[meno]
+            z = build.sken_dokladu(zdroj)
+            self.assertEqual(z.size, (r - l, b - t))
+            pomer = z.width / z.height
+            pomery.append(pomer)
+            self.assertLessEqual(pomer, build.POMER_RAMU_DOKLADU)
+            self.assertGreaterEqual(pomer, build.POMER_RAMU_DOKLADU - 0.002)
+            # cover pri vnútri rámu 322 (768 px), 332 (390 px), 438 (1024 px) až 528 x 757,51 CSS px (1440 a 1920 px):
+            # odreže najviac 1,5 % papiera
+            for ram_w in (322, 332, 438, 528):
+                ram_h = (ram_w + 26) * 297 / 210 - 26
+                s = max(ram_w / z.width, ram_h / z.height)
+                self.assertLessEqual(1 - ram_w / (z.width * s), 0.015, (meno, ram_w))
+                self.assertLessEqual(1 - ram_h / (z.height * s), 0.015, (meno, ram_w))
+            # obvod výrezu je papier, nie biely okraj skenera
+            rgb = np.asarray(z, dtype=np.int32).sum(2)
+            obvod = np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]])
+            self.assertLess(float((obvod >= 735).mean()), 0.01, meno)
+            # odstránená plocha je biela alebo prázdny papier: najtmavší px zeleného ornamentu pri hranách výrezu má
+            # jas 85 až 139 (presnost/meranie/oprava2-orez.json), odstránená plocha 192 a 210
+            jas = np.asarray(Image.open(zdroj).convert('L'), dtype=np.float64)
+            maska = np.ones_like(jas, dtype=bool)
+            maska[t:b, l:r] = False
+            self.assertGreaterEqual(float(jas[maska].min()), 180, meno)
+            self.assertGreaterEqual(float(np.percentile(jas[maska], 1)), 200, meno)
+            # atribúty img a data-sirka sú rozmer výrezu
+            telo = self.info['telo']
+            self.assertIn(f'width="{z.width}" height="{z.height}"', telo)
+            self.assertIn(f'data-sirka="{z.width}" data-vyska="{z.height}"', telo)
+        self.assertLess(abs(pomery[0] - pomery[1]), 0.002)
+        # sabotáž: bez orezu má pravý sken pomer 0,716, mimo tolerancie (contain by dal biely pás 9 px)
+        with Image.open(KOREN / 'sablona' / 'opravnenia' / 'osvedcenie-sksi-stavebny-dozor-2010.png') as im:
+            self.assertGreater(im.width / im.height - build.POMER_RAMU_DOKLADU, 0.002)
+        povodne = dict(build.OREZ_DOKLADU)
+        try:
+            build.OREZ_DOKLADU['osvedcenie-sksi-stavebny-dozor-2010'] = (2, 3, 517, 725)
+            with self.assertRaises(build.ChybaZostavy):
+                build.sken_dokladu(KOREN / 'sablona' / 'opravnenia' / 'osvedcenie-sksi-stavebny-dozor-2010.png')
+        finally:
+            build.OREZ_DOKLADU.clear()
+            build.OREZ_DOKLADU.update(povodne)
+
+
+# ---------------------------------------------------------------- linka bmb-presnost: zarovnanie s nulovou toleranciou
+
+def css_bloky(css, hlavicka):
+    """Telá všetkých blokov „<hlavicka>{...}“ (napr. @supports (grid-template-rows:subgrid)) aj s vnorenými blokmi."""
+    out = []
+    i = 0
+    while True:
+        j = css.find(hlavicka + '{', i)
+        if j < 0:
+            return out
+        k = j + len(hlavicka) + 1
+        hlbka = 1
+        while hlbka:
+            hlbka += {'{': 1, '}': -1}.get(css[k], 0)
+            k += 1
+        out.append(css[j + len(hlavicka) + 1:k - 1])
+        i = k
+
+
+def css_bez_blokov(css):
+    """Štýl bez @media a @supports (len pravidlá, ktoré platia pri každej šírke a v každom prehliadači)."""
+    out = []
+    i = 0
+    while True:
+        m = re.compile(r'@(?:media|supports|container|keyframes)\b').search(css, i)
+        if not m:
+            out.append(css[i:])
+            return ''.join(out)
+        out.append(css[i:m.start()])
+        k = css.index('{', m.start()) + 1
+        hlbka = 1
+        while hlbka:
+            hlbka += {'{': 1, '}': -1}.get(css[k], 0)
+            k += 1
+        i = k
+
+
+def deklaracie(css, selektor):
+    """Deklarácie pravidiel s presne týmto selektorom (nie v zozname selektorov); neskoršie prepíše skoršie."""
+    out = {}
+    for m in re.finditer(r'(?:^|[{};\n])\s*' + re.escape(selektor) + r'\{([^{}]*)\}', css):
+        for d in m.group(1).split(';'):
+            if ':' in d:
+                k, v = d.split(':', 1)
+                out[k.strip()] = v.strip()
+    return out
+
+
+class CastiKariet(HTMLParser):
+    """Triedy priamych detí figcaption v kartách (li.projekt): poradie častí karty, ktoré CSS kladie do riadkov subgrid."""
+
+    def __init__(self, trieda_karty):
+        super().__init__()
+        self.trieda = trieda_karty
+        self.zasobnik = []
+        self.karty = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        triedy = (a.get('class') or '').split()
+        if self.zasobnik and self.zasobnik[-1][0] == 'figcaption' and self.zasobnik[-1][2]:
+            self.karty[-1].append(triedy[0] if triedy else tag)
+        v_karte = tag == 'figcaption' and any(t == 'li' and self.trieda in tr for t, tr, _ in self.zasobnik)
+        if tag == 'figcaption' and v_karte:
+            self.karty.append([])
+        if tag not in VOID:
+            self.zasobnik.append((tag, triedy, v_karte))
+
+    def handle_startendtag(self, tag, attrs):
+        if self.zasobnik and self.zasobnik[-1][0] == 'figcaption' and self.zasobnik[-1][2]:
+            triedy = (dict(attrs).get('class') or '').split()
+            self.karty[-1].append(triedy[0] if triedy else tag)
+
+    def handle_endtag(self, tag):
+        for i in range(len(self.zasobnik) - 1, -1, -1):
+            if self.zasobnik[i][0] == tag:
+                del self.zasobnik[i:]
+                break
+
+
+class TestZarovnanie(unittest.TestCase):
+    """Linka bmb-presnost, časť 1 Oprava (zadanie ops/druhy-ucet/gmail/zadanie-bmb-presnost.md): osvedčenia v rámoch
+    A4 a v spoločných riadkoch, karty pásu a mriežok v spoločných riadkoch (subgrid), text vedľa textu na základnej
+    čiare, jedna škála medzier. Meranie v prehliadači: ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-zarovnanie.md
+    (0 rozdielov nad 1 px v Chrome aj Firefoxe pri 5 šírkach); tieto testy strážia štruktúru a pravidlá, z ktorých to
+    vychádza, bez prehliadača."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry = s['ostry']
+        cls.css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        cls.zaklad = css_bez_blokov(cls.css)
+        cls.subgrid = '\n'.join(css_bloky(cls.css, '@supports (grid-template-rows:subgrid)'))
+
+    def telo(self, cesta):
+        return stranka_info(self.ostry / cesta)['telo']
+
+    def test_osvedcenia_rovnake_riadky_tabuliek(self):
+        telo = self.telo('opravnenia/index.html')
+        doklady = re.findall(r'<div class="(doklad[^"]*)"><h2 class="doklad-h">(.*?)</dl>(.*?)</div>', telo, re.S)
+        self.assertEqual(len(doklady), 2)
+        cisty = lambda s: html.unescape(s).replace(' ', ' ')  # noqa: E731
+        stitky = [[cisty(x) for x in re.findall(r'<dt>(.*?)</dt>', d)] for _, d, _ in doklady]
+        hodnoty = [[cisty(re.sub(r'<[^>]+>', '', x)) for x in re.findall(r'<dd>(.*?)</dd>', d)] for _, d, _ in doklady]
+        # rovnaké riadky v rovnakom poradí v oboch tabuľkách (bez toho mala ľavá 7 a pravá 6 riadkov)
+        self.assertEqual(stitky[0], ['Vydala', 'Doklad', 'Meno', 'Činnosť', 'Odborné zameranie', 'Evidenčné číslo', 'Vydané'])
+        self.assertEqual(stitky[0], stitky[1])
+        self.assertEqual(hodnoty[0][4], 'pozemné stavby')
+        # osvedčenie stavebného dozoru 2010 odborné zameranie neuvádza (zakrytý sken v sablona/opravnenia/)
+        self.assertEqual(hodnoty[1][4], 'v osvedčení neuvedené')
+        for trieda, d, za in doklady:
+            self.assertEqual(trieda, f'doklad riadkov-{len(stitky[0])}')
+            # poradie častí = poradie riadkov mriežky: nadpis, rám s obrázkom, popis, tabuľka, odkaz do registra
+            self.assertRegex(d, r'(?s)^[^<]*</h2><figure class="doklad-obr"><a class="doklad-odkaz"[^>]*>(<picture>.*?</picture>|<img [^>]*>)</a>'
+                                r'<figcaption class="doklad-popis">.*?</figcaption></figure><dl class="fakty">')
+            self.assertTrue(za.startswith('<p class="doklad-register">'), za[:80])
+        # stránka služby: jedno osvedčenie bez obrázka, bez triedy riadkov a bez doplneného riadka
+        sluzba = self.telo('stavebny-dozor/index.html')
+        self.assertIn('<div class="doklad"><h2 class="doklad-h">', sluzba)
+        self.assertNotIn('riadkov-', sluzba)
+        self.assertNotIn('neuvedené', html.unescape(sluzba).replace(' ', ' '))
+        self.assertEqual(csp_sedi(self.ostry / 'opravnenia' / 'index.html'), '')
+
+    def test_osvedcenia_ram_a4_a_spolocne_riadky(self):
+        # rám s rovnakým pomerom strán (A4) a šírkou stĺpca; sken orezaný na hranu papiera vypĺňa vnútro rámu (cover,
+        # brána pokus 2 nález 1: contain dal skenom s iným pomerom strán iný biely pás a papier v inej výške)
+        odkaz = deklaracie(self.zaklad, '.doklad-odkaz')
+        self.assertEqual(odkaz.get('aspect-ratio'), '210/297')
+        self.assertEqual(odkaz.get('width'), '100%')
+        self.assertEqual(odkaz.get('display'), 'block')
+        self.assertEqual(odkaz.get('background'), '#fff')
+        img = deklaracie(self.zaklad, '.doklad-odkaz img')
+        self.assertEqual(img.get('object-fit'), 'cover')
+        self.assertEqual(img.get('position'), 'absolute')
+        self.assertEqual(img.get('height'), 'calc(100% - 2 * var(--m-12))')
+        self.assertNotIn('auto', img.get('height', 'auto'))
+        # rám najviac 554 px: 528 px skenu + 2 x 12 px okraj + 2 x 1 px čiara, sken 528 px sa zobrazí 1 : 1
+        self.assertEqual(deklaracie(self.zaklad, '.doklady').get('--doklad-max'), '554px')
+        # nadpis, rám, popis, každý riadok tabuľky a odkaz v spoločných riadkoch oboch stĺpcov (subgrid od 640 px)
+        sg = ''.join(css_bloky(self.subgrid, '@media (min-width:640px)'))
+        self.assertIn('.doklady>.doklad{display:grid;grid-template-rows:subgrid;', sg)
+        for n in range(1, 8):
+            self.assertIn(f'.doklady>.riadkov-{n}{{grid-row:span {n + 4}}}', sg)
+        self.assertIn('.doklady>.doklad>.doklad-h{grid-row:1}', sg)
+        self.assertIn('.doklady>.doklad>.doklad-obr{display:grid;grid-template-rows:subgrid;grid-row:2/span 2}', sg)
+        self.assertIn('.doklady>.doklad>.fakty{display:grid;grid-template-rows:subgrid;grid-row:4/-2}', sg)
+        self.assertIn('.doklady>.doklad>.doklad-register{grid-row:-2}', sg)
+        # medzera medzi riadkami dokladov nie je row-gap (zdedil by sa medzi časti dokladu)
+        self.assertIn('.doklady{row-gap:0;', sg)
+
+    def test_karty_casti_v_poradi_riadkov(self):
+        # časti karty idú v pevnom poradí; CSS ich kladie do riadkov subgrid (kóta 1, nadpis 2, údaje -3, rola -2)
+        pripady = (('index.html', 'projekt', ['kota', 'projekt-riadok'], ['projekt-udaje', 'projekt-text']),
+                   ('realizacie/index.html', 'dlazdica', ['kota', 'dlazdica-nazov'], ['projekt-udaje', 'projekt-text']),
+                   ('stavebny-dozor/index.html', 'dlazdica', ['kota', 'dlazdica-nazov'], ['projekt-udaje', 'projekt-text']),
+                   ('novinky/index.html', 'novinka-karta', ['kota', 'novinka-nazov'], ['projekt-ilustr', 'projekt-udaje', 'projekt-text']))
+        for cesta, trieda, zaciatok, volitelne in pripady:
+            r = CastiKariet(trieda)
+            r.feed(self.telo(cesta))
+            self.assertGreaterEqual(len(r.karty), 2, cesta)
+            for casti in r.karty:
+                self.assertEqual(casti[:2], zaciatok, (cesta, casti))
+                zvysok = casti[2:]
+                self.assertEqual(zvysok, [c for c in volitelne if c in zvysok], (cesta, casti))
+                # riadkov subgrid je dosť pre všetky časti: fotka + kóta + nadpis + voliteľné
+                self.assertLessEqual(len(casti), 2 + len(volitelne))
+        # novinka s ilustračnou fotkou aj stavbou a úryvkom (taký pár skutočný obsah dnes nemá): všetkých 5 častí
+        # v poradí riadkov, popis ilustračnej fotky v 3. riadku pred stavbou
+        w = skutocny()['web']
+        n = next((x for x in w.novinky if not x['karta'] and x.get('ilustracna_foto')), None)
+        self.assertIsNotNone(n)
+        r = CastiKariet('novinka-karta')
+        with redirect_stderr(io.StringIO()):
+            r.feed(w.novinka_karta('', dict(n, realizacia=w.realizacie[0]['slug'], text='Krátky úryvok novinky.')))
+        self.assertEqual(r.karty, [['kota', 'novinka-nazov', 'projekt-ilustr', 'projekt-udaje', 'projekt-text']])
+
+    def test_karty_v_spolocnych_riadkoch_subgrid(self):
+        sg = self.subgrid
+        # svetlé karty: 5 riadkov (fotka, kóta, nadpis, údaje, rola), novinky 6 (navyše popis ilustračnej fotky)
+        for kus in ('.karty{row-gap:0;margin-bottom:calc(-1 * var(--m-48))}',
+                    '.karty>.projekt{display:grid;grid-template-rows:subgrid;grid-row:span 5;margin-bottom:var(--m-48)}',
+                    '.karty>.novinka-karta{grid-row:span 6}',
+                    '.karty>.projekt>figure{display:grid;grid-template-rows:subgrid;grid-row:1/-1}',
+                    '.karty>.projekt figcaption{display:grid;grid-template-rows:subgrid;grid-row:2/-1}',
+                    '.karty figcaption>.projekt-ilustr{grid-row:3}', '.karty figcaption>.projekt-udaje{grid-row:-3}',
+                    '.karty figcaption>.projekt-text{grid-row:-2}'):
+            self.assertIn(kus, sg)
+        # tmavý pás: mriežka so stĺpcom na kartu a 5 riadkami, karty a karta Ďalšie realizácie cez všetky riadky
+        for kus in ('.pas{display:grid;grid-auto-flow:column;grid-auto-columns:var(--karta);grid-template-rows:repeat(5,auto);row-gap:0}',
+                    '.pas>.projekt{display:grid;grid-template-rows:subgrid;grid-row:1/-1}',
+                    '.pas>.projekt-dalsi{grid-row:1/-1;aspect-ratio:auto}',
+                    '.pas>.projekt>figure{display:grid;grid-template-rows:subgrid;grid-row:1/-1}',
+                    '.pas>.projekt figcaption{display:grid;grid-template-rows:subgrid;grid-row:2/-1}',
+                    '.pas figcaption>.projekt-udaje{grid-row:-3}', '.pas figcaption>.projekt-text{grid-row:-2}'):
+            self.assertIn(kus, sg)
+        # obmedzený pohyb: pás ako mriežka po riadkoch, karta cez 5 riadkov
+        rm = ''.join(css_bloky(sg, '@media (prefers-reduced-motion:reduce)'))
+        self.assertIn('.pas>.projekt,.pas>.projekt-dalsi{grid-row:span 5;', rm)
+        # pripnutý pás bez subgrid: karty natiahnuté na rovnakú výšku, nie zarovnané hore
+        pripnuty = deklaracie(self.zaklad, '.prace.pripnute .pas')
+        self.assertEqual(pripnuty.get('align-items'), 'stretch')
+        self.assertIn('--karta', pripnuty)
+        # content-visibility zapína layout containment a karta by prestala byť subgrid
+        self.assertNotRegex(self.css, r'\.dlazdica[^{}]*\{[^}]*content-visibility')
+
+    def test_fazy_v_spolocnych_riadkoch(self):
+        pc = ''.join(b for b in css_bloky(self.css, '@media (min-width:1024px)'))
+        fazy = ''.join(css_bloky(pc, '@supports (grid-template-rows:subgrid)'))
+        self.assertIn('.fazy{grid-template-rows:repeat(4,auto)}', fazy)
+        self.assertIn('.faza{display:grid;grid-template-rows:subgrid;grid-row:1/-1}', fazy)
+        self.assertIn('.faza .vystup{grid-row:4}', fazy)
+        telo = self.telo('index.html')
+        for li in re.findall(r'<li class="faza">(.*?)</li>', telo, re.S):
+            # číslo, nadpis, text a nanajvýš riadok Činnosť: 4 riadky subgrid
+            self.assertRegex(li, r'^<span class="faza-dlzka[^"]*"[^>]*>.*?</span></span><h3>[^<]*</h3><p>.*?</p>(<p class="vystup">.*</p>)?$')
+
+    def test_text_vedla_textu_na_zakladnej_ciare(self):
+        # pravidlá pri každej šírke (mimo @media): štítok a hodnota, číslo činnosti a text, názov a cena
+        self.assertEqual(deklaracie(self.zaklad, '.fakty>div').get('align-items'), 'baseline')
+        self.assertEqual(deklaracie(self.zaklad, '.cinnosti li').get('align-items'), 'baseline')
+        self.assertNotIn('padding-top', deklaracie(self.zaklad, '.cinnost-c'))
+        self.assertEqual(deklaracie(self.zaklad, '.sluzba').get('align-items'), 'baseline')
+        # kratší sused sa natiahne na výšku dlhšieho, voľné miesto ide pod text
+        self.assertEqual(deklaracie(self.zaklad, '.susedia a').get('align-content'), 'start')
+        # popis pod číslom v cenníku sa zalamuje (pri 1024 px pretiekol okraj stránky o 6 px)
+        self.assertEqual(deklaracie(self.zaklad, '.cena small').get('white-space'), 'normal')
+
+    def test_kota_detailu_na_hrane_fotky(self):
+        pc = ''.join(css_bloky(self.css, '@media (min-width:1024px)'))
+        self.assertIn('.detail:not(.detail-bez-fotky) .detail-text>.kota:first-child{margin-top:calc(-1 * var(--m-8))}', pc)
+        # údaje v hlave detailu a text pod nimi s jednou ľavou hranou (9. stĺpec ako bok ostatných podstránok)
+        self.assertIn('.detail .detail-text{grid-column:9/-1}', pc)
+        self.assertIn('.hlava-detail .hlava-bok{grid-column:9/-1;', pc)
+        # kóta je 16 px vysoká s čiarou v polovici: posun o 8 px dá čiaru na hornú hranu fotky
+        kota = deklaracie(self.zaklad, '.kota')
+        self.assertEqual(kota.get('min-height'), '16px')
+        self.assertIn('0 50%/100% 1px', kota.get('background', ''))
+        telo = self.telo('realizacie/novostavba-rd-nitrianske-hrnciarovce/index.html')
+        self.assertIn('<div class="detail-text atelier-text"><span class="kota', telo)
+
+    def test_jedna_skala_medzier(self):
+        root = deklaracie(self.zaklad, ':root')
+        self.assertEqual({k: v for k, v in root.items() if k.startswith('--m-')},
+                         {f'--m-{n}': f'{n}px' for n in (4, 8, 12, 16, 24, 32, 48, 64, 96)})
+        # súčiastky, kde meranie našlo nerovnaké medzery: margin, padding a gap len zo škály (alebo 0, auto, %)
+        selektory = ('.fakty>div', '.cinnosti li', '.sluzba', '.cena small', '.susedia a', '.doklady', '.doklady .doklad-h',
+                     '.doklad-obr', '.doklad-popis', '.doklad-register', '.projekt-riadok', '.projekt-udaje',
+                     '.projekt-text', '.projekt-svetly .kota', '.projekt-svetly .dlazdica-nazov,.projekt-svetly .novinka-nazov',
+                     '.projekt-svetly .projekt-text', '.projekt-ilustr', '.sekcia-karty .karty', '.faza', '.faza h3',
+                     '.faza p', '.faza .vystup', '.mapa-spodok', '.vizitka')
+        for sel in selektory:
+            d = deklaracie(self.zaklad, sel)
+            self.assertTrue(d, sel)
+            for k, v in d.items():
+                if k.split('-')[0] in ('margin', 'padding', 'gap', 'row', 'column') and k != 'grid-template-columns':
+                    self.assertNotRegex(v, r'(?<![\w-])\d+(\.\d+)?px', (sel, k, v))
+        # vizitka a spodok s tlačidlom Navigovať majú jeden vnútorný okraj (logo a tlačidlo na jednej ľavej hrane)
+        self.assertEqual(deklaracie(self.zaklad, '.vizitka').get('padding'), 'var(--karta-okraj)')
+        self.assertTrue(deklaracie(self.zaklad, '.mapa-spodok').get('padding', '').startswith('0 var(--karta-okraj) '))
+
+    def test_karta_kontaktu_na_verzalke_nadpisu(self):
+        # brána pokus 3 nález 1: od 768 px stojí karta s adresou vedľa nadpisu sekcie Kontakt; jej horná čiara bola na
+        # hrane škatule h2, verzálka o 4 až 11 px nižšie (snímky presnost/oprava-po-prejde.md). Karta ide dole o odstup
+        # verzálky od hrany škatule: Geist pri line-height 1 (ascent 1005, descent 295, capHeight 710 na 1000) 0,145 em.
+        try:
+            from fontTools.ttLib import TTFont
+        except ImportError:
+            self.skipTest('fontTools nie je')
+        f = TTFont(KOREN / 'sablona' / 'geist-latin.woff2')
+        em, asc, desc, cap = f['head'].unitsPerEm, f['hhea'].ascent, -f['hhea'].descent, f['OS/2'].sCapHeight
+        nadpis = deklaracie(self.zaklad, '.nadpis')
+        self.assertEqual(nadpis.get('line-height'), '1')
+        k = (1 - (asc + desc) / em) / 2 + asc / em - cap / em
+        self.assertAlmostEqual(k, 0.145, places=3)
+        tablet = '\n'.join(css_bloky(self.css, '@media (min-width:768px)'))
+        self.assertEqual(deklaracie(tablet, '.kontakt-mapa').get('margin-top'), f'calc(.145 * {nadpis["font-size"]})')
+        # na mobile je karta pod textom, bez posunu
+        self.assertNotIn('margin-top', deklaracie(self.zaklad, '.kontakt-mapa'))
+        for cesta in ('index.html', 'kontakt/index.html'):
+            sek = self.telo(cesta).split('id="kontakt"', 1)[1]
+            self.assertIn('<div class="kontakt-text"><h2 class="nadpis" id="kontakt-nadpis">', sek, cesta)
+            self.assertIn('<div class="kontakt-mapa"><figure class="mapa-karta">', sek, cesta)
 
 
 # ---------------------------------------------------------------- linka bmb-fotky: AVIF, WebP a fotky-web
@@ -3319,12 +3708,16 @@ class TestFotkyWeb(unittest.TestCase):
                         with Image.open((self.web / cesta).parent / u) as im:
                             self.assertEqual((im.format, im.width), (druh, w), u)
                 self.assertTrue(img['src'].endswith('.webp'))
-        # lightbox: AVIF v data-avif odkazov galérie a v data-sirky-avif skrátenej zmluvy pásu úvodu
+        # lightbox: AVIF v data-avif odkazov galérie (pri náhľade so srcset v zdroji AVIF náhľadu, lb_zdroje)
+        # a v data-sirky-avif skrátenej zmluvy pásu úvodu
         s = self.html('realizacie/plna/index.html')
-        odkazy = [a for t, a in rozober(self.web / 'realizacie/plna/index.html').prvky if t == 'a' and 'data-lightbox' in a]
-        self.assertTrue(odkazy)
-        for a in odkazy:
-            for u, _w in srcset_polozky(a['data-avif']):
+        prvky = rozober(self.web / 'realizacie/plna/index.html').prvky
+        indexy = [k for k, (t, a) in enumerate(prvky) if t == 'a' and 'data-lightbox' in a]
+        self.assertTrue(indexy)
+        for k in indexy:
+            _webp, avif, _z = lb_zdroje(prvky, k)
+            self.assertTrue(avif, prvky[k][1].get('href'))
+            for u, _w in srcset_polozky(avif):
                 self.assertTrue((self.web / 'realizacie' / 'plna' / u).resolve().is_file(), u)
         uvod = self.html('index.html')
         pas = re.findall(r'<ul class="lb-zoznam" data-galeria="[a-z0-9-]+" data-cesta="([^"]*)"[^>]*>(.*?)</ul>', uvod, re.S)
@@ -3481,6 +3874,382 @@ class TestFotkyWeb(unittest.TestCase):
         po = {p: (p.stat().st_mtime_ns, hashlib.sha256(p.read_bytes()).hexdigest())
               for p in web.rglob('*') if p.is_file()}
         self.assertEqual(po, pred)
+
+
+# ---------------------------------------------------------------- linka bmb-presnost: ostré fotky kariet a osvedčenia
+
+# karta pásu má pri 1920 px najviac 480 CSS px, pri hustote 2 teda 960 px zariadenia; viac než 1,25 px obrazovky na
+# 1 px zdroja je mäkká fotka (presnost/meranie/fotky-pred.md, pravidlo A), výrez 4 : 5 zdroja preto aspoň 960 / 1,25
+MIN_OREZ_PASU = 768
+
+
+class TestPresnostFotky(unittest.TestCase):
+    """Linka bmb-presnost (ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md): fotka karty z nastavenia
+    karta_foto, výrez 4 : 5 kariet pásu dosť veľký, prísnejší prah kódovania titulných fotiek, AI predloha len nad
+    1,25 x šírku zdroja, sizes pri object-fit: cover a osvedčenia zväčšené bez AI. Sabotáže:
+    presnost/nastroje/sabotaz_presnost.py (každý test musí bez opravy zlyhať)."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry = s['ostry']
+        cls.w = s['web']
+
+    def test_karta_foto_z_nastaveni(self):
+        nast = self.w.nastavenia.get('karta_foto')
+        self.assertIsInstance(nast, dict)
+        self.assertEqual(nast.get('novostavba-rd-nitrianske-hrnciarovce', {}).get('subor'), '09.jpg')
+        podla = {r['slug']: r for r in self.w.realizacie}
+        for slug, volba in nast.items():
+            subor = volba['subor'] if isinstance(volba, dict) else volba
+            # "detail": false mení len kartu mriežky a služieb (karta_len), titulná fotka detailu ostáva (brána 1, nález 2)
+            kluc = 'karta_len' if isinstance(volba, dict) and volba.get('detail') is False else 'karta'
+            self.assertEqual(podla[slug][kluc]['rel'], f'{slug}/{subor}', slug)
+        kal = podla['rd-kalvaria-bratislava']
+        self.assertEqual(kal['karta']['rel'], 'rd-kalvaria-bratislava/02.jpg')
+        mriezka = (self.ostry / 'realizacie' / 'index.html').read_text(encoding='utf-8')
+        kal_karta = mriezka.split('href="../realizacie/rd-kalvaria-bratislava/"', 1)[1].split('</li>', 1)[0]
+        self.assertIn('rd-kalvaria-bratislava/01-', kal_karta)
+        self.assertNotIn('rd-kalvaria-bratislava/02-', kal_karta)
+        # karta pásu, titulná fotka detailu aj karta mriežky Hrnčiaroviec sú 09.jpg (výrez 4 : 5 a celá fotka)
+        uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
+        hrn = uvod.split('href="realizacie/novostavba-rd-nitrianske-hrnciarovce/"', 1)[0].rsplit('<li class="projekt">', 1)[1]
+        self.assertIn('novostavba-rd-nitrianske-hrnciarovce/09-960-45.webp', hrn)
+        self.assertNotIn('/01-', hrn)
+        detail = (self.ostry / 'realizacie' / 'novostavba-rd-nitrianske-hrnciarovce' / 'index.html').read_text(encoding='utf-8')
+        pohlad = detail.split('<figure class="pohlad detail-foto">', 1)[1].split('</figure>', 1)[0]
+        self.assertIn('novostavba-rd-nitrianske-hrnciarovce/09-', pohlad)
+        # zlá voľba (chýbajúci súbor, vizualizácia alebo pôvodný stav) nechá kartu podľa pravidiel a varuje
+        r = copy_realizacie(podla['novostavba-rd-nitrianske-hrnciarovce'])
+        povodna = r['karta']
+        stare = self.w.nastavenia['karta_foto']
+        try:
+            self.w.nastavenia['karta_foto'] = {r['slug']: 'neexistuje.jpg'}
+            r['karta'] = povodna
+            err = io.StringIO()
+            with redirect_stderr(err):
+                self.w.karta_z_nastaveni(r)
+            self.assertIs(r['karta'], povodna)
+            self.assertIn('karta_foto', err.getvalue())
+            self.w.nastavenia['karta_foto'] = {r['slug']: '16.jpg'}
+            self.w.karta_z_nastaveni(r)
+            self.assertEqual(r['karta']['rel'], f'{r["slug"]}/16.jpg')
+        finally:
+            self.w.nastavenia['karta_foto'] = stare
+
+    def test_nahradena_karta_nie_je_prva_velka_v_galerii(self):
+        """Fotka karty nahradená nastavením karta_foto (malý zdroj) nesmie byť prvou veľkou fotkou galérie: inak by sa
+        mäkká fotka ukázala cez celú šírku galérie a jej bajty by na mobile zdržali LCP (overenie zostavy bmb-presnost,
+        Lighthouse detailu Hrnčiaroviec 89 pred opravou). V galérii ostáva ako bežná fotka."""
+        podla = {r['slug']: r for r in self.w.realizacie}
+        hrn = podla['novostavba-rd-nitrianske-hrnciarovce']
+        self.assertEqual(hrn['karta_nahradena']['rel'], 'novostavba-rd-nitrianske-hrnciarovce/01.jpg')
+        # predpoklad: nahradená fotka je prvá v galérii a inak by prvou veľkou fotkou bola
+        self.assertIs(hrn['galeria'][0], hrn['karta_nahradena'])
+        self.assertTrue(self.w.nezvacsena(hrn['galeria'][0], build.GALERIA_BUNKY['prva']))
+        for slug in self.w.nastavenia['karta_foto']:
+            r = podla[slug]
+            detail = (self.ostry / 'realizacie' / slug / 'index.html').read_text(encoding='utf-8')
+            galeria = detail.split('<ul class="galeria', 1)[1].split('</ul>', 1)[0]
+            polozky = galeria.split('<li class="galeria-polozka')[1:]
+            self.assertEqual(len(polozky), len(r['galeria']), slug)
+            nahradena = r.get('karta_nahradena')
+            if not nahradena:
+                continue
+            # súbor na webe: <obr_dir>/<nn>-<šírka>.<formát> (nn je poradie fotky, nie meno v obsah/)
+            s_nou = [p for p in polozky if f'{r["obr_dir"]}/{nahradena["nn"]}-' in p]
+            self.assertEqual(len(s_nou), 1, slug)
+            self.assertFalse(s_nou[0].startswith(' prva'), slug)
+        hrn_detail = (self.ostry / 'realizacie' / 'novostavba-rd-nitrianske-hrnciarovce' / 'index.html').read_text(encoding='utf-8')
+        self.assertNotIn('galeria-polozka prva', hrn_detail)
+
+    def test_lightbox_zdroje_z_nahladu(self):
+        """Odkaz galérie s náhľadom so srcset nenesie data-srcset ani data-avif (sú bajtovo rovnaké ako srcset náhľadu
+        a jeho zdroja AVIF), app.js ich berie z náhľadu; malá fotka a doklady ich nesú ďalej (overenie zostavy
+        bmb-presnost: HTML detailu Hrnčiaroviec 111 124 B s duplicitami, Lighthouse mobil 89, po zmene 91)."""
+        odkazov = z_nahladu = 0
+        for r in self.w.realizacie:
+            if not r['galeria']:
+                continue
+            s = (self.ostry / 'realizacie' / r['slug'] / 'index.html').read_text(encoding='utf-8')
+            galeria = s.split('<ul class="galeria', 1)[1].split('</ul>', 1)[0]
+            for p in galeria.split('<li class="galeria-polozka')[1:]:
+                a = re.search(r'<a class="galeria-odkaz( mala)?"[^>]*>', p)
+                odkazov += 1
+                if a.group(1):
+                    self.assertIn(' data-srcset="', a.group(0), r['slug'])
+                    continue
+                z_nahladu += 1
+                self.assertNotIn(' data-srcset="', a.group(0), r['slug'])
+                self.assertNotIn(' data-avif="', a.group(0), r['slug'])
+                # náhľad nesie to, čo by inak nieslo data-srcset a data-avif
+                self.assertRegex(p, r'<img [^>]*srcset="[^"]+"', r['slug'])
+                self.assertRegex(p, r'<source type="image/avif" srcset="[^"]+"', r['slug'])
+        self.assertGreater(z_nahladu, 100)
+        self.assertGreaterEqual(odkazov, z_nahladu)
+        # doklady na Oprávneniach majú vlastný markup a srcset ďalej v data-srcset
+        opr = (self.ostry / 'opravnenia' / 'index.html').read_text(encoding='utf-8')
+        self.assertEqual(len(re.findall(r'data-galeria="osvedcenia"[^>]*', opr)), 2)
+        self.assertEqual(opr.count(' data-srcset="'), 2)
+        js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        self.assertIn("a.getAttribute('data-srcset') || nahladZ(a, 'img')", js)
+        self.assertIn("""nahladZ(a, 'source[type="image/avif"]')""", js)
+
+    def test_karty_pasu_s_dost_velkym_zdrojom(self):
+        with redirect_stderr(io.StringIO()):
+            pas = self.w.pas_vyber()
+        self.assertTrue(pas)
+        def vyrez_karty(f):
+            w, h = f['w'], f['h']
+            if f.get('vyrez45'):
+                x0, y0, x1, y1 = build.box_px(f['vyrez45'], w, h)
+                w, h = x1 - x0, y1 - y0
+            return build.orez_rozmer(w, h, (4, 5))[0]
+        for r in pas:
+            f = r['karta']
+            cw = vyrez_karty(f)
+            self.assertGreaterEqual(cw, MIN_OREZ_PASU, (r['slug'], f['rel'], cw))
+        # Hrnčiarovce: výrez aspoň 960 px, teda bez zväčšenia aj pri 1920 px a hustote 2 (zadanie: karta musí byť ostrá),
+        # od brány 1 (nález 9) z rámika s viac domom a menej hliny
+        hrn = next(r for r in pas if r['slug'] == 'novostavba-rd-nitrianske-hrnciarovce')
+        self.assertTrue(hrn['karta'].get('vyrez45'))
+        self.assertGreaterEqual(vyrez_karty(hrn['karta']), 960)
+
+    def test_titulne_fotky_prisnejsi_prah(self):
+        sys.path.insert(0, str(KOREN / 'nastroje'))
+        import predlohy_web as pw
+        self.assertGreaterEqual(pw.PRAH_TITULNE['avif'], 0.997)
+        self.assertGreaterEqual(pw.PRAH_TITULNE['webp'], 0.997)
+        self.assertGreater(pw.PRAH_TITULNE['avif'], pw.PRAH['avif'])
+        titulne = pw.titulne_fotky(self.w)
+        hrdina = self.w.hrdina_foto()[1]
+        self.assertIn(hrdina['sha'], titulne)
+        for r in self.w.realizacie:
+            if r['karta']:
+                self.assertIn(r['karta']['sha'], titulne, r['slug'])
+        man = json.loads((KOREN / 'fotky-web' / 'manifest.json').read_text(encoding='utf-8'))['fotky']
+        for sha in titulne:
+            z = man.get(sha)
+            self.assertIsNotNone(z, sha)
+            self.assertTrue(z.get('titulna'), z['rel'])
+            self.assertEqual(z['zhoda'], pw.PRAH_TITULNE, z['rel'])
+        ostatne = [z for sha, z in man.items() if sha not in titulne]
+        self.assertTrue(ostatne)
+        for z in ostatne:
+            self.assertEqual(z['zhoda'], pw.PRAH, z['rel'])
+
+    def test_ai_predloha_len_nad_zdroj(self):
+        sys.path.insert(0, str(KOREN / 'nastroje'))
+        import predlohy_web as pw
+        master = Image.new('RGB', (2400, 1800), (255, 0, 0))
+        zdroj = Image.new('RGB', (1440, 1080), (0, 0, 255))
+        zaklad = pw.zaklad_variantu(master, zdroj)
+        self.assertIs(zaklad(960), zdroj)
+        self.assertIs(zaklad(1440), zdroj)
+        self.assertIs(zaklad(1800), zdroj)       # 1,25 x 1440
+        self.assertIs(zaklad(1920), master)
+        self.assertIs(zaklad(960, '45'), zdroj)  # výrez 4 : 5 zdroja 864 px, 1,25 x 864 = 1080
+        self.assertIs(zaklad(1200, '45'), master)
+        self.assertIs(pw.zaklad_variantu(master, None)(480), master)
+        # titulné fotky do 1,6 x zdroja (brána bmb-presnost pokus 1, nález 4: karta Rosnička 14 brala 960 px z AI)
+        self.assertGreaterEqual(pw.ZDROJ_LANCZOS_MAX_TITULNE, 1.5)
+        titulny = pw.zaklad_variantu(master, zdroj, pw.ZDROJ_LANCZOS_MAX_TITULNE)
+        self.assertIs(titulny(2160), zdroj)      # 1,5 x 1440
+        self.assertIs(titulny(1200, '45'), zdroj)
+        self.assertIs(titulny(2400), master)
+        # skutočné fotky-web: každá fotka s AI predlohou má šírky do 1,25 x zdroja zo zdroja (záznam zo_zdroja_do),
+        # titulná do ZDROJ_LANCZOS_MAX_TITULNE x
+        man = json.loads((KOREN / 'fotky-web' / 'manifest.json').read_text(encoding='utf-8'))['fotky']
+        ai = [z for z in man.values() if z['predloha'].get('model') in pw.MODELY_AI]
+        self.assertTrue(ai)
+        self.assertTrue(any(z.get('titulna') for z in ai))
+        for z in ai:
+            w, _ = build.rozmery_zdroja(KOREN / 'obsah' / 'obrazky' / z['rel'])
+            k = pw.ZDROJ_LANCZOS_MAX_TITULNE if z.get('titulna') else 1.25
+            self.assertEqual(z.get('zo_zdroja_do'), int(w * k), z['rel'])
+        # karta novinky Vianočný pozdrav (Rosnička 14, výrez 734 px): súbor 960 px výrezu je zo zdroja, nie z AI
+        ros = next(z for z in man.values() if z['rel'] == 'bytovy-dom-rosnicka-bratislava/14.jpg')
+        self.assertTrue(ros.get('titulna'))
+        self.assertGreaterEqual(build.orez_rozmer(1224, 918, (4, 5))[0] * pw.ZDROJ_LANCZOS_MAX_TITULNE, 960)
+
+    def test_sizes_pri_cover_podla_pomeru_fotky(self):
+        sd = '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
+        self.assertEqual(build.sizes_pre_cover(sd, 2000, 1333), sd)
+        self.assertEqual(build.sizes_pre_cover(sd, 1280, 960), sd)
+        self.assertEqual(build.sizes_pre_cover(sd, 1496, 640),
+                         '(min-width: 1024px) calc(min(56vw, 1000px) * 1.56), calc((100vw - 32px) * 1.56)')
+        self.assertEqual(build.sizes_pre_cover('(min-width:640px) min(30vw, 570px), 46vw', 1440, 810),
+                         '(min-width:640px) calc(min(30vw, 570px) * 1.19), calc(46vw * 1.19)')
+        # web: titulná fotka detailu Devína (2,34 : 1 v ráme 3 : 2) a galéria s fotkou 16 : 9
+        detail = (self.ostry / 'realizacie' / 'rd-devin-bratislava' / 'index.html').read_text(encoding='utf-8')
+        pohlad = detail.split('<figure class="pohlad detail-foto">', 1)[1].split('</figure>', 1)[0]
+        self.assertIn('* 1.56)', pohlad)
+        siroke = 0
+        for r in self.w.realizacie:
+            telo = (self.ostry / 'realizacie' / r['slug'] / 'index.html').read_text(encoding='utf-8')
+            gal = telo.split('id="galeria"', 1)[1] if 'id="galeria"' in telo else ''
+            for f in r['galeria']:
+                if f['w'] / f['h'] > 1.6:
+                    kus = re.search(rf'<img src="[^"]*/{f["nn"]}-[^"]*" srcset="[^"]*" sizes="([^"]*)"', gal)
+                    if kus:
+                        siroke += 1
+                        self.assertIn('calc(', kus.group(1), (r['slug'], f['rel']))
+        self.assertGreater(siroke, 0)
+
+    def test_osvedcenia_zvacsene_bez_ai_a_bez_zmeny_pisma(self):
+        import numpy as np
+        r = Rozbor()
+        r.feed((self.ostry / 'opravnenia' / 'index.html').read_text(encoding='utf-8'))
+        odkazy = [a for t, a in r.prvky if t == 'a' and a.get('data-galeria') == 'osvedcenia']
+        self.assertEqual(len(odkazy), 2)
+        for a in odkazy:
+            sirky = dict((w, c) for c, w in srcset_polozky(a['data-srcset']))
+            meno = a['data-plna'].rsplit('/', 1)[1].rsplit('-', 1)[0]
+            zdroj = KOREN / 'sablona' / 'opravnenia' / f'{meno}.png'
+            # sken orezaný na hranu papiera (build.OREZ_DOKLADU, brána pokus 2): výrez pixelov skenu (po prevode do sRGB
+            # v otvor_rgb) bez prepočtu
+            z = build.sken_dokladu(zdroj)
+            self.assertEqual(z.tobytes(), build.otvor_rgb(zdroj).crop(build.OREZ_DOKLADU[meno]).tobytes())
+            # data-sirka ostáva šírkou skenu (lightbox doklad nezväčší nad ňu v CSS px), súbor pre hustotu 2 je v srcset
+            self.assertEqual(int(a['data-sirka']), z.width)
+            hore = 2 * max(z.width, 528)
+            self.assertIn(hore, sirky, a['data-srcset'])
+            self.assertTrue(a['data-plna'].endswith(f'-{hore}.webp'))
+            with Image.open(self.ostry / 'opravnenia' / f'{meno}-{hore}.webp') as o:
+                o = o.convert('RGB')
+            self.assertEqual(o.width, hore)
+            # zmenšené späť na rozmer skenu: ani písmeno iné (rozdiel jasu ako pri čistom Lanczose a WebP q90)
+            jas = lambda im: np.asarray(im.convert('L'), dtype=np.float64)  # noqa: E731
+            d = np.abs(jas(o.resize(z.size, Image.LANCZOS)) - jas(z))
+            self.assertLess(float(d.max()), 40, meno)
+            self.assertLess(float(np.percentile(d, 99.9)), 16, meno)
+            self.assertLess(float(d.mean()), 2.0, meno)
+            # jemné doostrenie: viac vysokých frekvencií než čistý Lanczos, ale nie prehnane
+            from PIL import ImageFilter
+
+            def hf(im):
+                y = jas(im)
+                g = np.asarray(im.convert('L').filter(ImageFilter.GaussianBlur(1)), dtype=np.float64)
+                return float(((y - g) ** 2).mean())
+            pomer = hf(o) / hf(z.resize(o.size, Image.LANCZOS))
+            self.assertGreater(pomer, 1.1, meno)
+            self.assertLess(pomer, 1.8, meno)
+            # zakryté miesto ostalo jednofarebné aj v zväčšenom súbore
+            k = o.width / z.width
+            box = [round(x * k) for x in zakrytie_v_oreze(meno)]
+            m = round(3 * k)
+            vyrez = o.convert('L').crop((box[0] + m, box[1] + m, box[2] - m, box[3] - m))
+            self.assertLess(max(vyrez.getextrema()) - min(vyrez.getextrema()), 24)
+
+    def test_karty_s_malym_zdrojom_cela_fotka(self):
+        """Brána bmb-presnost pokus 1, nález 1: karta mriežky, služby a novinky s výrezom 4 : 5 pod KARTA_MIN_OREZ px
+        zdroja ukáže celú fotku 4 : 3 (3 : 4) v strede rámu, najviac cap CSS px, takže pri hustote 2 pripadá na 1 px
+        zdroja najviac 1,25 px obrazovky aj pri najširšej karte; ostatné karty výrez 4 : 5 aspoň KARTA_MIN_OREZ px.
+        Karty služieb majú najprv fotky dosť veľké na celý rám (Vila X nie je na karte Stavebného manažmentu)."""
+        self.assertEqual(build.KARTA_MIN_OREZ, 676)               # 2 x 422 / 1,25 = 675,2
+        self.assertLessEqual(2 * build.KARTA_CELA_MAX / build.KARTA_MIN_OREZ, 1.25)
+        malych = 0
+        for stranka in ('realizacie', 'novinky', 'stavebny-dozor', 'stavebny-manazment', 'stavbyveduci'):
+            s = (self.ostry / stranka / 'index.html').read_text(encoding='utf-8')
+            for li in re.findall(r'<li class="(?:dlazdica|novinka-karta)[^"]*"[^>]*>.*?</li>', s, re.S):
+                img = re.search(r'<img [^>]*>', li)
+                m = re.search(r'src="[^"]*/(obrazky(?:-novinky)?)/([a-z0-9-]+)/(\d\d)-\d+-(\d\d)\.webp"', img.group(0)) if img else None
+                if not m:
+                    continue
+                trieda = (re.search(r'class="([^"]*)"', img.group(0)) or [None, ''])[1]
+                w_attr = int(re.search(r'width="(\d+)"', img.group(0)).group(1))
+                if m.group(4) == '45':
+                    self.assertNotIn('foto-cela', trieda, (stranka, li[:120]))
+                    continue
+                malych += 1
+                self.assertIn(m.group(4), ('43', '34'), (stranka, li[:120]))
+                self.assertIn('foto-cela', trieda)
+                cap = int(re.search(r'cap-(\d+)', trieda).group(1)) if 'cap-' in trieda else build.KARTA_CELA_MAX
+                self.assertIn(f'{cap}px)', re.search(r'sizes="([^"]*)"', img.group(0)).group(1))
+                self.assertGreater(w_attr, 0)
+        # 7 kariet s malým zdrojom z brány 1: Vila X, Kalvária, Grunty, Devín, Devínske Luky, dve novinky
+        self.assertGreaterEqual(malych, 7)
+        for r in self.w.realizacie + self.w.novinky:
+            f = self.w.foto_karty(r) if r in self.w.realizacie else r.get('karta')
+            if not f:
+                continue
+            cw = build.orez_rozmer(f['w'], f['h'], (4, 5))[0]
+            self.assertEqual(self.w.mala_karta(f), cw < build.KARTA_MIN_OREZ, f['rel'])
+            if self.w.mala_karta(f):
+                kod = '43' if f['w'] >= f['h'] else '34'
+                vw = build.orez_rozmer(f['w'], f['h'], build.OREZY[kod])[0]
+                cap = max(build.KARTA_CELA_MIN, min(build.KARTA_CELA_MAX, int(vw * build.KARTA_CELA_ZVACSENIE / 2) // 8 * 8))
+                self.assertLessEqual(2 * cap / vw, 1.25, f['rel'])
+        css = (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8')
+        self.assertIn('.projekt-foto img.foto-cela{position:absolute;inset:0;margin:auto;'
+                      f'width:min(100% - 2 * var(--m-24),var(--cap,{build.KARTA_CELA_MAX}px))', css)
+        for n in range(build.KARTA_CELA_MIN, build.KARTA_CELA_MAX, 8):
+            self.assertIn(f'.cap-{n}{{--cap:{n}px}}', css)
+        # služby: prvé karty majú fotku dosť veľkú na celý rám, Vila X je v zozname pod nimi
+        man = (self.ostry / 'stavebny-manazment' / 'index.html').read_text(encoding='utf-8')
+        karty = man.split('<ul class="karty">', 1)[1].split('</ul>', 1)[0]
+        self.assertNotIn('realizacie/vila-x-bratislava/', karty)
+        self.assertIn('realizacie/vila-x-bratislava/', man)
+        self.assertNotIn('foto-cela', karty)
+
+    def test_postup_a_firma_s_dost_velkym_zdrojom(self):
+        """Brána bmb-presnost pokus 1, nález 3: fotky Postupu a O firme majú pole 868 CSS px pri 1920 px (1736 px
+        obrazovky pri hustote 2); výrez 3 : 2 zdroja musí mať aspoň 1736 / 1,25 = 1389 px."""
+        for kluc in ('postup_foto', 'firma_foto'):
+            with redirect_stderr(io.StringIO()):
+                r, f = self.w.foto_nastavenia(kluc)
+            self.assertIsNotNone(f, kluc)
+            self.assertGreaterEqual(build.orez_rozmer(f['w'], f['h'], (3, 2))[0], 1389, (kluc, f['rel']))
+        uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
+        postup = uvod.split('<figure class="postup-foto">', 1)[1].split('</figure>', 1)[0]
+        self.assertIn(self.w.texty['postup']['foto_popis'], postup)
+        r, f = self.w.foto_nastavenia('postup_foto')
+        self.assertTrue(self.w.texty['postup']['foto_popis'].startswith(r['nazov']))
+
+    def test_vyrez_karty_z_ramika(self):
+        """Brána bmb-presnost pokus 1, nález 9: výrez 4 : 5 karty Hrnčiaroviec je z rámika karta_foto vyrez (viac domu,
+        menej hliny), súbor fotky-web ho nesie v zázname vyrez a zhoduje sa s výrezom z rámika, nie zo stredu."""
+        import numpy as np
+        hrn = next(r for r in self.w.realizacie if r['slug'] == 'novostavba-rd-nitrianske-hrnciarovce')
+        f = hrn['karta']
+        box = f.get('vyrez45')
+        self.assertTrue(box)
+        with Image.open(self.ostry / 'obrazky' / hrn['slug'] / f'{f["nn"]}-480-45.webp') as im:
+            web = np.asarray(im.convert('L'), dtype=np.float64)
+        zdroj = build.otvor_rgb(Path(f['zdroj']))
+        z_ramika = np.asarray(build.zmensi(zdroj.copy(), 480, 600, (4, 5), box).convert('L'), dtype=np.float64)
+        zo_stredu = np.asarray(build.zmensi(zdroj.copy(), 480, 600, (4, 5)).convert('L'), dtype=np.float64)
+        d_ram, d_str = float(np.abs(web - z_ramika).mean()), float(np.abs(web - zo_stredu).mean())
+        self.assertLess(d_ram, 4, d_ram)
+        self.assertGreater(d_str, 2 * d_ram, (d_ram, d_str))
+        # zlý rámik (výrez pod 768 px) sa nepoužije a build varuje
+        r = copy_realizacie(hrn)
+        stare = self.w.nastavenia['karta_foto']
+        f2 = dict(f)
+        f2.pop('vyrez45', None)
+        r['galeria'] = [f2 if x is f else x for x in r['galeria']]
+        try:
+            self.w.nastavenia['karta_foto'] = {r['slug']: {'subor': f['rel'].rsplit('/', 1)[1], 'vyrez': [0.4, 0.4, 0.6, 0.6]}}
+            err = io.StringIO()
+            with redirect_stderr(err):
+                self.w.karta_z_nastaveni(r)
+            self.assertNotIn('vyrez45', f2)
+            self.assertIn('výrez', err.getvalue())
+        finally:
+            self.w.nastavenia['karta_foto'] = stare
+
+    def test_css_nadpis_pasu_a_titulna_fotka_detailu(self):
+        """Brána bmb-presnost pokus 1, nálezy 5 a 6: nadpis v riadku s tlačidlom Fotky na celú výšku riadka; pole
+        titulnej fotky detailu najviac 1000 CSS px ako v sizes, súbor 2000 px sa pri 1920 px nezväčšuje."""
+        css = (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8')
+        self.assertIn('.projekt-riadok>h3{align-self:stretch}', css)
+        self.assertIn('.detail .detail-foto{grid-column:1/8;max-width:1000px}', css)
+        self.assertIn('min(56vw, 1000px)', build.SIZES_DETAIL)
+
+
+def copy_realizacie(r):
+    """Plytká kópia realizácie na skúšku nastavenia karta_foto (fotky ostávajú tie isté slovníky)."""
+    return dict(r)
 
 
 if __name__ == '__main__':
