@@ -1,0 +1,21 @@
+{
+  "name": "BM Building, s.r.o.",
+  "short_name": "BM Building",
+  "lang": "sk",
+  "start_url": "./",
+  "display": "browser",
+  "theme_color": "#17476f",
+  "background_color": "#f4f4f1",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

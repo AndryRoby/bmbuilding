@@ -12,20 +12,25 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rd-ivanka-pri-dunaji/01.jpg",
-      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 1 z 3"
+      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 1 z 4"
     },
     {
       "subor": "obsah/obrazky/rd-ivanka-pri-dunaji/02.jpg",
-      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 2 z 3"
+      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 2 z 4"
     },
     {
       "subor": "obsah/obrazky/rd-ivanka-pri-dunaji/03.jpg",
-      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 3 z 3"
+      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 3 z 4"
+    },
+    {
+      "subor": "obsah/obrazky/rd-ivanka-pri-dunaji/05.jpg",
+      "alt": "RD Ivanka pri Dunaji, prístavba wellness, fotka 4 z 4"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/1062080270520718",
   "datum": "2017-07-13",
   "poradie": 12,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

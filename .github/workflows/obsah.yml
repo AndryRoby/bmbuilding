@@ -41,7 +41,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Dočasný vypínač (Fable 22. 11. 2026): kým D1 a R2 nemajú nový obsah z liniek bmb-fb a bmb-fb-uplnost,
+      # premenná repozitára OBSAH_SYNC=vypnute preskočí sťahovanie, inak by stiahni.py zmazal realizácie zo zdroja fb.
       - name: Stiahnuť obsah z arling-obsah
+        if: ${{ vars.OBSAH_SYNC != 'vypnute' }}
         env:
           OBSAH_API: ${{ vars.OBSAH_API }}
           POVOL_PRAZDNE: ${{ inputs.povol_prazdne }}

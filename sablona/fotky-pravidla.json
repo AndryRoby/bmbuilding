@@ -1,0 +1,62 @@
+{
+ "_poznamka": "Pravidlá fotiek pre build.py (dizajn 3, ops/weby-na-mieru/klienti/bmbuilding/dizajn-3/fotky/FOTKY.md). Obsah sa nemení: ostrosť (rozptyl Laplaciánu na šedej verzii so šírkou 960 px) počíta build z každého súboru. prah_rozmazana: pod ním fotka nejde do galérie ani na obal (build varuje). obal: dlaždica realizácie, len fotka na šírku, nie detail, pôvodný stav ani interiér (interiér len keď názov realizácie naznačuje interiér, vzor interier_nazov); najprv fotky s odporucany_obal, potom ostatné vyhovujúce, inak modrý štvorec s logom. velka: hrdina úvodu. typy: kód typu fotky podľa cesty v obsah/obrazky (HE hotová stavba exteriér, LH letecká hotová, LR letecká rozostavaná, R rozostavaná, D detail, I interiér, P pôvodný stav); fotka môže mať aj vlastné pole typ v obsahu. Typ sa automaticky spoľahlivo nezistí: neznámy typ sa berie ako exteriér a galéria ho necháva v poradí obsahu. pary_pred_po: jediný zdroj pred a po, len dvojica so zhodným záberom overená človekom (istota vysoká; stredná sa nevykreslí), oba súbory v tej istej realizácii, rovnaký pomer strán.",
+ "prah_rozmazana": 80,
+ "_prah_vizualizacia": "Prah ostrosti pre vizualizácie (druh vizualizacia v obsahu). Vizualizácie z príspevkov sú často malé rendery (napríklad 320 x 179 px pri odovzdaní staveniska UFO), nie rozmazané fotky stavby; rozptyl Laplaciánu ich zmenšeného renderu je nízky, hoci sú čitateľné. Andrej o vizualizáciách: „on to tam chce a potrebuje“ (zadanie bmb-dokoncenie). Preto 0: vizualizácia ide do galérie vždy, za skutočnými fotkami, so štítkom. Nikdy nie je obal ani hrdina úvodu a v galérii ani lightboxe sa nezväčší nad 1,25 násobok súboru (build.py GALERIA_BUNKY, app.js).",
+ "prah_rozmazana_vizualizacia": 0,
+ "_ilustracne_fotky": "Novinky bez vlastnej použiteľnej fotky (ich obrázky na Facebooku sú cudzia grafika alebo osobné údaje, obsah-zmeny.md) majú na karte skutočnú fotku stavby BM Building z obsahu s popisom „Ilustračná fotka: <realizácia>, <miesto>“ v alt texte, na fotke aj pod nadpisom karty, aby nikto nemyslel, že fotka zobrazuje predmet novinky (zadanie oprava po bráne 21. 11. 2026, bod 2). Fotka musí byť v galérii realizácie, ostrá aspoň ako obal (obal.min_ostrost), nie vizualizácia ani pôvodný stav; inak build varuje a skúsi predvolenú. Kľúč je slug novinky, slug a subor určujú fotku, dovod zdôvodňuje výber. Výber: iná fotka než karta tej realizácie (v prehľade sa neopakuje rovnaký záber) a výrez 4 : 5 zo stredu bez ľudí. ilustracna_predvolena platí pre novinku bez fotky, ktorá tu nemá vlastný riadok (budúce príspevky linky bmb-fb).",
+ "ilustracne_fotky": {
+  "20-rokov-na-trhu-2025-08": {"slug": "bytovy-dom-na-krizovatkach-bratislava", "subor": "01.jpg", "dovod": "Novinka je o firme ako celku; web v časti O firme ukazuje tento bytový dom (nastavenia.json firma_foto, súbor 02.jpg), tu iný záber toho istého domu (01.jpg, hotová stavba, ostrosť asi 1990)."},
+  "osvedcenie-rozpoctovanie-2024-12": {"slug": "ufo-most-snp-bratislava", "subor": "09.jpg", "dovod": "Časovo najbližšia realizácia so známymi rokmi (2025, odovzdanie staveniska 3. 3. 2025) a projektový manažment, ku ktorému rozpočtovanie patrí; 09.jpg nie je karta realizácie (05.jpg), výrez 4 : 5 zo stredu ukazuje konštrukciu pod mostom bez ľudí (ostrosť asi 2180)."},
+  "vianocny-pozdrav-2015-12": {"slug": "bytovy-dom-rosnicka-bratislava", "subor": "02.jpg", "dovod": "Stavba, na ktorej BM Building pracovala v čase pozdravu (Rosnička, roky 2015 až 2016); 02.jpg nie je karta realizácie (01.jpg), hotový dom bez ľudí (ostrosť asi 2800). Pôvodne 04.jpg, ktorá bola ten istý záber ako karta 01.jpg a oprava 1 linky bmb-fb-uplnost ju zlúčila (fb/uplnost/oprava-1.md)."}
+ },
+ "ilustracna_predvolena": {"slug": "bytovy-dom-na-krizovatkach-bratislava", "subor": "01.jpg", "dovod": "Ten istý dom ako fotka časti O firme; novinka bez vlastnej fotky hovorí o firme, nie o jednej stavbe."},
+ "obal": {"min_sirka": 640, "min_ostrost": 350},
+ "odporucany_obal": {"min_sirka": 960, "min_ostrost": 500},
+ "velka": {"min_sirka": 1280, "min_ostrost": 800},
+ "interier_nazov": "ambulanc|klub|interi[eé]r|kancelári|ordináci",
+ "poradie_typov": ["HE", "LH", "LR", "R", "D", "I", "P"],
+ "typy": {
+  "bytove-domy-vtacnik-bratislava/01.jpg": "LH", "bytove-domy-vtacnik-bratislava/02.jpg": "LR",
+  "bytove-domy-vtacnik-bratislava/03.jpg": "R", "bytove-domy-vtacnik-bratislava/04.jpg": "LR",
+  "bytove-domy-vtacnik-bratislava/05.jpg": "R", "bytove-domy-vtacnik-bratislava/06.jpg": "R",
+  "bytove-domy-vtacnik-bratislava/07.jpg": "R", "bytove-domy-vtacnik-bratislava/08.jpg": "LH",
+  "bytove-domy-vtacnik-bratislava/09.jpg": "HE", "bytove-domy-vtacnik-bratislava/10.jpg": "HE",
+  "bytove-domy-vtacnik-bratislava/11.jpg": "D",
+  "bytovy-dom-devinske-luky-bratislava/01.jpg": "D", "bytovy-dom-devinske-luky-bratislava/02.jpg": "R",
+  "bytovy-dom-devinske-luky-bratislava/03.jpg": "R", "bytovy-dom-devinske-luky-bratislava/04.jpg": "HE",
+  "bytovy-dom-devinske-luky-bratislava/05.jpg": "HE",
+  "bytovy-dom-na-krizovatkach-bratislava/01.jpg": "HE", "bytovy-dom-na-krizovatkach-bratislava/02.jpg": "HE",
+  "bytovy-dom-na-krizovatkach-bratislava/03.jpg": "HE",
+  "bytovy-dom-rosnicka-bratislava/01.jpg": "HE", "bytovy-dom-rosnicka-bratislava/02.jpg": "D",
+  "bytovy-dom-rosnicka-bratislava/03.jpg": "R",
+  "dom-betliarska-bratislava-petrzalka/01.jpg": "HE", "dom-betliarska-bratislava-petrzalka/02.jpg": "R",
+  "dom-betliarska-bratislava-petrzalka/03.jpg": "R",
+  "filmovy-klub-spitalska-bratislava/01.jpg": "HE", "filmovy-klub-spitalska-bratislava/02.jpg": "I",
+  "filmovy-klub-spitalska-bratislava/03.jpg": "I", "filmovy-klub-spitalska-bratislava/04.jpg": "I",
+  "filmovy-klub-spitalska-bratislava/05.jpg": "I", "filmovy-klub-spitalska-bratislava/06.jpg": "I",
+  "filmovy-klub-spitalska-bratislava/07.jpg": "I",
+  "rd-ivanka-pri-dunaji/01.jpg": "HE", "rd-ivanka-pri-dunaji/02.jpg": "I", "rd-ivanka-pri-dunaji/03.jpg": "I",
+  "rd-jarovce-bratislava/01.jpg": "HE", "rd-kalvaria-bratislava/01.jpg": "HE", "rd-pezinok/01.jpg": "HE",
+  "rekonstrukcia-5-ambulancii-pre-lekarov/01.jpg": "I", "rekonstrukcia-5-ambulancii-pre-lekarov/02.jpg": "I",
+  "rekonstrukcia-5-ambulancii-pre-lekarov/03.jpg": "I",
+  "rekonstrukcia-okanikova-bratislava/01.jpg": "P", "rekonstrukcia-okanikova-bratislava/02.jpg": "P",
+  "rekonstrukcia-okanikova-bratislava/03.jpg": "P",
+  "rekonstrukcia-venturska-bratislava/01.jpg": "HE", "rekonstrukcia-venturska-bratislava/02.jpg": "R",
+  "rekonstrukcia-venturska-bratislava/03.jpg": "R",
+  "rezidencia-grunty-bratislava/01.jpg": "HE", "rezidencia-grunty-bratislava/02.jpg": "HE",
+  "rezidencia-grunty-bratislava/03.jpg": "LH"
+ },
+ "pary_pred_po": [],
+ "_navrhy_poznamka": "navrhy_pred_po build nečíta a nikdy nevykreslí. Zadanie bmb-olovnica (21. 11. 2026): pred a po len so zhodným záberom a vysokou istotou; jediný pár Rosnička 03/01 má istotu len strednú, preto je tu ako návrh. Do pary_pred_po ho presunie len človek, keď istotu potvrdí ako vysokú.",
+ "navrhy_pred_po": [
+  {
+   "slug": "bytovy-dom-rosnicka-bratislava",
+   "pred": "obrazky/bytovy-dom-rosnicka-bratislava/03.jpg",
+   "po": "obrazky/bytovy-dom-rosnicka-bratislava/01.jpg",
+   "istota": "stredná",
+   "popis_pred": "Rozostavané",
+   "popis_po": "Hotové",
+   "zdroj": "ops/weby-na-mieru/klienti/bmbuilding/dizajn-3/fotky/FOTKY.md, Páry pred a po (rovnaké stanovisko z rohu pred domom, prekryv 50 %)"
+  }
+ ]
+}

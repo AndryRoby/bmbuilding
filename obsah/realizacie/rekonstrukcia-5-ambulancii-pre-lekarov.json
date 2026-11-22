@@ -12,20 +12,49 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/01.jpg",
-      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 1 z 3"
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 1 z 10"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/02.jpg",
-      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 2 z 3"
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 2 z 10"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/03.jpg",
-      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 3 z 3"
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 3 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/05.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 4 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/06.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 5 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/08.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 6 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/09.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 7 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/10.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 8 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/11.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 9 z 10"
+    },
+    {
+      "subor": "obsah/obrazky/rekonstrukcia-5-ambulancii-pre-lekarov/12.jpg",
+      "alt": "Rekonštrukcia obchodných priestorov na 5 ambulancií, fotka 10 z 10"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/media/set/?set=a.709578009104281",
   "datum": "2017-07-13",
   "poradie": 10,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

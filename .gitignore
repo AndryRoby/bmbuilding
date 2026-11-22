@@ -1,2 +1,4 @@
 .pytest_cache/
 __pycache__/
+# web/ je výstup build.py; Actions (obsah.yml) ho zostaví sám z obsah/ a fotky-web/ (linka bmb-fotky, 22. 11. 2026)
+/web/

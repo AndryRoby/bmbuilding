@@ -9,10 +9,16 @@
   "text": "Polyfunkčný dom pozostáva z 32 bytov, 5 obchodných priestorov a reštaurácie.",
   "investor": "Vazex Reality s.r.o.",
   "zhotovitel": "HANT BA, a.s.",
-  "fotky": [],
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/polyfunkcny-objekt-na-krizovatkach-bratislava/01.jpg",
+      "alt": "Polyfunkčný objekt, ulica Na Križovatkách, Bratislava, fotka 1 z 1"
+    }
+  ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid036tHDvgdDvDA8dBUd2wpioThsFe9h2PrQ7Gsb77oy3hhqhuNhpKFAEmXVa5rYwP5rl",
   "datum": "2013-01-09",
   "poradie": 17,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

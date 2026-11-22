@@ -12,12 +12,17 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rd-kalvaria-bratislava/01.jpg",
-      "alt": "RD Kalvária, Bratislava, fotka 1 z 1"
+      "alt": "RD Kalvária, Bratislava, fotka 1 z 2"
+    },
+    {
+      "subor": "obsah/obrazky/rd-kalvaria-bratislava/02.jpg",
+      "alt": "RD Kalvária, Bratislava, fotka 2 z 2"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid0329wkKajMrWkJ1HRfSo6kAKeiDugEo3DuycBymXxxzx3FaM4Fy2W8kVf9663W56Fql",
   "datum": "2013-01-09",
   "poradie": 16,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

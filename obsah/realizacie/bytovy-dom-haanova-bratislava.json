@@ -9,10 +9,16 @@
   "text": "Bytový dom pavlačového typu pozostáva z 80 bytov a 2 obchodných priestorov.",
   "investor": "Vazex, s.r.o.",
   "zhotovitel": "TINAMA, Ing. Čahoj",
-  "fotky": [],
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/bytovy-dom-haanova-bratislava/01.jpg",
+      "alt": "Bytový dom, Haanova ulica, Bratislava, fotka 1 z 1"
+    }
+  ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid0T2W8j4pjYztLEnJPxvfyA8AuJ42TXyvC8KUYupwVoSaijhwh4V4eF5hFyMHCRjZVl",
   "datum": "2013-01-09",
   "poradie": 20,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

@@ -1,0 +1,48 @@
+{
+  "id": "dom-pod-lesom",
+  "slug": "dom-pod-lesom",
+  "nazov": "Dom pod lesom",
+  "miesto": "",
+  "rola": "Stavebný dozor",
+  "projektant": "Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk",
+  "roky": "",
+  "text": "Dom pod lesom podľa projektu Ing. arch. Martina Rezníka, Ing. arch. Matúša Poláka a Ing. arch. Renáty Bátorovej. BM Building tu vykonával stavebný dozor.",
+  "investor": "",
+  "zhotovitel": "",
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/dom-pod-lesom/01.jpg",
+      "alt": "Dom pod lesom, fotka 1 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/dom-pod-lesom/02.jpg",
+      "alt": "Vizualizácia, Dom pod lesom, autor Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk, fotka 2 z 5",
+      "druh": "vizualizacia",
+      "autor": "Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk"
+    },
+    {
+      "subor": "obsah/obrazky/dom-pod-lesom/03.jpg",
+      "alt": "Vizualizácia, Dom pod lesom, autor Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk, fotka 3 z 5",
+      "druh": "vizualizacia",
+      "autor": "Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk"
+    },
+    {
+      "subor": "obsah/obrazky/dom-pod-lesom/04.jpg",
+      "alt": "Vizualizácia, Dom pod lesom, autor Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk, fotka 4 z 5",
+      "druh": "vizualizacia",
+      "autor": "Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk"
+    },
+    {
+      "subor": "obsah/obrazky/dom-pod-lesom/05.jpg",
+      "alt": "Vizualizácia, Dom pod lesom, autor Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk, fotka 5 z 5",
+      "druh": "vizualizacia",
+      "autor": "Ing. arch. Martin Rezník, Ing. arch. Matúš Polák, Ing. arch. Renáta Bátorová, architekti.sk"
+    }
+  ],
+  "zdroj": "fb",
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid02veBFUAsFb4h76MRGsDfQLyzKbTeSNnhZ17vLbMjhQ5sPcBULfMy38xbpJKhmVwoyl",
+  "datum": "2024-10-31",
+  "poradie": 100,
+  "zverejnene": true,
+  "rok_prispevku": "2024"
+}

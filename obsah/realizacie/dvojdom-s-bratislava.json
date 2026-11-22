@@ -9,10 +9,28 @@
   "text": "Dvojdom S v Bratislave. BM Building tu zabezpečoval projektový manažment a stavebný dozor. Realizácia prebehla v rokoch 2021 až 2022.",
   "investor": "",
   "zhotovitel": "",
-  "fotky": [],
+  "fotky": [
+    {
+      "subor": "obsah/obrazky/dvojdom-s-bratislava/01.jpg",
+      "alt": "Dvojdom S, Bratislava, fotka 1 z 4"
+    },
+    {
+      "subor": "obsah/obrazky/dvojdom-s-bratislava/03.jpg",
+      "alt": "Dvojdom S, Bratislava, fotka 2 z 4"
+    },
+    {
+      "subor": "obsah/obrazky/dvojdom-s-bratislava/04.jpg",
+      "alt": "Dvojdom S, Bratislava, fotka 3 z 4"
+    },
+    {
+      "subor": "obsah/obrazky/dvojdom-s-bratislava/05.jpg",
+      "alt": "Dvojdom S, Bratislava, fotka 4 z 4"
+    }
+  ],
   "zdroj": "fb",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid0ci4YYRJy4xNrMEJLn3zLzLc2Dy1ZXZbxrCp2NYUgu9tjdzssKeQxpwVZhFEfWnyEl",
   "datum": "2026-10-04",
   "poradie": 1,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

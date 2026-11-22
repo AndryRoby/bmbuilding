@@ -12,20 +12,73 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/01.jpg",
-      "alt": "Bytový dom Rosnička, Bratislava, fotka 1 z 3"
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 1 z 16"
     },
     {
       "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/02.jpg",
-      "alt": "Bytový dom Rosnička, Bratislava, fotka 2 z 3"
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 2 z 16"
     },
     {
       "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/03.jpg",
-      "alt": "Bytový dom Rosnička, Bratislava, fotka 3 z 3"
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 3 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/06.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 4 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/07.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 5 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/09.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 6 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/10.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 7 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/11.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 8 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/12.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 9 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/13.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 10 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/14.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 11 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/15.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 12 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/16.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 13 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/17.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 14 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/18.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 15 z 16"
+    },
+    {
+      "subor": "obsah/obrazky/bytovy-dom-rosnicka-bratislava/19.jpg",
+      "alt": "Bytový dom Rosnička, Bratislava, fotka 16 z 16"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/1126977710697640",
   "datum": "2017-07-13",
   "poradie": 7,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

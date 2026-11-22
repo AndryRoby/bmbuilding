@@ -6,18 +6,35 @@
   "rola": "Stavebný dozor",
   "projektant": "",
   "roky": "2013 až 2014",
-  "text": "Rodinný dom v Jarovciach. Stavebný dozor vykonával Ing. Mário Bulko, BM Building.",
+  "text": "Rodinný dom v Jarovciach. Stavebný dozor vykonával Ing. Mário Bulko, BM Building.\nSkolaudované 09/2014.",
   "investor": "súkromný investor",
   "zhotovitel": "",
   "fotky": [
     {
       "subor": "obsah/obrazky/rd-jarovce-bratislava/01.jpg",
-      "alt": "RD Jarovce, Bratislava, fotka 1 z 1"
+      "alt": "RD Jarovce, Bratislava, fotka 1 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rd-jarovce-bratislava/03.jpg",
+      "alt": "RD Jarovce, Bratislava, fotka 2 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rd-jarovce-bratislava/04.jpg",
+      "alt": "RD Jarovce, Bratislava, fotka 3 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rd-jarovce-bratislava/05.jpg",
+      "alt": "RD Jarovce, Bratislava, fotka 4 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rd-jarovce-bratislava/06.jpg",
+      "alt": "RD Jarovce, Bratislava, fotka 5 z 5"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/669431466452269",
   "datum": "2014-10-22",
   "poradie": 13,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }

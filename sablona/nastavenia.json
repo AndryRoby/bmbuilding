@@ -1,9 +1,24 @@
 {
- "_poznamka": "Nastavenia zostavy (nie obsah). uvod_realizacia: slug realizácie, ktorej prvá fotka na šírku s aspoň 960 px ide do úvodu (DIZAJN 6.2 odporúča Vtáčnik; pravidlo podľa poradia by vybralo Okánikovu s pôvodným stavom, grafitmi a ŠPZ). zaklad_nahladu: cesta náhľadu na github.io (repozitár bmbuilding), použije sa len v 404.html. uvod_pocet_dalsich: koľko realizácií bez fotky ukáže úvod v zozname Ďalšie realizácie. vydanie: deň poslednej zmeny šablóny alebo textov stránok (RRRR-MM-DD), ide do lastmod v sitemap; pri zmene sablona/ ho posuň.",
+ "_poznamka": "Nastavenia zostavy (nie obsah). uvod_foto: realizácia a súbor (subor, napr. 05.jpg) alebo číslo fotky (fotka) v ráme úvodu; fotka musí mať aspoň 1280 px a ostrosť aspoň 800 (sablona/fotky-pravidla.json, velka), inak build vezme prvú takú fotku z realizácií a varuje. uvod_pocet_realizacii: koľko štvorcov realizácií s vhodnou fotkou je na úvode. sluzba_pocet_kariet: koľko štvorcov realizácií má stránka služby, ostatné ako zoznam. realizacie_na_stranu: do tohto počtu je zoznam realizácií jedna stránka, nad ním stránky po desaťročiach. zaklad_nahladu: cesta náhľadu na github.io (repozitár bmbuilding), použije sa len v 404.html. vydanie: deň poslednej zmeny šablóny alebo textov stránok (RRRR-MM-DD), ide do lastmod v sitemap; pri zmene sablona/ ho posuň. instagram: adresa profilu https://www.instagram.com/<profil>/ len keď je istá (dizajn-olovnica/INSTAGRAM.md); null = odkaz na Instagram sa nezobrazí. Facebook je v obsah/firma.json.",
  "domena": "https://bmbuilding.sk",
- "uvod_realizacia": "bytove-domy-vtacnik-bratislava",
- "uvod_pocet_realizacii": 6,
- "uvod_pocet_dalsich": 3,
- "vydanie": "2026-11-21",
- "zaklad_nahladu": "/bmbuilding/"
+ "uvod_foto": {
+  "slug": "rekonstrukcia-okanikova-bratislava",
+  "subor": "05.jpg"
+ },
+ "uvod_pocet_realizacii": 8,
+ "_pas_vyber": "Realizácie v tmavom páse úvodu (slugy, poradie podľa rokov ako zoznam realizácií); chýbajúci slug sa vynechá s varovaním, bez zoznamu prvých uvod_pocet_realizacii s fotkou. postup_foto a firma_foto: fotky sekcií Postup a O firme (slug a súbor).",
+ "pas_vyber": ["ufo-most-snp-bratislava", "dvojdom-s-bratislava", "rekonstrukcia-okanikova-bratislava", "novostavba-rd-nitrianske-hrnciarovce", "bytove-domy-vtacnik-bratislava", "bytovy-dom-rosnicka-bratislava", "filmovy-klub-spitalska-bratislava", "rekonstrukcia-venturska-bratislava"],
+ "postup_foto": {"slug": "bytove-domy-vtacnik-bratislava", "subor": "07.jpg"},
+ "firma_foto": {"slug": "bytovy-dom-na-krizovatkach-bratislava", "subor": "02.jpg"},
+ "sluzba_pocet_kariet": 4,
+ "realizacie_na_stranu": 300,
+ "_realizacie_naraz": "Koľko kariet ukáže zoznam realizácií naraz (app.js, tlačidlo Zobraziť ďalšie s počtom zvyšných); bez JS sú viditeľné všetky. 0 = všetky naraz. Pás úvodu (pas_vyber) má najviac 10 kariet (build.py PAS_MAX): chýbajúci slug sa vynechá s varovaním a miesto doplní záložný výber, bez pas_vyber záložný výber uvod_pocet_realizacii s varovaním.",
+ "realizacie_naraz": 12,
+ "_opravnenia_obrazky": "Zakryté obrázky osvedčení SKSI na stránke Oprávnenia: evidenčné číslo z obsah/firma.json -> súbor v sablona/opravnenia/ (kópia zakrytej verzie z ops/weby-na-mieru/klienti/bmbuilding/opravnenia/, rodné číslo a dátum narodenia zakryté; originály z D: nikdy). Build ich len zmenší alebo prevedie na WebP do opravnenia/<meno>-<šírka>.webp, nikdy nezväčší.",
+ "opravnenia_obrazky": {"00912*10*": "opravnenia/osvedcenie-sksi-stavbyveduci-2003.png", "09903": "opravnenia/osvedcenie-sksi-stavebny-dozor-2010.png"},
+ "_opravnenia_register": "Verejný zoznam SKSI (verejnyportal.sksi.sk): evidenčné číslo z obsah/firma.json -> adresa výsledku vyhľadávania (priezvisko Bulko, evidenčné číslo, typ zoznamu). Adresy otvorené 21. 11. 2026 (HTTP 200, nájdený 1 záznam), dôkaz v ops/weby-na-mieru/klienti/bmbuilding/opravnenia/register/. Odkaz len na hostiteľa verejnyportal.sksi.sk; bez kľúča sa odkaz nezobrazí.",
+ "opravnenia_register": {"00912*10*": "https://verejnyportal.sksi.sk/search/eyJmb19sYXN0IjoiQnVsa28iLCJmcm9udF9ldmMiOiIwMDkxMiIsInF1YWwiOjIsImNvZGVzIjpbXSwiZnJvbnRfb3JkZXIiOiJmb19sYXN0IiwiZnJvbnRfb3JkZXJfdHlwZSI6ImFzYyJ9", "09903": "https://verejnyportal.sksi.sk/search/eyJmb19sYXN0IjoiQnVsa28iLCJmcm9udF9ldmMiOiIwOTkwMyIsInF1YWwiOjMsImNvZGVzIjpbXSwiZnJvbnRfb3JkZXIiOiJmb19sYXN0IiwiZnJvbnRfb3JkZXJfdHlwZSI6ImFzYyJ9"},
+ "vydanie": "2026-11-22",
+ "zaklad_nahladu": "/bmbuilding/",
+ "instagram": null
 }

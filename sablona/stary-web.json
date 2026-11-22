@@ -1,0 +1,424 @@
+{
+ "_poznamka": "Vygenerované nástrojom ops/weby-na-mieru/klienti/bmbuilding/nastroje/stary_web_strany.py z dokoncenie/udaje-stareho-webu.json (doslovné údaje starého webu bmbuilding.sk, stary-web/*.md). Ručne nemeniť, spustiť nástroj znova. Build.py ukáže adresy a weby strán pod ich menom, termín s mesiacmi, etapy a osobu pri role na stránke realizácie.",
+ "realizacie": {
+  "bytove-domy-vtacnik-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__11-bytove-domy-vtacnik-tupeho-ul-bratislava.md",
+   "id": [
+    "vtacnik-investor-adresa",
+    "vtacnik-projektant-adresa",
+    "vtacnik-zhotovitel-adresa",
+    "vtacnik-termin-1"
+   ],
+   "investor": [
+    {
+     "meno": "BB Finance s.r.o",
+     "adresa": "Humenské nám. 1, 851 07 Bratislava"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "Koneval / Manikova architekti",
+     "adresa": "Trenčianska 53/B, 821 09 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "HANT BA",
+     "adresa": "017 04 Považská Bystrica"
+    }
+   ],
+   "termin": "05/2016 až 05/2018"
+  },
+  "bytovy-dom-devinske-luky-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__20-bytovy-dom-devinske-luky.md",
+   "id": [
+    "devinske-luky-investor-adresa",
+    "devinske-luky-projektant-adresa",
+    "devinske-luky-zhotovitel-adresa",
+    "devinske-luky-termin-1"
+   ],
+   "investor": [
+    {
+     "meno": "KOBAX reality",
+     "adresa": "Palisády 1, 811 01 Bratislava"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "Ing. arch. Milan Kiaček",
+     "adresa": "Lazaretská 2, 811 08 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "Colorstav - Team, s.r.o",
+     "adresa": "930 40 Štvrtok na Ostrove"
+    }
+   ],
+   "termin": "12/2016 až 02/2018"
+  },
+  "bytovy-dom-haanova-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "haanova-investor-adresa",
+    "haanova-investor-web",
+    "haanova-rola",
+    "haanova-projektant-adresa",
+    "haanova-zhotovitel-adresa",
+    "haanova-zhotovitel-web"
+   ],
+   "investor": [
+    {
+     "meno": "Vazex, s.r.o",
+     "adresa": "Palisády 1, 811 01 Bratislava",
+     "web": "www.vazex.sk"
+    }
+   ],
+   "rola_osoba": "Ing. Mário Bulko",
+   "projektant": [
+    {
+     "meno": "Kappa 1 s.r.o",
+     "adresa": "Veternicová 22, 841 05 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "TINAMA – Ing. Čahoj",
+     "adresa": "Zrínskeho 4, 811 03 Bratislava",
+     "web": "www.tinama.sk"
+    }
+   ]
+  },
+  "bytovy-dom-na-krizovatkach-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__12-bytovy-dom-ul-na-krizovatkach-bratislava.md",
+   "id": [
+    "na-krizovatkach-bd-investor-adresa",
+    "na-krizovatkach-bd-investor-web",
+    "na-krizovatkach-bd-projektant-adresa",
+    "na-krizovatkach-bd-zhotovitel-adresa",
+    "na-krizovatkach-bd-zhotovitel-web",
+    "na-krizovatkach-bd-termin-1"
+   ],
+   "investor": [
+    {
+     "meno": "IN DEVELOP s.r.o",
+     "adresa": "Palisády 1, 811 01 Bratislava",
+     "web": "www.novatrnavka.sk"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "Koneval / Manikova architekti",
+     "adresa": "Trenčianska 53/B, 821 09 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "HANT BA, a.s",
+     "adresa": "017 04 Považská Bystrica",
+     "web": "www.hant-ba.sk"
+    }
+   ],
+   "termin": "11/2014 až 06/2016"
+  },
+  "bytovy-dom-rosnicka-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__23-bytovy-dom-rosnicka.md",
+   "id": [
+    "rosnicka-investor-adresa",
+    "rosnicka-investor-web",
+    "rosnicka-zhotovitel-adresa",
+    "rosnicka-zhotovitel-web",
+    "rosnicka-termin-1"
+   ],
+   "investor": [
+    {
+     "meno": "BD Rosnička s.r.o",
+     "adresa": "Stará Ivánska cesta 1, 821 04 Bratislava",
+     "web": "www.bytyrosnicka.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "HANT BA, a.s",
+     "adresa": "017 04 Považská Bystrica",
+     "web": "www.hant-ba.sk"
+    }
+   ],
+   "termin": "04/2015 až 09/2016"
+  },
+  "dom-betliarska-bratislava-petrzalka": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "betliarska-investor-adresa",
+    "betliarska-projektant-adresa",
+    "betliarska-projektant-web"
+   ],
+   "investor": [
+    {
+     "meno": "BETLIARSKA s.r.o",
+     "adresa": "Palisády 1, 811 01 Bratislava"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "CONCEPT Slovakia s.r.o",
+     "adresa": "Komenského 8/28, 945 01 Komárno",
+     "web": "www.concept.sk"
+    }
+   ]
+  },
+  "filmovy-klub-spitalska-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__13-stavebne-upravy-filmoveho-klubu-na-spitalsk.md",
+   "id": [
+    "filmovy-klub-termin-1",
+    "filmovy-klub-termin-2",
+    "filmovy-klub-termin-3",
+    "filmovy-klub-investor-adresa",
+    "filmovy-klub-investor-web",
+    "filmovy-klub-projektant-adresa",
+    "filmovy-klub-zhotovitel-adresa",
+    "filmovy-klub-zhotovitel-adresa-2"
+   ],
+   "etapy": [
+    "1. etapa 06/2013 až 11/2013",
+    "2. etapa 09/2014 až 12/2014",
+    "3. etapa 06 až 12/2016"
+   ],
+   "investor": [
+    {
+     "meno": "Slovenský filmový ústav",
+     "adresa": "Grösslingová 32, 811 09 Bratislava",
+     "web": "www.sfu.sk"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "A3a, s. r. o",
+     "adresa": "Súťažná 17, 821 08 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "Trading universal services, s.r.o",
+     "adresa": "Kysucký Lieskovec 420"
+    },
+    {
+     "meno": "COFELY a.s",
+     "adresa": "Jarošova 1, Bratislava"
+    }
+   ]
+  },
+  "polyfunkcny-objekt-budatinska-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "budatinska-investor-adresa",
+    "budatinska-investor-web",
+    "budatinska-projektant-adresa",
+    "budatinska-projektant-web",
+    "budatinska-zhotovitel-adresa",
+    "budatinska-zhotovitel-web"
+   ],
+   "investor": [
+    {
+     "meno": "Vazex s.r.o",
+     "adresa": "Palisády 1, 811 01 Bratislava",
+     "web": "www.vazex.sk"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "Bajoprojekt s.r.o",
+     "adresa": "Ambroseho 10, 851 02 Bratislava-Petržalka",
+     "web": "www.bajoprojekt.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "SKANSKA, a.s",
+     "adresa": "Krajna 29, 821 04 Bratislava",
+     "web": "www.skanska.sk"
+    }
+   ]
+  },
+  "polyfunkcny-objekt-na-krizovatkach-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "po-na-krizovatkach-investor-adresa",
+    "po-na-krizovatkach-investor-web",
+    "po-na-krizovatkach-projektant-adresa",
+    "po-na-krizovatkach-projektant-web",
+    "po-na-krizovatkach-zhotovitel-adresa",
+    "po-na-krizovatkach-zhotovitel-web"
+   ],
+   "investor": [
+    {
+     "meno": "Vazex Reality s.r.o",
+     "adresa": "Palisády 1, 811 01 Bratislava",
+     "web": "www.vazex.sk"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "CONCEPT Slovakia s.r.o",
+     "adresa": "Komenského 8/28, 945 01 Komárno",
+     "web": "www.concept.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "HANT BA, a.s",
+     "adresa": "017 04 Považská Bystrica",
+     "web": "www.hant-ba.sk"
+    }
+   ]
+  },
+  "rd-ivanka-pri-dunaji": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "ivanka-projektant-web",
+    "ivanka-zhotovitel-web"
+   ],
+   "projektant": [
+    {
+     "meno": "PRO STYLE, s.r.o., Bratislava",
+     "web": "www.pro-style.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "Korektstav s.r.o, Bratislava",
+     "web": "www.korektstav.sk"
+    }
+   ]
+  },
+  "rd-jarovce-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "jarovce-rola"
+   ],
+   "rola_osoba": "Ing. Mário Bulko"
+  },
+  "rd-kalvaria-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "kalvaria-rola",
+    "kalvaria-projektant-adresa",
+    "kalvaria-projektant-web",
+    "kalvaria-zhotovitel-adresa"
+   ],
+   "rola_osoba": "Ing. Mário Bulko",
+   "projektant": [
+    {
+     "meno": "CONCEPT Slovakia s.r.o",
+     "adresa": "Komenského 8/28, 945 01 Komárno",
+     "web": "www.concept.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "Colorstav - Team, s.r.o",
+     "adresa": "930 40 Štvrtok na Ostrove"
+    }
+   ]
+  },
+  "rd-pezinok": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "pezinok-rola",
+    "pezinok-projektant-adresa",
+    "pezinok-zhotovitel-adresa"
+   ],
+   "rola_osoba": "Ing. Mário Bulko",
+   "projektant": [
+    {
+     "meno": "Koneval / Manikova architekti",
+     "adresa": "Trenčianska 53/B, 821 09 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "TATRASOD spol. s.r.o",
+     "adresa": "Hraničná 16, 821 05 Bratislava"
+    }
+   ]
+  },
+  "rekonstrukcia-5-ambulancii-pre-lekarov": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "ambulancie-projektant-adresa",
+    "ambulancie-projektant-web",
+    "ambulancie-zhotovitel-adresa",
+    "ambulancie-termin-1"
+   ],
+   "projektant": [
+    {
+     "meno": "CONCEPT Slovakia s.r.o",
+     "adresa": "Komenského 8/28, 945 01 Komárno",
+     "web": "www.concept.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "Colorstav - Team, s.r.o",
+     "adresa": "930 40 Štvrtok na Ostrove"
+    }
+   ],
+   "termin": "04 až 10/2014"
+  },
+  "rekonstrukcia-venturska-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty__14-rekonstrukcia-a-nadstavba-objektu-venturska.md",
+   "id": [
+    "venturska-investor-adresa",
+    "venturska-investor-web",
+    "venturska-zhotovitel-adresa",
+    "venturska-zhotovitel-web",
+    "venturska-termin-1"
+   ],
+   "investor": [
+    {
+     "meno": "VENTURIAN, s.r.o",
+     "adresa": "811 01 Bratislava",
+     "web": "www.venturian.sk"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "TINAMA, s.r.o",
+     "adresa": "Zrínskeho 4, 811 03 Bratislava",
+     "web": "www.tinama.sk"
+    }
+   ],
+   "termin": "10/2013 až 09/2014"
+  },
+  "rezidencia-grunty-bratislava": {
+   "zdroj": "stary-web/referencie__realizovane-projekty.md",
+   "id": [
+    "grunty-investor-adresa",
+    "grunty-investor-web",
+    "grunty-projektant-adresa",
+    "grunty-zhotovitel-adresa",
+    "grunty-zhotovitel-web"
+   ],
+   "investor": [
+    {
+     "meno": "Realitná spoločnosť SLSP a.s",
+     "adresa": "Nedbalova 17, 811 01 Bratislava",
+     "web": "www.grunty.sk"
+    }
+   ],
+   "projektant": [
+    {
+     "meno": "Ing. Arch. Dušan Dinaj, autorizovaný architekt",
+     "adresa": "Sabinovská 5, 821 02 Bratislava"
+    }
+   ],
+   "zhotovitel": [
+    {
+     "meno": "HANT BA, a.s",
+     "adresa": "017 04 Považská Bystrica",
+     "web": "www.hant-ba.sk"
+    }
+   ]
+  }
+ }
+}

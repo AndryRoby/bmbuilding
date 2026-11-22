@@ -12,20 +12,29 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/01.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 1 z 3"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 1 z 5"
     },
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/02.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 2 z 3"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 2 z 5"
     },
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/03.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 3 z 3"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 3 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rezidencia-grunty-bratislava/04.jpg",
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 4 z 5"
+    },
+    {
+      "subor": "obsah/obrazky/rezidencia-grunty-bratislava/08.jpg",
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 5 z 5"
     }
   ],
   "zdroj": "web",
-  "fb_url": null,
+  "fb_url": "https://www.facebook.com/bmbuilding/posts/pfbid02eaBJcbxatGExfbhDCyXomMJLNaCsXsnFvp2nRfyub4wdp9Jkqqsu9A7mRY8EJnyyl",
   "datum": "2013-01-09",
   "poradie": 18,
-  "zverejnene": true
+  "zverejnene": true,
+  "upravene": "2026-11-21"
 }
