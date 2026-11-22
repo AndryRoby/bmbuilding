@@ -1,5 +1,5 @@
 {
-  "id": "web-bmbuilding-rekonstrukcia-okanikova-bratislava",
+  "id": "rekonstrukcia-okanikova-bratislava",
   "slug": "rekonstrukcia-okanikova-bratislava",
   "nazov": "Rekonštrukcia objektu, nadstavba a prístavba, Okánikova ulica",
   "miesto": "Bratislava, Okánikova ulica",
@@ -8,7 +8,7 @@
   "roky": "2018 až 2021",
   "text": "Rekonštrukcia objektu s nadstavbou a prístavbou na Okánikovej ulici v Bratislave. BM Building tu pôsobil ako projektový manažér a stavebný dozor. Realizácia prebehla v rokoch 2018 až 2021.",
   "investor": "súkromný investor",
-  "zhotovitel": null,
+  "zhotovitel": "",
   "fotky": [
     {
       "subor": "obsah/obrazky/rekonstrukcia-okanikova-bratislava/04.jpg",
