@@ -305,6 +305,35 @@
     }
   });
 
+  // 4b. Kotva z inej stránky (menu Činnosť alebo Postup z podstránky, napríklad ../#sluzby): pripnutý pás zmení výšku
+  //     úvodu až po prvom posune prehliadača na kotvu, takže človek skončil v páse a musel kliknúť znova (Andrej
+  //     23. 11. 2026). Po zostavení stránky, po načítaní a po písmach sa znova postaví na cieľ kotvy, kým sa sám nepohol.
+  (function () {
+    var hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+    var ciel = null;
+    try { ciel = d.getElementById(decodeURIComponent(hash.slice(1))); } catch (e) { ciel = null; }
+    if (!ciel) return;
+    var pohol = false;
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (t) {
+      window.addEventListener(t, function () { pohol = true; }, { passive: true, once: true });
+    });
+    var skoc = function () {
+      if (pohol) return;
+      try { ciel.scrollIntoView({ block: 'start', behavior: 'instant' }); } catch (e) { ciel.scrollIntoView(true); }
+    };
+    // po zmene výšky pásu (prepocitaj pri načítaní a po písmach) a ešte raz o chvíľu, keby prehliadač dobiehal vlastný posun
+    var neskor = function () { window.requestAnimationFrame(skoc); window.setTimeout(skoc, 150); window.setTimeout(skoc, 600); };
+    neskor();
+    if (d.readyState !== 'complete') window.addEventListener('load', neskor);
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(neskor);
+  })();
+  // Plynulý posun (CSS html.plynuly-posun) až po načítaní stránky, aby príchod s kotvou skočil hneď na miesto.
+  (function () {
+    var zapni = function () { window.setTimeout(function () { d.documentElement.classList.add('plynuly-posun'); }, 700); };
+    if (d.readyState === 'complete') zapni(); else window.addEventListener('load', zapni);
+  })();
+
   // 5. Filter, zoradenie a postupné načítanie realizácií: stav v adrese ?druh=&roky=&mesto=&zoradit=, počet
   //    v aria-live, prázdny výsledok. Všetky karty sú v HTML (bez skriptu viditeľné všetky); filter a zoradenie
   //    idú cez všetky karty, z výsledku sa ukáže prvých data-naraz a tlačidlo Zobraziť ďalšie s počtom zvyšných.

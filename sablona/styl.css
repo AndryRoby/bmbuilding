@@ -689,8 +689,9 @@ img[data-src],img.nacitava{opacity:0}
    Text sa neanimuje. Pás prác pripnutý cez časovú os posunu. Pri obmedzenom pohybe blok neplatí. */
 @media (prefers-reduced-motion:no-preference){
   /* plynulý posun pri odkazoch na tej istej stránke (menu Činnosť a Postup, Preskočiť na obsah): človek vidí, že ostal na
-     stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“); pri obmedzenom pohybe skok ako doteraz */
-  html{scroll-behavior:smooth}
+     stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“); pri obmedzenom pohybe skok ako doteraz.
+     Triedu plynuly-posun dá app.js až po načítaní: príchod s kotvou z inej stránky skočí hneď (časť 4b). */
+  html.plynuly-posun{scroll-behavior:smooth}
   .olovnica{animation:kyv 1.6s cubic-bezier(.37,0,.63,1) 120ms both}
   .v-teren{animation:kreslit-zlava 380ms var(--krivka) 60ms both}
   .v-obrys{animation:kreslit-zdola 760ms var(--krivka) 120ms both}
