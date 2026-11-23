@@ -2789,8 +2789,19 @@ class Web:
             cena = (f'<p class="cena"><span class="cisla">{n}</span> {T(tvar(n, "realizácia", "realizácie", "realizácií").split(" ", 1)[1])}{small}</p>'
                     if n else (f'<p class="cena">{small}</p>' if small else ''))
             opis = ' '.join(x for x in (t.get('veta', ''), t.get('priklady', '')) if x)
+            # Odkaz na celý zoznam činností zo starého webu na stránke služby (Andrej 23. 11. 2026: Mário „tam chce mať
+            # všetky info“; zoznamy boli len na podstránkach a z úvodu ich nebolo vidno).
+            cin = (self.firma['sluzby'].get(k) or {}).get('cinnosti') or []
+            viac = ''
+            if cin:
+                pocet = len(cin)
+                text_viac = ('Celý popis činnosti' if pocet == 1 else
+                             f'Všetky {tvar(pocet, "činnosť", "činnosti", "činností")}' if pocet <= 4 else
+                             f'Všetkých {tvar(pocet, "činnosť", "činnosti", "činností")}')
+                viac = (f'<a class="odkaz-sipka sluzba-viac" href="{esc(self.rel(pre, k + "/"))}#cinnosti-nadpis">'
+                        f'{T(text_viac)} {SVG_SIPKA}</a>')
             riadky.append(f'<li class="sluzba"><h3><a href="{esc(self.rel(pre, k + "/"))}">{T(t["menu"])}</a></h3>'
-                          f'<p class="sluzba-opis">{T(opis)}</p>{cena}</li>')
+                          f'<p class="sluzba-opis">{T(opis)}{viac}</p>{cena}</li>')
         dokl = [f'{o["cinnost"]}, vydané {o["datum"]}' for o in self.firma['opravnenia'] if o['cinnost'] and o['datum']]
         pozn = ''
         if dokl:

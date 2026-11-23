@@ -33,6 +33,9 @@
 *{box-sizing:border-box}
 [hidden]{display:none}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:16px;scrollbar-color:var(--tlmeny) var(--vapno-2)}
+/* Plynulý posun pri odkazoch na tej istej stránke (menu Činnosť a Postup, Preskočiť na obsah, Kontakt): človek vidí, že
+   ostal na stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“). Pri obmedzenom pohybe skok ako doteraz. */
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 html.lb-otvorene{overflow:hidden}
 .lb-otvorene{overflow:hidden}
 body{position:relative;margin:0;background:var(--vapno);color:var(--grafit);font:400 17px/1.6 var(--pismo);overflow-x:clip;overflow-wrap:break-word;font-feature-settings:"kern"}
@@ -325,6 +328,8 @@ img[data-src],img.nacitava{opacity:0}
 .sluzba h3 a{text-decoration:none}
 .sluzba h3 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
 .sluzba-opis{grid-column:1/-1;color:var(--tlmeny);font-size:16px;line-height:1.55;max-width:36em}
+/* odkaz na celý zoznam činností pod popisom služby na úvode, vlastný riadok, text zarovnaný s popisom (padding 4 px) */
+.sluzba-viac{display:flex;width:fit-content;margin:var(--m-8) 0 0 -4px;color:var(--grafit)}
 .cena{grid-column:2;grid-row:1;text-align:right;font-size:clamp(1.35rem,2.2vw,2.1rem);line-height:1.05;letter-spacing:-.025em;font-variant-numeric:tabular-nums;white-space:nowrap}
 /* popis pod číslom sa zalamuje: pri 1024 px „ako projektový alebo stavebný manažment“ v jednom riadku pretiekol stĺpec
    aj okraj stránky o 6 px (linka bmb-presnost, meranie scrollWidth) */
