@@ -327,6 +327,13 @@
     neskor();
     if (d.readyState !== 'complete') window.addEventListener('load', neskor);
     if (d.fonts && d.fonts.ready) d.fonts.ready.then(neskor);
+    // pás sa pri 1280 px pripína až asi 0,9 s po načítaní (meranie 23. 11. 2026), na pomalšej sieti neskôr: každá zmena
+    // výšky stránky v prvých 8 sekundách postaví stránku znova na kotvu, kým sa človek sám nepohol
+    if (typeof ResizeObserver === 'function') {
+      var sledovanie = new ResizeObserver(function () { if (!pohol) window.requestAnimationFrame(skoc); });
+      sledovanie.observe(d.body);
+      window.setTimeout(function () { sledovanie.disconnect(); }, 8000);
+    }
   })();
   // Plynulý posun (CSS html.plynuly-posun) až po načítaní stránky, aby príchod s kotvou skočil hneď na miesto.
   (function () {
