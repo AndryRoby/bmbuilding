@@ -33,9 +33,6 @@
 *{box-sizing:border-box}
 [hidden]{display:none}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:16px;scrollbar-color:var(--tlmeny) var(--vapno-2)}
-/* Plynulý posun pri odkazoch na tej istej stránke (menu Činnosť a Postup, Preskočiť na obsah, Kontakt): človek vidí, že
-   ostal na stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“). Pri obmedzenom pohybe skok ako doteraz. */
-@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 html.lb-otvorene{overflow:hidden}
 .lb-otvorene{overflow:hidden}
 body{position:relative;margin:0;background:var(--vapno);color:var(--grafit);font:400 17px/1.6 var(--pismo);overflow-x:clip;overflow-wrap:break-word;font-feature-settings:"kern"}
@@ -691,6 +688,9 @@ img[data-src],img.nacitava{opacity:0}
    číslo činností dozoru sa pretočí; fotka pohľadu A sa odkryje (mobil zhora, počítač od väzby dvojstrany).
    Text sa neanimuje. Pás prác pripnutý cez časovú os posunu. Pri obmedzenom pohybe blok neplatí. */
 @media (prefers-reduced-motion:no-preference){
+  /* plynulý posun pri odkazoch na tej istej stránke (menu Činnosť a Postup, Preskočiť na obsah): človek vidí, že ostal na
+     stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“); pri obmedzenom pohybe skok ako doteraz */
+  html{scroll-behavior:smooth}
   .olovnica{animation:kyv 1.6s cubic-bezier(.37,0,.63,1) 120ms both}
   .v-teren{animation:kreslit-zlava 380ms var(--krivka) 60ms both}
   .v-obrys{animation:kreslit-zdola 760ms var(--krivka) 120ms both}
