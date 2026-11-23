@@ -485,6 +485,9 @@ img[data-src],img.nacitava{opacity:0}
 .prazdne{padding:40px 0;display:grid;gap:16px;justify-items:start}
 /* postupné načítanie zoznamu: tlačidlo Zobraziť ďalšie pod kartami, počet zvyšných v Mono (app.js, bez JS skryté) */
 .viac-obal{display:flex;justify-content:center;margin-top:56px;padding-top:32px;border-top:1px solid var(--beton)}
+/* Zoznam realizácií a noviniek končí rytmom sekcie ako ostatné časti; predtým sa tlačidlo Zobraziť ďalšie (aj posledné
+   karty) dotýkalo časti Kontakt (Andrej 23. 11. 2026: „aj to tlačidlo sa dotýka“). */
+.obsah.zoznam{padding-bottom:var(--rytmus)}
 .viac-pocet{font:400 14px/1 var(--mono);font-variant-numeric:tabular-nums}
 @media (max-width:479px){.viac-obal .tlacidlo{width:100%}}
 

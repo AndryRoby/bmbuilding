@@ -349,17 +349,28 @@
       }
       return s.zoradit === 'najstarsie' ? y - x : x - y;
     }
+    // Fotky ďalšej dávky (karty, ktoré ukáže najbližšie Zobraziť ďalšie) sa načítajú vopred, keď sa človek
+    // priblíži k tlačidlu, aby sa po kliknutí neobjavovali postupne (Andrej 23. 11. 2026: „pri načítaní to tak
+    // divne vyzerá“). Obrázky v skrytej karte s loading="eager" prehliadač stiahne, s lazy nie.
+    var dalsiaDavka = [];
+    var predNacitaj = function () {
+      dalsiaDavka.forEach(function (li) {
+        vsetky('img[loading="lazy"]', li).forEach(function (img) { img.setAttribute('loading', 'eager'); });
+      });
+    };
     var obnov = function (zapis, novaPrva) {
       var n = 0;
       var m = 0;
       var prvaNova = null;
       var poradie = dlazdice.slice().sort(porovnaj);
+      dalsiaDavka = [];
       poradie.forEach(function (li) {
         var druhy = ' ' + (li.getAttribute('data-druh') || '') + ' ';
         var rok = Number(li.getAttribute('data-rok')) || 0;
         var dekada = rok ? String(rok - rok % 10) : '0';
         var ok = (!s.druh || druhy.indexOf(' ' + s.druh + ' ') >= 0) && (!s.roky || s.roky === dekada)
           && (!s.mesto || li.getAttribute('data-mesto') === s.mesto);
+        if (ok && naraz && n >= ukazat && n < ukazat + naraz) dalsiaDavka.push(li);
         var vidno = ok && (!naraz || n < ukazat);
         if (ok) n++;
         if (vidno) {
@@ -383,7 +394,9 @@
       if (viacPocet) viacPocet.textContent = m < n ? '(' + (n - m) + ')' : '';
       if (prvaNova) {
         var odkaz = prvaNova.querySelector('.dlazdica-nazov a');
-        if (odkaz) odkaz.focus();
+        // preventScroll: bez neho prehliadač posunul stránku k nadpisu prvej novej karty (pri 1600 px o 798 px,
+        // Andrej 23. 11. 2026: „ako keby skočí“). Nové karty sa ukážu tam, kde bolo tlačidlo, fokus ide za nimi.
+        if (odkaz) odkaz.focus({ preventScroll: true });
       }
       if (zapis) {
         var p = new URLSearchParams();
@@ -406,9 +419,19 @@
     if (zrusit) zrusit.addEventListener('click', function () { s.druh = ''; s.roky = ''; s.mesto = ''; zmena(); });
     if (viac) viac.addEventListener('click', function () {
       var bolo = ukazat;
+      predNacitaj();
       ukazat += naraz;
       obnov(false, bolo);
     });
+    if (viac) {
+      viac.addEventListener('pointerenter', predNacitaj);
+      viac.addEventListener('focus', predNacitaj);
+    }
+    if (viacObal && typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(function (z) {
+        if (z[0] && z[0].isIntersecting) predNacitaj();
+      }, { rootMargin: '0px 0px 900px 0px' }).observe(viacObal);
+    }
     filtre.hidden = false;
     obnov(false);
   }
