@@ -249,6 +249,8 @@ def skutocny():
         atexit.register(shutil.rmtree, tmp, True)
         ostry, nahlad = tmp / 'ostry', tmp / 'nahlad'
         _SKUTOCNY['o'] = postav(ostry, rychle=True)
+        # prísne varovania celej zostavy (fb-ostro A4): v GitHub Actions by z nich bola chyba zostavy
+        _SKUTOCNY['prisne'] = list(build.PRISNE_VAROVANIA)
         shutil.copytree(ostry, nahlad)
         _SKUTOCNY['n'] = postav(nahlad, nahlad=True, rychle=True)
         _SKUTOCNY.update(tmp=tmp, ostry=ostry, nahlad=nahlad)
@@ -337,6 +339,28 @@ def maly_obsah(koren):
         (obsah / 'realizacie' / f'{meno}.json').write_text(json.dumps(d, ensure_ascii=False), encoding='utf-8')
     (obsah / 'realizacie' / 'pokazeny.json').write_text('{toto nie je json', encoding='utf-8')
     return obsah
+
+
+# fotky sekcií a pás, ktoré v malom obsahu (maly_obsah) sú: O firme a Postup z realizácie plna, pás s ňou, úvod bez
+# nastavenia (záložná veľká fotka, v malom obsahu žiadna); šablóna webu má slugy skutočného obsahu (fb-ostro A4)
+NASTAVENIA_MALY = {'uvod_foto': None, 'firma_foto': {'slug': 'plna', 'subor': '01.jpg'},
+                   'postup_foto': {'slug': 'plna', 'subor': '02.jpg'}, 'pas_vyber': ['plna']}
+
+
+def sablona_s_nastaveniami(koren, **zmeny):
+    """Kópia sablona/ v koren/sablona s upraveným nastavenia.json (None kľúč odoberie), pre mock build.SABLONA."""
+    sablona = koren / 'sablona'
+    if not sablona.is_dir():
+        shutil.copytree(KOREN / 'sablona', sablona)
+    p = sablona / 'nastavenia.json'
+    d = json.loads(p.read_text(encoding='utf-8'))
+    for kluc, hodnota in zmeny.items():
+        if hodnota is None:
+            d.pop(kluc, None)
+        else:
+            d[kluc] = hodnota
+    p.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding='utf-8')
+    return sablona
 
 
 def pridaj_novinky(obsah):
@@ -472,6 +496,18 @@ class TestSkutocnyObsah(unittest.TestCase):
         # skutočný obsah má len varovania o rozmazaných fotkách (FOTKY.md: build ich vypíše)
         ine = [r for r in self.err_o.splitlines() if r.strip() and 'je rozmazaná' not in r]
         self.assertEqual(ine, [])
+
+    def test_v_actions_bez_chyby_sekcii(self):
+        # fb-ostro A4: uvod_foto, firma_foto, postup_foto a pas_vyber zo šablóny sú v dnešnom obsahu, takže zostava
+        # v GitHub Actions prejde (filter vyššie by varovanie foto_nastavenia „… je rozmazaná …“ skryl)
+        self.assertEqual(skutocny()['prisne'], [])
+        w = skutocny()['web']
+        with redirect_stderr(io.StringIO()):
+            self.assertIsNotNone(w.hrdina_foto()[1])
+            for kluc in ('firma_foto', 'postup_foto'):
+                self.assertIsNotNone(w.foto_nastavenia(kluc)[1], kluc)
+            vyber = [s for s in w.nastavenia['pas_vyber'] if isinstance(s, str)][:build.PAS_MAX]
+            self.assertTrue(set(vyber) <= {r['slug'] for r in w.pas_vyber()}, vyber)
 
     def test_stranky_existuju(self):
         for c in ('index.html', 'stavebny-dozor/index.html', 'stavbyveduci/index.html', 'stavebny-manazment/index.html',
@@ -2196,14 +2232,18 @@ class TestDocasnyObsah(unittest.TestCase):
         self.assertEqual(interne_odkazy(web, '/'), [])
 
     def test_ci_bez_premennej_stavia_nahlad(self):
+        # šablóna s fotkami sekcií z malého obsahu: slugy skutočného obsahu by v Actions boli chyba zostavy (fb-ostro A4)
+        sablona = sablona_s_nastaveniami(self.tmp, **NASTAVENIA_MALY)
         web = self.tmp / 'ci'
-        kod, out, err = postav(web, self.obsah, prostredie={'GITHUB_ACTIONS': 'true'})
+        with mock.patch.object(build, 'SABLONA', sablona):
+            kod, out, err = postav(web, self.obsah, prostredie={'GITHUB_ACTIONS': 'true'})
         self.assertEqual(kod, 0, err)
         self.assertIn('<meta name="robots" content="noindex, nofollow">', (web / 'index.html').read_text(encoding='utf-8'))
         self.assertIn('href="/bmbuilding/kontakt/"', (web / '404.html').read_text(encoding='utf-8'))
         self.assertFalse((web / 'CNAME').exists())
         web2 = self.tmp / 'ci-ostry'
-        kod, out, err = postav(web2, self.obsah, prostredie={'GITHUB_ACTIONS': 'true', 'BMB_OSTRY': 'ano'})
+        with mock.patch.object(build, 'SABLONA', sablona):
+            kod, out, err = postav(web2, self.obsah, prostredie={'GITHUB_ACTIONS': 'true', 'BMB_OSTRY': 'ano'})
         self.assertEqual(kod, 0, err)
         self.assertNotIn('noindex', (web2 / 'index.html').read_text(encoding='utf-8'))
         self.assertTrue((web2 / 'CNAME').is_file())
@@ -2345,6 +2385,100 @@ class TestDocasnyObsah(unittest.TestCase):
         self.assertNotIn('Traceback', err)
         self.assertIn('sluzby', err)
         self.assertIn('opravnenia', err)
+
+
+ACTIONS = {'GITHUB_ACTIONS': 'true'}
+
+
+class TestChybaVActions(unittest.TestCase):
+    """fb-ostro A4 (OPONENT.md S2, POSTUP.md časť 4): v GitHub Actions je chýbajúca realizácia alebo fotka z uvod_foto,
+    firma_foto alebo postup_foto a slug z pas_vyber chyba zostavy (kód 1): nič sa nezapíše, krok nasadenia sa nespustí
+    a ostane posledný dobrý web. Lokálne ostáva varovanie a sekcia bez fotky."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix='bmb-test-'))
+        self.obsah = maly_obsah(self.tmp)
+        self.web = self.tmp / 'web'
+        self.nastav()
+        # posledný dobrý web: zostava v Actions s fotkami sekcií, ktoré v obsahu sú
+        kod, out, err = self.postav(ACTIONS)
+        self.assertEqual(kod, 0, err)
+        self.dobry = odtlacky(self.web)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def nastav(self, **zmeny):
+        self.sablona = sablona_s_nastaveniami(self.tmp, **{**NASTAVENIA_MALY, **zmeny})
+
+    def postav(self, prostredie=None, vystup=None):
+        with mock.patch.object(build, 'SABLONA', self.sablona):
+            return postav(vystup or self.web, self.obsah, prostredie=prostredie, rychle=True)
+
+    def test_nastavenia_z_obsahu_prejdu(self):
+        uvod = (self.web / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('<figure class="atelier-foto">', uvod)
+        self.assertIn('<figure class="postup-foto">', uvod)
+        self.assertIn('realizacie/plna/', uvod.split('id="prace"', 1)[1].split('</section>', 1)[0])
+        # nenastavený kľúč (sekcia zámerne bez fotky, pás záložným výberom) nie je chyba ani v Actions
+        self.nastav(firma_foto=None, postup_foto=None, pas_vyber=None)
+        kod, out, err = self.postav(ACTIONS)
+        self.assertEqual(kod, 0, err)
+        self.assertNotIn('<figure class="atelier-foto">', (self.web / 'index.html').read_text(encoding='utf-8'))
+
+    def test_chybajuce_v_actions_je_chyba_a_web_ostane(self):
+        pripady = [
+            ({'uvod_foto': {'slug': 'zmazana-stavba', 'subor': '05.jpg'}},
+             "uvod_foto: realizácia 'zmazana-stavba' nie je v obsahu"),
+            # plna/01.jpg má 1100 px, na úvod treba 1280 (fotky-pravidla.json velka)
+            ({'uvod_foto': {'slug': 'plna', 'subor': '01.jpg'}},
+             'uvod_foto: fotka 01.jpg realizácie plna chýba alebo nie je dosť veľká a ostrá na úvod'),
+            ({'firma_foto': {'slug': 'zmazana-stavba', 'subor': '09.jpg'}},
+             "firma_foto: realizácia 'zmazana-stavba' nie je v obsahu"),
+            ({'firma_foto': {'slug': 'plna', 'subor': '07.jpg'}},
+             'firma_foto: fotka 07.jpg realizácie plna chýba'),
+            ({'postup_foto': {'slug': 'zmazana-stavba', 'subor': '14.jpg'}},
+             "postup_foto: realizácia 'zmazana-stavba' nie je v obsahu"),
+            # 99.jpg je v JSON realizácie, ale súbor chýba
+            ({'postup_foto': {'slug': 'plna', 'subor': '99.jpg'}},
+             'postup_foto: fotka 99.jpg realizácie plna chýba'),
+            ({'pas_vyber': ['plna', 'zmazana-stavba']},
+             "nastavenia pas_vyber: realizácia 'zmazana-stavba' nie je v obsahu"),
+            ({'pas_vyber': ['plna', 'hola']}, 'nastavenia pas_vyber: realizácia hola nemá fotku'),
+        ]
+        for zmeny, sprava in pripady:
+            with self.subTest(sprava):
+                self.nastav(**zmeny)
+                for prostredie in (ACTIONS, {**ACTIONS, 'BMB_OSTRY': 'ano'}):
+                    kod, out, err = self.postav(prostredie)
+                    self.assertEqual(kod, 1, err)
+                    self.assertIn('CHYBA: v GitHub Actions chýba fotka sekcie alebo realizácia pásu', err)
+                    self.assertIn(sprava, err.split('CHYBA:', 1)[1])
+                    self.assertEqual(odtlacky(self.web), self.dobry)
+                # lokálne len varovanie, zostava prejde ako doteraz
+                kod, out, err = self.postav(vystup=self.tmp / 'lokalne')
+                self.assertEqual(kod, 0, err)
+                self.assertIn('VAROVANIE: ' + sprava, err)
+
+    def test_zmazana_fotka_alebo_realizacia_v_obsahu(self):
+        # OPONENT.md S2: sťahovanie alebo ručný zásah zmaže fotku O firme z obsah/, nastavenia ostanú
+        (self.obsah / 'obrazky' / 'plna' / '01.jpg').unlink()
+        kod, out, err = self.postav(ACTIONS)
+        self.assertEqual(kod, 1, err)
+        self.assertIn('firma_foto: fotka 01.jpg realizácie plna chýba', err.split('CHYBA:', 1)[1])
+        self.assertEqual(odtlacky(self.web), self.dobry)
+        # zmazaná celá realizácia: O firme, Postup aj pás (zz-dupl má ten istý slug, preč aj ona)
+        (self.obsah / 'realizacie' / 'plna.json').unlink()
+        (self.obsah / 'realizacie' / 'zz-dupl.json').unlink()
+        kod, out, err = self.postav(ACTIONS)
+        self.assertEqual(kod, 1, err)
+        for kluc in ('firma_foto', 'postup_foto', 'nastavenia pas_vyber'):
+            self.assertIn(f"{kluc}: realizácia 'plna' nie je v obsahu", err.split('CHYBA:', 1)[1])
+        self.assertEqual(odtlacky(self.web), self.dobry)
+        # lokálne sa web zostaví bez nich (doterajšie správanie)
+        kod, out, err = self.postav()
+        self.assertEqual(kod, 0, err)
+        self.assertNotIn('<figure class="atelier-foto">', (self.web / 'index.html').read_text(encoding='utf-8'))
 
 
 class TestFotkyPravidla(unittest.TestCase):
@@ -2716,8 +2850,10 @@ class TestStovkyRealizacii(unittest.TestCase):
 
     def test_jedna_stranka_zoznamu(self):
         self.assertEqual(self.kod, 0, self.err)
-        # pas_vyber šablóny nemá v tomto obsahu ani jednu realizáciu: varovania a záložný výber, nie chyba
-        self.assertEqual([r for r in self.err.splitlines() if r.strip() and 'presmerovanie' not in r and 'pas_vyber' not in r], [])
+        # pas_vyber a fotky sekcií šablóny (uvod_foto, firma_foto, postup_foto) nemajú v tomto obsahu ani jednu
+        # realizáciu: lokálne varovania a záložný výber, nie chyba (v GitHub Actions chyba, TestChybaVActions)
+        sekcie = ('presmerovanie', 'pas_vyber', 'uvod_foto', 'firma_foto', 'postup_foto')
+        self.assertEqual([r for r in self.err.splitlines() if r.strip() and not any(s in r for s in sekcie)], [])
         self.assertIn('pas_vyber: doplnené záložným výberom', self.err)
         self.assertEqual(len([p for p in (self.web / 'realizacie').iterdir() if p.is_dir()]), 120)
         s = (self.web / 'realizacie' / 'index.html').read_text(encoding='utf-8')

@@ -1,4 +1,5 @@
-# Obsah webu z arling-obsah: stiahne realizácie a fotky do obsah/, uloží zmenu do main, zostaví web a nasadí GitHub Pages.
+# Obsah webu z arling-obsah: stiahne realizácie, novinky a fotky z Facebooku a zo správy do obsah/, uloží zmenu do main,
+# zostaví web a nasadí GitHub Pages.
 # Premenná repozitára OBSAH_API, napríklad https://arling-obsah.<subdoména>.workers.dev/api/bmbuilding (verejné API, bez tajomstva).
 name: Obsah
 
@@ -8,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       povol_prazdne:
-        description: "Povoliť 0 realizácií z API (klient zámerne zmazal všetky)"
+        description: "Bez účinku od sťahovača verzie 2 (podľa chýbania v API sa nič nemaže)"
         type: boolean
         default: false
   push:
@@ -41,8 +42,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Dočasný vypínač (Fable 22. 11. 2026): kým D1 a R2 nemajú nový obsah z liniek bmb-fb a bmb-fb-uplnost,
-      # premenná repozitára OBSAH_SYNC=vypnute preskočí sťahovanie, inak by stiahni.py zmazal realizácie zo zdroja fb.
+      # Vypínač (Fable 22. 11. 2026): premenná repozitára OBSAH_SYNC=vypnute preskočí sťahovanie. Sťahovač verzie 2
+      # (fb-ostro, 23. 11. 2026) mení len položky z Facebooku a zo správy a maže len id zo zoznamu stiahnute z API,
+      # takže zapnutie nepotrebuje dorovnanie D1; staré realizácie a novinky ostávajú v repozitári.
       - name: Stiahnuť obsah z arling-obsah
         if: ${{ vars.OBSAH_SYNC != 'vypnute' }}
         env:
@@ -55,10 +57,22 @@ jobs:
             python .github/obsah/stiahni.py --api "$OBSAH_API" --obsah obsah
           fi
 
+      # Brzda mazania (fb-ostro A3, OPONENT.md S1): viac ako 20 súborov odobratých z obsah/ je chyba kroku bez commitu
+      # a bez pushu, úloha nasadenie sa nespustí a na webe ostane posledná dobrá verzia. Jedna položka zmaže najviac
+      # 1 JSON a 16 fotiek. Väčšie mazanie, ktoré je v poriadku, ide commitom z PC (README, Brzda mazania).
+      # --no-renames: aj súbor, ktorý git spáruje s novým ako premenovanie, sa ráta ako odobratý.
       - name: Uložiť zmenu obsahu do main
         id: ulozit
+        shell: bash
         run: |
           git add -A obsah
+          zmazane=$(git diff --cached --no-renames --name-only --diff-filter=D -- obsah)
+          pocet=$(grep -c . <<< "$zmazane" || true)
+          if [ "$pocet" -gt 20 ]; then
+            echo "::error title=Brzda mazania::Zmena obsahu maže $pocet súborov v obsah/ (najviac 20). Nič som necommitol, web ostáva posledný dobrý. Príčina je v kroku Stiahnuť obsah."
+            head -n 50 <<< "$zmazane"
+            exit 1
+          fi
           if git diff --cached --quiet -- obsah; then
             echo "zmena=nie" >> "$GITHUB_OUTPUT"
           else

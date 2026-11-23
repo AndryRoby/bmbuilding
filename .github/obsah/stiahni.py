@@ -1,11 +1,24 @@
 #!/usr/bin/env python3
-"""Stiahne realizácie z verejného API arling-obsah do priečinka obsah/ webu klienta.
+"""Stiahne z verejného API arling-obsah realizácie a novinky, ktoré vznikli v D1, do priečinka obsah/ webu klienta.
 
-Použitie: python .github/obsah/stiahni.py --api https://arling-obsah.<subdoména>.workers.dev/api/bmbuilding --obsah obsah [--sucho] [--povol-prazdne]
+Použitie: python .github/obsah/stiahni.py --api https://arling-obsah.<subdoména>.workers.dev/api/bmbuilding --obsah obsah [--sucho]
 
-Zapisuje len obsah/realizacie/<slug>.json, obsah/obrazky/<slug>/NN.<jpg|webp|png> a obsah/.obsah-stav.json.
-firma.json a súbory, ktoré API nikdy nemalo (zdroj web), nemení. Zlyhanie zatvára: chyba siete, kód iný ako 200,
-zlý JSON alebo zlý tvar = koniec s kódom 1 bez zápisu. Len štandardná knižnica Pythonu 3.
+Verzia 2, doplňovanie (fb-ostro, 23. 11. 2026): repozitár je zdrojom pravdy pre staré položky, D1 len pre položky, ktoré
+v nej vznikli. Spravované sú len id z Facebooku (fb-<číslice>[-<číslice>]) a zo správy obsahu (tvar id D1, nezačína
+web-, s- ani fb-). Položky prvého naplnenia (web-…) sťahovač nečíta, nepíše ani nemaže.
+- Spravovaná položka sa zapíše celá podľa API do obsah/realizacie/<slug>.json alebo obsah/novinky/<slug>.json, fotky do
+  obsah/obrazky/<slug>/NN.<jpg|webp|png> alebo obsah/obrazky/novinky/<slug>/NN.<…>. Stav je obsah/.obsah-stav.json
+  (verzia 2, podľa id). firma.json a súbory iných položiek nemení.
+- Mazanie len výslovné: položka zmizne, len keď je jej id v zozname "stiahnute" z API (v D1 zmazaná alebo Len koncept),
+  je v stave a jej súbor nesie to isté id. To, že položka v "polozky" chýba, nikdy nič nezmaže.
+- Kolízia: cieľový súbor alebo priečinok fotiek patrí inej položke = koniec s kódom 1 bez zápisu.
+- Zlyhanie zatvára: chyba siete, kód iný ako 200, zlý JSON alebo zlý tvar = koniec s kódom 1 bez zápisu. Novinka s
+  kódom 404 znamená, že klient typ novinka nemá: novinky sa vtedy nemenia. Len štandardná knižnica Pythonu 3.
+
+Príznak vizualizácie (linka bmb-dokoncenie): fotka z API smie mať "druh" (len "vizualizacia") a "autor" (text do 300
+znakov, len spolu s druh); do súboru ide ako { subor, alt, druh, autor }. Iná hodnota = zlý tvar.
+Kľúče, ktoré API vôbec nepozná (rok_prispevku, titulok, realizacia…), sa pri prepise vlastného súboru zachovajú
+(ZACHOVAJ_NEZNAME_KLUCE); API ich nevie zmeniť ani zmazať, menia sa len v repozitári.
 """
 import argparse
 import hashlib
@@ -21,6 +34,14 @@ import urllib.request
 
 SLUG = re.compile(r'^(?=.*[a-z0-9])[a-z0-9-]{1,80}$')
 ID = re.compile(r'^[A-Za-z0-9_-]{1,100}$')
+# Spravované id podľa products/arling-obsah/src/spolocne.mjs: RE_ID_FB (položky z Facebooku, smie ich vytvoriť len
+# stroj), RE_ID (tvar id v D1) a RE_ID_NASTROJA (predpony nástrojov, správa ich klientovi nedá).
+ID_FB = re.compile(r'^fb-[0-9]{1,30}(?:-[0-9]{1,30})?$')
+ID_D1 = re.compile(r'^[a-z0-9-]{8,64}$')
+ID_NASTROJA = re.compile(r'^(?:web|s|fb)-')
+# Id, ktoré dáva správa obsahu (noveId v products/arling-obsah/ui/app.js, UUID v4). Staré súbory repozitára majú id
+# rovné slugu, takže súbor bez záznamu v stave sa podľa id prevezme len pri fb-<číslice> alebo UUID.
+ID_UUID = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
 SHA = re.compile(r'^[0-9a-f]{64}$')
 DATUM = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 CESTA_FOTKY = re.compile(r'^/f/[a-z0-9-]{2,40}/[A-Za-z0-9_-]{1,100}\.(jpg|webp|png)$')
@@ -30,8 +51,29 @@ TEXTY = ('miesto', 'rola', 'projektant', 'roky', 'text', 'investor', 'zhotovitel
 MAX_JSON = 10 * 1024 * 1024
 MAX_FOTKA = 6291456
 MAX_FOTIEK = 60
+MAX_STIAHNUTE = 10000
 STAV = '.obsah-stav.json'
+VERZIA_STAVU = 2
 DOCASNY = '.obsah-tmp-'
+DRUHY_FOTKY = {'vizualizacia'}
+MAX_AUTOR = 300
+# Zmena b) návrhu bmb-fb-samo: pri prepise vlastného súboru zachovať kľúče, ktoré API nepozná. False = súbor presne podľa API.
+ZACHOVAJ_NEZNAME_KLUCE = True
+# Typy: priečinok JSON, priečinok fotiek, či je typ povinný (404 = chyba), slugy, ktoré typ mať nesmie (realizácia
+# „novinky“ by mala fotky v obsah/obrazky/novinky/, kde sú fotky noviniek), a kľúče z API, ktoré sa zo starého súboru
+# nikdy nepreberajú.
+TYPY = {
+    'realizacia': {
+        'json': 'realizacie', 'fotky': 'obrazky', 'povinny': True, 'zakazane_slugy': frozenset({'novinky'}),
+        'kluce_api': frozenset({'id', 'slug', 'typ', 'nazov', 'fotky', 'zdroj', 'datum', 'poradie', 'zverejnene',
+                                'upravene', *TEXTY}),
+    },
+    'novinka': {
+        'json': 'novinky', 'fotky': 'obrazky/novinky', 'povinny': False, 'zakazane_slugy': frozenset(),
+        'kluce_api': frozenset({'id', 'slug', 'typ', 'datum', 'nadpis', 'text', 'fotky', 'zdroj', 'poradie',
+                                'zverejnene', 'upravene'}),
+    },
+}
 
 
 class Chyba(Exception):
@@ -60,14 +102,17 @@ def over_api(api):
     return api.rstrip('/'), (u.scheme, u.netloc)
 
 
-def stiahni(url, limit, timeout):
-    poziadavka = urllib.request.Request(url, headers={'User-Agent': 'arling-obsah-stiahni/1', 'Accept': '*/*'})
+def stiahni(url, limit, timeout, povol_404=False):
+    """GET s hlavičkou User-Agent (worker bez nej vráti 403). Vráti bajty; pri povol_404 a kóde 404 None."""
+    poziadavka = urllib.request.Request(url, headers={'User-Agent': 'arling-obsah-stiahni/2', 'Accept': '*/*'})
     try:
         with OTVARAC.open(poziadavka, timeout=timeout) as odpoved:
             if odpoved.status != 200:
                 raise Chyba(f'Server vrátil kód {odpoved.status} pre {url}.')
             telo = odpoved.read(limit + 1)
     except urllib.error.HTTPError as e:
+        if povol_404 and e.code == 404:
+            return None
         raise Chyba(f'Server vrátil kód {e.code} pre {url}.') from None
     except (urllib.error.URLError, OSError, ValueError) as e:
         raise Chyba(f'Sieť zlyhala pre {url} ({type(e).__name__}).') from None
@@ -86,6 +131,21 @@ def typ_obrazka(bajty):
     return None
 
 
+def je_spravovane(pid):
+    """Id z Facebooku (fb-<číslice>[-<číslice>]) alebo zo správy obsahu (tvar id D1 bez predpony web-, s- a fb-)."""
+    return isinstance(pid, str) and (bool(ID_FB.match(pid)) or (bool(ID_D1.match(pid)) and not ID_NASTROJA.match(pid)))
+
+
+def priecinok_fotiek(typ, slug):
+    return f'{TYPY[typ]["fotky"]}/{slug}'
+
+
+def je_fotka_polozky(typ, slug, rel):
+    """rel je obrazky/<slug>/NN.<…> (pri novinke obrazky/novinky/<slug>/NN.<…>), nič hlbšie ani inde."""
+    predpona = priecinok_fotiek(typ, slug) + '/'
+    return isinstance(rel, str) and rel.startswith(predpona) and SUBOR_FOTKY.match(rel[len(predpona):]) is not None
+
+
 def text_alebo_none(hodnota, kde):
     if hodnota is None:
         return None
@@ -94,83 +154,143 @@ def text_alebo_none(hodnota, kde):
     return hodnota
 
 
-def over_polozky(data, povod):
-    """Overí tvar odpovede API; vráti zoznam položiek v tvare pre zápis. Zlý tvar = Chyba."""
+def priznak_fotky(f, kde):
+    """Príznak vizualizácie z API: {} alebo {'druh': 'vizualizacia'[, 'autor': text]}. Iná hodnota = Chyba (zlý tvar)."""
+    druh = f.get('druh')
+    autor = f.get('autor')
+    if druh is None:
+        if autor is not None:
+            raise Chyba(f'{kde}: autor fotky je len spolu s druh.')
+        return {}
+    if not isinstance(druh, str) or druh not in DRUHY_FOTKY:
+        raise Chyba(f'{kde}: neznámy druh fotky (povolené len vizualizacia).')
+    vysledok = {'druh': druh}
+    if autor is not None:
+        if not isinstance(autor, str):
+            raise Chyba(f'{kde}: autor fotky musí byť text.')
+        if len(autor) > MAX_AUTOR:
+            raise Chyba(f'{kde}: autor fotky je dlhší ako {MAX_AUTOR} znakov.')
+        if autor.strip():
+            vysledok['autor'] = autor
+    return vysledok
+
+
+def over_fotky(p, kde, typ, slug, povod):
+    fotky_api = p.get('fotky') or []
+    if not isinstance(fotky_api, list) or len(fotky_api) > MAX_FOTIEK:
+        raise Chyba(f'{kde}: fotky musia byť zoznam s najviac {MAX_FOTIEK} položkami.')
+    fotky = []
+    for j, f in enumerate(fotky_api, start=1):
+        kdef = f'{kde}.fotky[{j - 1}]'
+        if not isinstance(f, dict):
+            raise Chyba(f'{kdef} nie je objekt.')
+        url, sha, alt = f.get('url'), f.get('sha256'), f.get('alt', '')
+        if not isinstance(url, str) or not isinstance(alt, str):
+            raise Chyba(f'{kdef}: chýba url alebo alt.')
+        if not isinstance(sha, str) or not SHA.match(sha):
+            raise Chyba(f'{kdef}: neplatné sha256.')
+        u = urllib.parse.urlsplit(url)
+        zhoda = CESTA_FOTKY.match(u.path)
+        if (u.scheme, u.netloc) != povod or not zhoda or u.query or u.fragment:
+            raise Chyba(f'{kdef}: adresa fotky nie je z rovnakého servera ako API alebo má zlú príponu.')
+        pripona = zhoda.group(1)
+        rel = f'{priecinok_fotiek(typ, slug)}/{j:02d}.{pripona}'
+        zaznam = {'subor': f'obsah/{rel}', 'alt': alt}
+        zaznam.update(priznak_fotky(f, kdef))
+        fotky.append({'rel': rel, 'url': url, 'sha256': sha, 'pripona': pripona, 'zaznam': zaznam})
+    return fotky
+
+
+def obsah_polozky(p, kde, typ, slug, pid, fotky):
+    """Obsah súboru v tvare, ktorý číta build.py (nacitaj_realizacie, nacitaj_novinky)."""
+    datum = text_alebo_none(p.get('datum'), f'{kde}.datum')
+    if datum is not None and not DATUM.match(datum):
+        raise Chyba(f'{kde}: dátum nemá tvar RRRR-MM-DD.')
+    poradie = p.get('poradie', 0)
+    if not isinstance(poradie, int) or isinstance(poradie, bool):
+        raise Chyba(f'{kde}: poradie musí byť celé číslo.')
+    zdroj = p.get('zdroj', 'sprava')
+    if zdroj not in ZDROJE:
+        raise Chyba(f'{kde}: neznámy zdroj.')
+    zaznamy = [f['zaznam'] for f in fotky]
+    if typ == 'novinka':
+        nadpis = p.get('nadpis')
+        if not isinstance(nadpis, str) or not nadpis.strip():
+            raise Chyba(f'{kde}: chýba nadpis.')
+        if datum is None:
+            raise Chyba(f'{kde}: novinka musí mať dátum RRRR-MM-DD.')
+        return {'id': pid, 'slug': slug, 'datum': datum, 'nadpis': nadpis, 'text': text_alebo_none(p.get('text'), f'{kde}.text'),
+                'fotky': zaznamy, 'zdroj': zdroj, 'zverejnene': True}
+    nazov = p.get('nazov')
+    if not isinstance(nazov, str) or not nazov.strip():
+        raise Chyba(f'{kde}: chýba názov.')
+    polia = {k: text_alebo_none(p.get(k), f'{kde}.{k}') for k in TEXTY}
+    if polia['fb_url'] is not None and not polia['fb_url'].startswith('https://'):
+        raise Chyba(f'{kde}: fb_url musí začínať https://.')
+    return {
+        'id': pid,
+        'slug': slug,
+        'nazov': nazov,
+        'miesto': polia['miesto'],
+        'rola': polia['rola'],
+        'projektant': polia['projektant'],
+        'roky': polia['roky'],
+        'text': polia['text'],
+        'investor': polia['investor'],
+        'zhotovitel': polia['zhotovitel'],
+        'fotky': zaznamy,
+        'zdroj': zdroj,
+        'fb_url': polia['fb_url'],
+        'datum': datum,
+        'poradie': poradie,
+        'zverejnene': True,
+    }
+
+
+def over_stiahnute(data, typ):
+    """Zoznam id položiek, ktoré D1 stiahla z webu (zmazané alebo Len koncept). Bez kľúča (starý worker) None."""
+    s = data.get('stiahnute')
+    if s is None:
+        return None
+    if not isinstance(s, list) or len(s) > MAX_STIAHNUTE:
+        raise Chyba(f'Odpoveď API pre {typ}: stiahnute musí byť zoznam s najviac {MAX_STIAHNUTE} id.')
+    for i, pid in enumerate(s):
+        if not isinstance(pid, str) or not ID.match(pid):
+            raise Chyba(f'Odpoveď API pre {typ}: stiahnute[{i}] nie je platné id.')
+    return set(s)
+
+
+def over_odpoved(data, typ, povod):
+    """Overí tvar odpovede API. Vráti (spravované položky v tvare pre zápis, počet ostatných, stiahnute alebo None).
+    Ostatné položky (prvé naplnenie web-…) sa okrem id neoverujú ani nepoužijú. Zlý tvar = Chyba."""
     if not isinstance(data, dict) or not isinstance(data.get('polozky'), list):
-        raise Chyba('Odpoveď API nemá tvar { "polozky": [ … ] }.')
-    if data.get('typ') not in (None, 'realizacia'):
-        raise Chyba('Odpoveď API nie je pre typ realizacia.')
-    vysledok = []
-    slugy = set()
-    idcka = set()
+        raise Chyba(f'Odpoveď API pre {typ} nemá tvar {{ "polozky": [ … ] }}.')
+    if data.get('typ') not in (None, typ):
+        raise Chyba(f'Odpoveď API nie je pre typ {typ}.')
+    vysledok, slugy, idcka, ostatne = [], set(), set(), 0
     for i, p in enumerate(data['polozky']):
-        kde = f'polozky[{i}]'
+        kde = f'{typ}: polozky[{i}]'
         if not isinstance(p, dict):
             raise Chyba(f'{kde} nie je objekt.')
-        pid, slug = p.get('id'), p.get('slug')
+        pid = p.get('id')
         if not isinstance(pid, str) or not ID.match(pid):
             raise Chyba(f'{kde}: neplatné id.')
+        if pid in idcka:
+            raise Chyba(f'{kde}: id je v odpovedi dvakrát.')
+        idcka.add(pid)
+        if not je_spravovane(pid):
+            ostatne += 1
+            continue
+        slug = p.get('slug')
         if not isinstance(slug, str) or not SLUG.match(slug):
             raise Chyba(f'{kde}: neplatný slug (povolené a až z, 0 až 9 a pomlčka, najviac 80 znakov).')
-        if slug in slugy or pid in idcka:
-            raise Chyba(f'{kde}: slug alebo id je v odpovedi dvakrát.')
+        if slug in slugy:
+            raise Chyba(f'{kde}: slug je v odpovedi dvakrát.')
         slugy.add(slug)
-        idcka.add(pid)
-        nazov = p.get('nazov')
-        if not isinstance(nazov, str) or not nazov.strip():
-            raise Chyba(f'{kde}: chýba názov.')
-        polia = {k: text_alebo_none(p.get(k), f'{kde}.{k}') for k in TEXTY}
-        if polia['fb_url'] is not None and not polia['fb_url'].startswith('https://'):
-            raise Chyba(f'{kde}: fb_url musí začínať https://.')
-        datum = text_alebo_none(p.get('datum'), f'{kde}.datum')
-        if datum is not None and not DATUM.match(datum):
-            raise Chyba(f'{kde}: dátum nemá tvar RRRR-MM-DD.')
-        poradie = p.get('poradie', 0)
-        if not isinstance(poradie, int) or isinstance(poradie, bool):
-            raise Chyba(f'{kde}: poradie musí byť celé číslo.')
-        zdroj = p.get('zdroj', 'sprava')
-        if zdroj not in ZDROJE:
-            raise Chyba(f'{kde}: neznámy zdroj.')
-        fotky_api = p.get('fotky') or []
-        if not isinstance(fotky_api, list) or len(fotky_api) > MAX_FOTIEK:
-            raise Chyba(f'{kde}: fotky musia byť zoznam s najviac {MAX_FOTIEK} položkami.')
-        fotky = []
-        for j, f in enumerate(fotky_api, start=1):
-            kdef = f'{kde}.fotky[{j - 1}]'
-            if not isinstance(f, dict):
-                raise Chyba(f'{kdef} nie je objekt.')
-            url, sha, alt = f.get('url'), f.get('sha256'), f.get('alt', '')
-            if not isinstance(url, str) or not isinstance(alt, str):
-                raise Chyba(f'{kdef}: chýba url alebo alt.')
-            if not isinstance(sha, str) or not SHA.match(sha):
-                raise Chyba(f'{kdef}: neplatné sha256.')
-            u = urllib.parse.urlsplit(url)
-            zhoda = CESTA_FOTKY.match(u.path)
-            if (u.scheme, u.netloc) != povod or not zhoda or u.query or u.fragment:
-                raise Chyba(f'{kdef}: adresa fotky nie je z rovnakého servera ako API alebo má zlú príponu.')
-            pripona = zhoda.group(1)
-            rel = f'obrazky/{slug}/{j:02d}.{pripona}'
-            fotky.append({'rel': rel, 'url': url, 'sha256': sha, 'pripona': pripona, 'alt': alt})
-        obsah = {
-            'id': pid,
-            'slug': slug,
-            'nazov': nazov,
-            'miesto': polia['miesto'],
-            'rola': polia['rola'],
-            'projektant': polia['projektant'],
-            'roky': polia['roky'],
-            'text': polia['text'],
-            'investor': polia['investor'],
-            'zhotovitel': polia['zhotovitel'],
-            'fotky': [{'subor': f'obsah/{f["rel"]}', 'alt': f['alt']} for f in fotky],
-            'zdroj': zdroj,
-            'fb_url': polia['fb_url'],
-            'datum': datum,
-            'poradie': poradie,
-            'zverejnene': True,
-        }
-        vysledok.append({'slug': slug, 'id': pid, 'json': obsah, 'fotky': fotky})
-    return vysledok
+        fotky = over_fotky(p, kde, typ, slug, povod)
+        obsah = obsah_polozky(p, kde, typ, slug, pid, fotky)
+        vysledok.append({'typ': typ, 'slug': slug, 'id': pid, 'json': obsah, 'fotky': fotky})
+    return vysledok, ostatne, over_stiahnute(data, typ)
 
 
 def bezpecna_cesta(koren, rel):
@@ -192,23 +312,68 @@ def sha_suboru(cesta):
     return h.hexdigest()
 
 
-def nacitaj_stav(koren):
-    cesta = os.path.join(koren, STAV)
+def citaj_subor(cesta):
+    """(bajty, objekt JSON) existujúceho súboru; nečitateľný JSON = (bajty, None); chýbajúci súbor = (None, None)."""
     try:
-        with open(cesta, encoding='utf-8') as f:
-            stav = json.load(f)
-        if isinstance(stav, dict) and isinstance(stav.get('realizacie'), dict):
-            return {s: v for s, v in stav['realizacie'].items() if isinstance(s, str) and SLUG.match(s) and isinstance(v, dict)}
+        with open(cesta, 'rb') as f:
+            bajty = f.read()
     except FileNotFoundError:
-        return {}
+        return None, None
+    try:
+        return bajty, json.loads(bajty.decode('utf-8'))
+    except (UnicodeDecodeError, ValueError):
+        return bajty, None
+
+
+def zaznam_stavu(typ, slug, fotky):
+    """Platný záznam stavu {typ, slug, fotky} alebo None; fotky len z vlastného priečinka položky."""
+    if typ not in TYPY or not isinstance(slug, str) or not SLUG.match(slug):
+        return None
+    fotky = fotky if isinstance(fotky, dict) else {}
+    return {'typ': typ, 'slug': slug,
+            'fotky': {r: s for r, s in fotky.items() if je_fotka_polozky(typ, slug, r) and isinstance(s, str) and SHA.match(s)}}
+
+
+def nacitaj_stav(koren):
+    """Stav verzie 2 {"verzia": 2, "polozky": {id: {typ, slug, fotky}}}. Verzia 1 ({"realizacie": {slug: {id, fotky}}})
+    sa prevedie: spravované id ostanú, položky prvého naplnenia (web-…) vypadnú a ich súbory ostanú repozitáru.
+    Vráti (stav, veta o prevode alebo None). Poškodený stav = prázdny (nič sa preto nezmaže)."""
+    try:
+        with open(os.path.join(koren, STAV), encoding='utf-8') as f:
+            stav = json.load(f)
+    except FileNotFoundError:
+        return {}, None
     except (OSError, ValueError):
-        pass
+        stav = None
+    if isinstance(stav, dict) and stav.get('verzia') == VERZIA_STAVU and isinstance(stav.get('polozky'), dict):
+        vysledok = {}
+        for pid, z in stav['polozky'].items():
+            zaznam = zaznam_stavu(z.get('typ'), z.get('slug'), z.get('fotky')) if isinstance(z, dict) else None
+            if je_spravovane(pid) and zaznam:
+                vysledok[pid] = zaznam
+        return vysledok, None
+    if isinstance(stav, dict) and stav.get('verzia') in (None, 1) and isinstance(stav.get('realizacie'), dict):
+        vysledok, odovzdane = {}, 0
+        for slug, v in stav['realizacie'].items():
+            pid = v.get('id') if isinstance(v, dict) else None
+            zaznam = zaznam_stavu('realizacia', slug, v.get('fotky')) if je_spravovane(pid) else None
+            if zaznam:
+                vysledok[pid] = zaznam
+            else:
+                odovzdane += 1
+        return vysledok, (f'Stav sťahovača verzie 1 prevádzam na verziu 2: spravovaných položiek {len(vysledok)}, '
+                          f'položiek prvého naplnenia a iných {odovzdane} odovzdávam repozitáru (ich súbory ostávajú).')
     print(f'Upozornenie: {STAV} je poškodený, beriem ho ako prázdny (nič sa preto nezmaže).')
-    return {}
+    return {}, None
 
 
 def json_text(obsah):
     return json.dumps(obsah, ensure_ascii=False, indent=2) + '\n'
+
+
+def stav_bajty(novy_stav):
+    stav = {'verzia': VERZIA_STAVU, 'polozky': novy_stav}
+    return (json.dumps(stav, ensure_ascii=False, indent=2, sort_keys=True) + '\n').encode('utf-8')
 
 
 def zapis_atomovo(cesta, bajty, docasny):
@@ -219,77 +384,142 @@ def zapis_atomovo(cesta, bajty, docasny):
     os.replace(tmp, cesta)
 
 
-def lokalne_realizacie(koren):
-    priecinok = os.path.join(koren, 'realizacie')
-    if not os.path.isdir(priecinok):
-        return []
-    return sorted(n[:-5] for n in os.listdir(priecinok) if n.endswith('.json') and SLUG.match(n[:-5]))
-
-
-def fotky_na_zmazanie(koren, slug, lokalny_json, stav_slugu):
-    """Fotky starej realizácie: zo súboru (len obsah/obrazky/<slug>/…) a zo stavu."""
+def fotky_zo_suboru(typ, slug, d):
+    """Fotky, na ktoré odkazuje súbor položky, len z jej vlastného priečinka (obsah/obrazky/<slug>/NN.<…>)."""
     rel = set()
-    fotky = lokalny_json.get('fotky') if isinstance(lokalny_json, dict) else None
+    fotky = d.get('fotky') if isinstance(d, dict) else None
     for f in fotky if isinstance(fotky, list) else []:
         subor = f.get('subor') if isinstance(f, dict) else None
-        predpona = f'obsah/obrazky/{slug}/'
-        if isinstance(subor, str) and subor.startswith(predpona) and SUBOR_FOTKY.match(subor[len(predpona):]):
+        if isinstance(subor, str) and subor.startswith('obsah/') and je_fotka_polozky(typ, slug, subor[len('obsah/'):]):
             rel.add(subor[len('obsah/'):])
-    for r in (stav_slugu or {}).get('fotky', {}) or {}:
-        if isinstance(r, str) and r.startswith(f'obrazky/{slug}/') and SUBOR_FOTKY.match(r.split('/')[-1]) and r.count('/') == 2:
-            rel.add(r)
-    return sorted(rel)
+    return rel
 
 
-def priprav_plan(koren, polozky, stav, povol_prazdne):
-    lokalne = lokalne_realizacie(koren)
-    if not polozky and lokalne and not povol_prazdne:
-        raise Chyba(f'API vrátilo 0 realizácií, ale lokálne ich je {len(lokalne)}. Ak je to správne, spustite s --povol-prazdne.')
-    plan = {'stiahnut': [], 'zapisat': [], 'zmazat': [], 'novy_stav': {}}
-    api_slugy = {p['slug'] for p in polozky}
-    for p in polozky:
-        slug = p['slug']
-        ciele = set()
+def zmaz_polozku(koren, pid, zaznam, plan, dovod):
+    """Naplánuje zmazanie súborov položky, ktorú vytvoril sťahovač. JSON len keď nesie to isté id, potom fotky zo stavu
+    a z JSON, len vo vlastnom priečinku. Bez JSON len fotky zo stavu so zhodným sha256. Iné súbory v priečinku ostanú."""
+    typ, slug = zaznam['typ'], zaznam['slug']
+    rel_json = f'{TYPY[typ]["json"]}/{slug}.json'
+    bajty, d = citaj_subor(bezpecna_cesta(koren, rel_json))
+    if bajty is not None:
+        if not (isinstance(d, dict) and d.get('id') == pid):
+            plan['upozornenia'].append(f'{rel_json} nenesie id {pid}, nechávam ho aj jeho fotky ({dovod}).')
+            return
+        plan['zmazat'].add(rel_json)
+        rel = set(zaznam['fotky']) | fotky_zo_suboru(typ, slug, d)
+        plan['zmazat'].update(r for r in rel if os.path.isfile(bezpecna_cesta(koren, r)))
+        return
+    for r, sha in zaznam['fotky'].items():
+        cesta = bezpecna_cesta(koren, r)
+        if os.path.isfile(cesta) and sha_suboru(cesta) == sha:
+            plan['zmazat'].add(r)
+
+
+def priprav_plan(koren, odpovede, stav):
+    """odpovede: {typ: {'polozky': [spravované], 'stiahnute': set alebo None}} pre typy, ktoré API vrátilo.
+    Vráti plán (stiahnuť, zapísať, zmazať, nový stav, upozornenia); nič nemení. Kolízia = Chyba."""
+    plan = {'stiahnut': [], 'zapisat': [], 'zmazat': set(), 'upozornenia': []}
+    novy_stav = dict(stav)
+    api = {}
+    for typ, o in odpovede.items():
+        for p in o['polozky']:
+            if p['id'] in api:
+                raise Chyba(f'Id {p["id"]} vracia API pri dvoch typoch.')
+            api[p['id']] = p
+            z = stav.get(p['id'])
+            if z and z['typ'] != typ:
+                raise Chyba(f'Položka {p["id"]} je v stave ako {z["typ"]}, API ju vracia ako {typ}. Treba ju opraviť ručne.')
+    # 1. Mazanie: id zo zoznamu stiahnute, ktoré vytvoril sťahovač, a staré miesto položky so zmeneným slugom.
+    for typ, o in odpovede.items():
+        if o['stiahnute'] is None:
+            plan['upozornenia'].append(f'API {typ} nemá zoznam stiahnute (starý worker), nič preto nemažem.')
+            continue
+        for pid in sorted(o['stiahnute']):
+            if pid in api:
+                plan['upozornenia'].append(f'{pid} je v API medzi zverejnenými aj v zozname stiahnute, nechávam ho.')
+                continue
+            z = stav.get(pid)
+            if not je_spravovane(pid) or not z or z['typ'] != typ:
+                continue
+            zmaz_polozku(koren, pid, z, plan, 'stiahnutá v D1')
+            novy_stav.pop(pid, None)
+    for pid, p in api.items():
+        z = stav.get(pid)
+        if z and z['slug'] != p['slug']:
+            zmaz_polozku(koren, pid, z, plan, f'nový slug {p["slug"]}')
+    # 2. Zápis spravovaných položiek. Súbor alebo fotka, ktorá sa v tomto behu maže, sa berie ako voľná.
+    ciele = set()
+    for pid, p in sorted(api.items()):
+        typ, slug = p['typ'], p['slug']
+        z = stav.get(pid)
+        if slug in TYPY[typ]['zakazane_slugy']:
+            raise Chyba(f'{typ} {pid}: slug {slug} je vyhradený (obsah/{priecinok_fotiek(typ, slug)}/ patrí inému typu). '
+                        'Treba zmeniť názov v správe obsahu.')
+        rel_json = f'{TYPY[typ]["json"]}/{slug}.json'
+        bajty, d = citaj_subor(bezpecna_cesta(koren, rel_json))
+        if bajty is None or rel_json in plan['zmazat']:
+            vlastny, d = False, None
+        elif isinstance(d, dict) and d.get('id') == pid and ((z and z['slug'] == slug) or ID_FB.match(pid) or ID_UUID.match(pid)):
+            # Vlastný súbor podľa stavu, alebo prevzatý podľa id po strate stavu či prerušenom behu.
+            vlastny = True
+        elif not isinstance(d, dict) and z and z['slug'] == slug:
+            plan['upozornenia'].append(f'{rel_json} sa nedá prečítať, prepíšem ho podľa API bez ďalších kľúčov.')
+            vlastny, d = True, None
+        else:
+            ine = d.get('id') if isinstance(d, dict) else None
+            raise Chyba(f'Kolízia: obsah/{rel_json} patrí inej položke (id {ine or "chýba alebo nečitateľné"}), {typ} {pid} '
+                        'z D1 by ho prepísala. Treba zmeniť slug v správe obsahu alebo súbor v repozitári.')
+        fotky = {f['rel']: f['sha256'] for f in p['fotky']}
+        priecinok = priecinok_fotiek(typ, slug)
+        cesta_priecinka = bezpecna_cesta(koren, priecinok)
+        if os.path.exists(cesta_priecinka) and not os.path.isdir(cesta_priecinka):
+            raise Chyba(f'Kolízia: obsah/{priecinok} nie je priečinok.')
+        if vlastny:
+            # Fotku, ktorú položka v D1 už nemá, zmaže len keď ju sťahovač vytvoril (stav alebo jej súbor JSON).
+            zname = (set(z['fotky']) if z and z['slug'] == slug else set()) | fotky_zo_suboru(typ, slug, d)
+            plan['zmazat'].update(r for r in zname - set(fotky) if os.path.isfile(bezpecna_cesta(koren, r)))
+        elif os.path.isdir(cesta_priecinka):
+            # Nová položka: v priečinku smú byť len jej fotky zo skoršieho prerušeného behu (zhodné sha256) a súbory,
+            # ktoré sa v tomto behu mažú.
+            for n in sorted(os.listdir(cesta_priecinka)):
+                rel = f'{priecinok}/{n}'
+                cesta = os.path.join(cesta_priecinka, n)
+                if rel in plan['zmazat']:
+                    continue
+                if not (os.path.isfile(cesta) and rel in fotky and sha_suboru(cesta) == fotky[rel]):
+                    raise Chyba(f'Kolízia: obsah/{priecinok}/ už má súbor {n}, ktorý nepatrí {typ} {pid} z D1. '
+                                'Treba zmeniť slug v správe obsahu alebo priečinok v repozitári.')
         for f in p['fotky']:
             cesta = bezpecna_cesta(koren, f['rel'])
-            ciele.add(f['rel'])
             if not (os.path.isfile(cesta) and sha_suboru(cesta) == f['sha256']):
                 plan['stiahnut'].append(f)
-        priecinok = os.path.join(koren, 'obrazky', slug)
-        if os.path.isdir(priecinok):
-            for n in sorted(os.listdir(priecinok)):
-                rel = f'obrazky/{slug}/{n}'
-                if SUBOR_FOTKY.match(n) and rel not in ciele:
-                    plan['zmazat'].append(rel)
-        rel_json = f'realizacie/{slug}.json'
-        cesta_json = bezpecna_cesta(koren, rel_json)
-        novy = json_text(p['json']).encode('utf-8')
-        try:
-            with open(cesta_json, 'rb') as f:
-                stary = f.read()
-        except FileNotFoundError:
-            stary = None
-        if stary != novy:
-            plan['zapisat'].append((rel_json, novy))
-        plan['novy_stav'][slug] = {'id': p['id'], 'fotky': {f['rel']: f['sha256'] for f in p['fotky']}}
-    for slug in lokalne:
-        if slug in api_slugy:
-            continue
-        rel_json = f'realizacie/{slug}.json'
-        try:
-            with open(bezpecna_cesta(koren, rel_json), encoding='utf-8') as f:
-                lokalny = json.load(f)
-        except (OSError, ValueError):
-            print(f'Upozornenie: {rel_json} sa nedá prečítať, nechávam ho.')
-            continue
-        zdroj = lokalny.get('zdroj') if isinstance(lokalny, dict) else None
-        if slug in stav or zdroj != 'web':
-            plan['zmazat'].append(rel_json)
-            plan['zmazat'].extend(fotky_na_zmazanie(koren, slug, lokalny, stav.get(slug)))
+            ciele.add(f['rel'])
+        obsah = p['json']
+        if ZACHOVAJ_NEZNAME_KLUCE and vlastny and isinstance(d, dict):
+            obsah = {**obsah, **{k: v for k, v in d.items() if k not in TYPY[typ]['kluce_api']}}
+        novy = json_text(obsah).encode('utf-8')
+        if bajty != novy:
+            plan['zapisat'].append((rel_json, novy, not vlastny))
+        ciele.add(rel_json)
+        novy_stav[pid] = {'typ': typ, 'slug': slug, 'fotky': fotky}
+    # Cieľ tohto behu sa nikdy nemaže (súbor alebo fotku inej položky prevezme nová).
+    plan['zmazat'] = sorted(plan['zmazat'] - ciele)
     for rel in plan['zmazat']:
         bezpecna_cesta(koren, rel)
-    plan['zmazat'] = sorted(set(plan['zmazat']))
+    plan['stav'] = stav_bajty(novy_stav)
+    stary_stav, _ = citaj_subor(os.path.join(koren, STAV))
+    plan['stav_zmena'] = stary_stav != plan['stav']
     return plan
+
+
+def pocty(plan):
+    return {
+        'pridane': sum(1 for _, _, novy in plan['zapisat'] if novy),
+        'zmenene': sum(1 for _, _, novy in plan['zapisat'] if not novy),
+        'zmazane': len(plan['zmazat']),
+        'zmazane_json': sum(1 for r in plan['zmazat'] if r.endswith('.json')),
+        'stiahnute': len(plan['stiahnut']),
+    }
 
 
 def vycisti_docasne(koren):
@@ -304,7 +534,7 @@ def vykonaj(koren, plan, timeout):
     vycisti_docasne(koren)
     docasny = tempfile.mkdtemp(prefix=DOCASNY, dir=koren)
     try:
-        stiahnute = []
+        hotove = []
         for i, f in enumerate(plan['stiahnut']):
             bajty = stiahni(f['url'], MAX_FOTKA, timeout)
             if hashlib.sha256(bajty).hexdigest() != f['sha256']:
@@ -314,13 +544,13 @@ def vykonaj(koren, plan, timeout):
             tmp = os.path.join(docasny, f'f{i}')
             with open(tmp, 'wb') as subor:
                 subor.write(bajty)
-            stiahnute.append((tmp, f['rel']))
+            hotove.append((tmp, f['rel']))
         # Všetko stiahnuté a overené: až teraz sa mení obsah/.
-        for tmp, rel in stiahnute:
+        for tmp, rel in hotove:
             cesta = bezpecna_cesta(koren, rel)
             os.makedirs(os.path.dirname(cesta), exist_ok=True)
             os.replace(tmp, cesta)
-        for rel, bajty in plan['zapisat']:
+        for rel, bajty, _ in plan['zapisat']:
             zapis_atomovo(bezpecna_cesta(koren, rel), bajty, docasny)
         for rel in plan['zmazat']:
             cesta = bezpecna_cesta(koren, rel)
@@ -330,58 +560,70 @@ def vykonaj(koren, plan, timeout):
             priecinok = os.path.dirname(bezpecna_cesta(koren, rel))
             if rel.startswith('obrazky/') and os.path.isdir(priecinok) and not os.listdir(priecinok):
                 os.rmdir(priecinok)
-        stav = {'verzia': 1, 'realizacie': plan['novy_stav']}
-        novy_stav = (json.dumps(stav, ensure_ascii=False, indent=2, sort_keys=True) + '\n').encode('utf-8')
-        cesta_stavu = os.path.join(koren, STAV)
-        try:
-            with open(cesta_stavu, 'rb') as f:
-                stary_stav = f.read()
-        except FileNotFoundError:
-            stary_stav = None
-        if stary_stav != novy_stav:
-            zapis_atomovo(cesta_stavu, novy_stav, docasny)
+        if plan['stav_zmena']:
+            zapis_atomovo(os.path.join(koren, STAV), plan['stav'], docasny)
     finally:
         shutil.rmtree(docasny, ignore_errors=True)
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description='Stiahne realizácie z arling-obsah do priečinka obsah/.')
+    ap = argparse.ArgumentParser(description='Stiahne položky z Facebooku a zo správy (arling-obsah) do priečinka obsah/.')
     ap.add_argument('--api', default=os.environ.get('OBSAH_API', ''))
     ap.add_argument('--obsah', default='obsah')
     ap.add_argument('--sucho', action='store_true', help='len vypíše, čo by zmenil')
-    ap.add_argument('--povol-prazdne', action='store_true', help='povolí 0 realizácií z API, aj keď lokálne nejaké sú')
+    ap.add_argument('--povol-prazdne', action='store_true',
+                    help='od verzie 2 bez účinku (podľa chýbania v API sa nič nemaže), ostáva kvôli workflowu Obsah')
     ap.add_argument('--timeout', type=float, default=30.0)
     a = ap.parse_args(argv)
     try:
         api, povod = over_api(a.api)
-        telo = stiahni(f'{api}/realizacia', MAX_JSON, a.timeout)
-        try:
-            data = json.loads(telo.decode('utf-8'))
-        except (UnicodeDecodeError, ValueError):
-            raise Chyba('Odpoveď API nie je platný JSON.') from None
-        polozky = over_polozky(data, povod)
+        odpovede = {}
+        for typ, definicia in TYPY.items():
+            telo = stiahni(f'{api}/{typ}', MAX_JSON, a.timeout, povol_404=not definicia['povinny'])
+            if telo is None:
+                print(f'API {typ}: typ klient nemá (404), obsah/{definicia["json"]}/ nechávam bez zmeny.')
+                continue
+            try:
+                data = json.loads(telo.decode('utf-8'))
+            except (UnicodeDecodeError, ValueError):
+                raise Chyba(f'Odpoveď API pre {typ} nie je platný JSON.') from None
+            polozky, ostatne, stiahnute = over_odpoved(data, typ, povod)
+            odpovede[typ] = {'polozky': polozky, 'stiahnute': stiahnute}
+            print(f'API {typ}: položiek {len(polozky) + ostatne}, z Facebooku a zo správy {len(polozky)}, '
+                  f'prvé naplnenie a iné (nechávam repozitáru) {ostatne}, zoznam stiahnute '
+                  f'{"chýba (starý worker)" if stiahnute is None else f"má {len(stiahnute)} id"}.')
+        if a.povol_prazdne:
+            print('Poznámka: --povol-prazdne od verzie 2 nič nemení, podľa chýbania v API sa nemaže.')
         koren = os.path.abspath(a.obsah)
-        stav = nacitaj_stav(koren)
-        plan = priprav_plan(koren, polozky, stav, a.povol_prazdne)
+        stav, prevod = nacitaj_stav(koren)
+        if prevod:
+            print(prevod)
+        plan = priprav_plan(koren, odpovede, stav)
+        for veta in plan['upozornenia']:
+            print(f'Upozornenie: {veta}')
         for f in plan['stiahnut']:
             print(f'{"stiahol by som" if a.sucho else "sťahujem"}: {f["rel"]}')
-        for rel, _ in plan['zapisat']:
-            print(f'{"zapísal by som" if a.sucho else "zapisujem"}: {rel}')
+        for rel, _, novy in plan['zapisat']:
+            print(f'{"zapísal by som" if a.sucho else "zapisujem"}: {rel} ({"nový" if novy else "zmena"})')
         for rel in plan['zmazat']:
             print(f'{"zmazal by som" if a.sucho else "mažem"}: {rel}')
+        c = pocty(plan)
+        suhrn = (f'pridaní {c["pridane"]}, zmien {c["zmenene"]}, mazaní {c["zmazane"]} '
+                 f'(JSON {c["zmazane_json"]}, fotky {c["zmazane"] - c["zmazane_json"]})')
         if a.sucho:
-            print(f'Suchý beh: realizácií v API {len(polozky)}, nič som nezapísal.')
+            print(f'Suchý beh: {suhrn}, fotiek na stiahnutie {c["stiahnute"]}, '
+                  f'stav {"by som prepísal" if plan["stav_zmena"] else "bez zmeny"}. Nič som nezapísal.')
             return 0
         vykonaj(koren, plan, a.timeout)
-        zmeny = len(plan['stiahnut']) + len(plan['zapisat']) + len(plan['zmazat'])
-        print(f'Hotovo: realizácií v API {len(polozky)}, zmien {zmeny}.')
+        print(f'Hotovo: {suhrn}, stiahnutých fotiek {c["stiahnute"]}, stav {"prepísaný" if plan["stav_zmena"] else "bez zmeny"}.')
         return 0
     except Chyba as e:
         print(f'Chyba: {e} Nič som nezapísal ako hotové.', file=sys.stderr)
         return 1
     except OSError as e:
-        # Stav sa zapisuje až na konci, takže ďalší beh všetko prepočíta podľa sha256 súborov.
-        print(f'Chyba: zápis na disk zlyhal ({type(e).__name__}). Stav som neuložil, ďalší beh to zopakuje.', file=sys.stderr)
+        # Stav sa zapisuje až na konci, takže ďalší beh všetko prepočíta podľa sha256 súborov a id v nich.
+        print(f'Chyba: čítanie alebo zápis na disk zlyhal ({type(e).__name__}). Stav som neuložil, ďalší beh to zopakuje.',
+              file=sys.stderr)
         return 1
 
 

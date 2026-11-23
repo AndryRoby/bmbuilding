@@ -134,11 +134,22 @@ POHLAD_ZNACKA = {'s': (-75, 330), 'u': (-100, 330)}
 LB_ODDELOVAC = ' · '
 
 VAROVANIA = []
+# Prísne varovania (fb-ostro A4, OPONENT.md S2): fotka sekcie z nastavenia.json (uvod_foto, firma_foto, postup_foto)
+# alebo realizácia z pas_vyber, ktorá v obsahu chýba. Lokálne je to varovanie a sekcia sa zostaví bez nej; v GitHub
+# Actions (GITHUB_ACTIONS=true) z nich main urobí chybu zostavy (kód 1), nasadenie sa nespustí a ostane posledný dobrý web.
+PRISNE_VAROVANIA = []
 
 
 def varuj(sprava):
     VAROVANIA.append(sprava)
     print('VAROVANIE: ' + sprava, file=sys.stderr)
+
+
+def varuj_prisne(sprava):
+    """Varovanie, ktoré je v GitHub Actions chybou zostavy (PRISNE_VAROVANIA, main)."""
+    if sprava not in PRISNE_VAROVANIA:
+        PRISNE_VAROVANIA.append(sprava)
+    varuj(sprava)
 
 
 class ChybaZostavy(Exception):
@@ -2300,7 +2311,8 @@ class Web:
     # --- úvod
     def hrdina_foto(self):
         """Fotka v ráme úvodu (nastavenia uvod_foto: slug a súbor alebo číslo fotky). Musí byť veľká a ostrá
-        (FOTKY.md bod 3: šírka aspoň 1280 px, ostrosť aspoň 800); inak prvá taká fotka z realizácií; bez nej nič."""
+        (FOTKY.md bod 3: šírka aspoň 1280 px, ostrosť aspoň 800); inak prvá taká fotka z realizácií; bez nej nič.
+        Nastavená realizácia alebo fotka, ktorá chýba alebo nevyhovuje, je prísne varovanie (v Actions chyba zostavy)."""
         nast = self.nastavenia.get('uvod_foto') or {}
         r = next((x for x in self.realizacie if x['slug'] == nast.get('slug')), None)
         if r:
@@ -2310,7 +2322,9 @@ class Web:
             p = self.pravidla['velka']
             if f and f['w'] >= p['min_sirka'] and f['ostrost'] >= p['min_ostrost'] and f['w'] >= f['h']:
                 return r, f
-            varuj(f'uvod_foto: fotka {subor or nn} realizácie {r["slug"]} chýba alebo nie je dosť veľká a ostrá na úvod')
+            varuj_prisne(f'uvod_foto: fotka {subor or nn} realizácie {r["slug"]} chýba alebo nie je dosť veľká a ostrá na úvod')
+        elif nast.get('slug'):
+            varuj_prisne(f'uvod_foto: realizácia {nast.get("slug")!r} nie je v obsahu')
         for x in self.realizacie:
             if x['velka']:
                 return x, x['velka']
@@ -2342,15 +2356,19 @@ class Web:
 
     # --- úvod v časti ukážky Olovnica (PLAN-1-1.md časť 1): úvod, pás prác, Postup, Činnosť, O firme, Kontakt
     def foto_nastavenia(self, kluc):
-        """Fotka sekcie z nastavenia.json (slug a súbor), len skutočná ostrá fotka z galérie; inak (None, None)."""
+        """Fotka sekcie z nastavenia.json (slug a súbor), len skutočná ostrá fotka z galérie; inak (None, None).
+        Nenastavený kľúč je sekcia bez fotky; nastavená realizácia alebo fotka, ktorá chýba, je prísne varovanie
+        (v Actions chyba zostavy, fb-ostro A4)."""
         nast = self.nastavenia.get(kluc) or {}
         r = next((x for x in self.realizacie if x['slug'] == nast.get('slug')), None)
         if not r:
+            if nast.get('slug'):
+                varuj_prisne(f'{kluc}: realizácia {nast.get("slug")!r} nie je v obsahu')
             return None, None
         subor = jeden_riadok(nast.get('subor'))
         f = next((x for x in r['galeria'] if x['rel'] == f'{r["slug"]}/{subor}' and not x.get('viz')), None)
         if f is None:
-            varuj(f'{kluc}: fotka {subor} realizácie {r["slug"]} chýba, je rozmazaná alebo je vizualizácia')
+            varuj_prisne(f'{kluc}: fotka {subor} realizácie {r["slug"]} chýba, je rozmazaná alebo je vizualizácia')
             return None, None
         return r, f
 
@@ -2436,7 +2454,8 @@ class Web:
         """Realizácie v páse úvodu (zadanie bmb-fb-uplnost bod 4: najlepšie stavby, nikdy všetky): nastavenia.json
         pas_vyber v poradí zoznamu realizácií (podľa rokov), najviac PAS_MAX. Chýbajúci slug alebo realizácia bez
         fotky sa vynechá s varovaním a miesto doplní záložný výber (zalozny_pas); bez pas_vyber záložný výber
-        uvod_pocet_realizacii (tiež najviac PAS_MAX) s varovaním. Nikdy chyba zostavy."""
+        uvod_pocet_realizacii (tiež najviac PAS_MAX) s varovaním. Lokálne nikdy chyba zostavy; chýbajúci slug
+        a realizácia bez fotky sú prísne varovania, v GitHub Actions chyba zostavy (fb-ostro A4)."""
         n = max(1, min(int(self.nastavenia.get('uvod_pocet_realizacii', 8)), PAS_MAX))
         vyber = self.nastavenia.get('pas_vyber')
         podla = {r['slug']: r for r in self.realizacie}
@@ -2447,9 +2466,9 @@ class Web:
             for s in vyber:
                 r = podla.get(s) if isinstance(s, str) else None
                 if r is None:
-                    varuj(f'nastavenia pas_vyber: realizácia {s!r} nie je v obsahu, vynechaná')
+                    varuj_prisne(f'nastavenia pas_vyber: realizácia {s!r} nie je v obsahu, vynechaná')
                 elif not r['karta']:
-                    varuj(f'nastavenia pas_vyber: realizácia {s} nemá fotku, vynechaná')
+                    varuj_prisne(f'nastavenia pas_vyber: realizácia {s} nemá fotku, vynechaná')
                 elif r not in out:
                     out.append(r)
             if len(out) > PAS_MAX:
@@ -3757,10 +3776,12 @@ def main(argv=None):
         except (AttributeError, ValueError):
             pass
     VAROVANIA.clear()
+    PRISNE_VAROVANIA.clear()
     nahlad = a.nahlad
+    v_actions = os.environ.get('GITHUB_ACTIONS') == 'true'
     # GitHub Actions (workflow linky bmb-obsah volá „python build.py“): ostrý beh len s BMB_OSTRY=ano, inak náhľad
     # s noindex, Disallow a 404 pod /bmbuilding/, kým doména nie je prepnutá (brána pokus 1, správnosť 1)
-    if not nahlad and os.environ.get('GITHUB_ACTIONS') == 'true' and os.environ.get('BMB_OSTRY', '').strip().lower() != 'ano':
+    if not nahlad and v_actions and os.environ.get('BMB_OSTRY', '').strip().lower() != 'ano':
         nahlad = True
         print('GitHub Actions bez BMB_OSTRY=ano: zostavujem náhľad (noindex). Ostrý web po prepnutí domény: BMB_OSTRY=ano.')
     vystup = a.vystup.resolve()
@@ -3772,6 +3793,12 @@ def main(argv=None):
         web = Web(obsah, nahlad, fotky_web=a.fotky_web.resolve())
         web.postav()
         skontroluj_text(web.subory)
+        # fb-ostro A4 (OPONENT.md S2): v Actions bez fotky sekcie alebo realizácie pásu nič nezapísať a skončiť kódom 1;
+        # krok nasadenia sa nespustí a na webe ostane posledná dobrá verzia
+        if v_actions and PRISNE_VAROVANIA:
+            raise ChybaZostavy('v GitHub Actions chýba fotka sekcie alebo realizácia pásu z nastavenia.json (nič som '
+                               'nezapísal, nasadenie sa nespustí a ostane posledný dobrý web): '
+                               + '; '.join(PRISNE_VAROVANIA[:10]))
         kodovanych = zapis(web, vystup)
     except ChybaZostavy as e:
         print('CHYBA: ' + str(e), file=sys.stderr)
