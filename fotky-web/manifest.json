@@ -6654,7 +6654,7 @@
   },
   "4035a153a8481d8bf2dff6a87c67e58c4ff31462e6621f9303d3cd4376d4f157": {
    "rel": "bytove-domy-vtacnik-bratislava/12.jpg",
-   "kluc": "9619ba835b98b4e2ffe9",
+   "kluc": "5c4c617c2afcab875270",
    "predloha": {
     "w": 1987,
     "h": 1490,
@@ -6662,97 +6662,140 @@
     "sha256": "ad83f9e93447f685d7fd1653fa922090c2404af105b1f381dc5a33cfd7281156"
    },
    "kvalita": {
-    "avif": 54,
-    "webp": 73
+    "avif": 63,
+    "webp": 81
    },
    "zhoda": {
-    "avif": 0.995,
-    "webp": 0.995
+    "avif": 0.997,
+    "webp": 0.997
    },
    "subory": {
+    "45|480|avif": {
+     "subor": "4035a153a8481d8b/480-45.avif",
+     "w": 480,
+     "h": 600,
+     "bajty": 64267,
+     "sha256": "a0d7046a657686ea497c32947b6b83ce1bf1fdcca5a077c466575646dc1bf336"
+    },
+    "45|480|webp": {
+     "subor": "4035a153a8481d8b/480-45.webp",
+     "w": 480,
+     "h": 600,
+     "bajty": 68242,
+     "sha256": "13d76966e43c15fe238e0671e310ef74859ef42f75a34ee5ff5b4d8f13f156ef"
+    },
+    "45|720|avif": {
+     "subor": "4035a153a8481d8b/720-45.avif",
+     "w": 720,
+     "h": 900,
+     "bajty": 142227,
+     "sha256": "3407ab7c0dfa4423887b2ec53653f3910302a1185b491d1b6b448a0c734cbf86"
+    },
+    "45|720|webp": {
+     "subor": "4035a153a8481d8b/720-45.webp",
+     "w": 720,
+     "h": 900,
+     "bajty": 151276,
+     "sha256": "98f64ab3061d25387157d7c5f74ddc671d1cb5a287f550ffe01083beda0cdcc8"
+    },
+    "45|960|avif": {
+     "subor": "4035a153a8481d8b/960-45.avif",
+     "w": 960,
+     "h": 1200,
+     "bajty": 219743,
+     "sha256": "e9804065241199220b822c6b9d8fcd0664355fb3080bb7c386f9a8145cbf0562"
+    },
+    "45|960|webp": {
+     "subor": "4035a153a8481d8b/960-45.webp",
+     "w": 960,
+     "h": 1200,
+     "bajty": 249266,
+     "sha256": "7eb62f0fa09a08c1890617194977beee5151e64e6cc4bcce09c2d5dc0a60af40"
+    },
     "|1440|avif": {
      "subor": "4035a153a8481d8b/1440.avif",
      "w": 1440,
      "h": 1080,
-     "bajty": 269613,
-     "sha256": "25cbd423582623f443aace1aa8de71e148b3d087c6a44b95745d42b6b715ab37"
+     "bajty": 321481,
+     "sha256": "ade2aa6b0977c5e580e4010ad347e58601af13deefa7b8b6e4d1e94dc9983ace"
     },
     "|1440|webp": {
      "subor": "4035a153a8481d8b/1440.webp",
      "w": 1440,
      "h": 1080,
-     "bajty": 302820,
-     "sha256": "f80d9a76444b9668ab5b3933405bfe82f2f53c29f1d8e2ccd3fa78334cc88ad5"
+     "bajty": 364232,
+     "sha256": "f52042ab02a5c27572536513b9eb3dffc7a82624b79b75bb7f3a84545c8d3721"
     },
     "|1987|avif": {
      "subor": "4035a153a8481d8b/1987.avif",
      "w": 1987,
      "h": 1490,
-     "bajty": 401335,
-     "sha256": "5de1432bb23be8e16bce9a54b4ee307a5fd1e4ac59ef3b2c0bf3e21401195d0d"
+     "bajty": 506354,
+     "sha256": "1b4776775393bd1a9486dd661fac0f6f7b030072400f8acddc933798fb613bfc"
     },
     "|480|avif": {
      "subor": "4035a153a8481d8b/480.avif",
      "w": 480,
      "h": 360,
-     "bajty": 32355,
-     "sha256": "4d4598ef3f36dd84c5e60ff129d8d7939e8d830e16c168f012cd3bd8cd7574e0"
+     "bajty": 41095,
+     "sha256": "1bea56d3a12534d6dbd000550b77a61265ddad45c35c098ca917b06fee2e4187"
     },
     "|480|webp": {
      "subor": "4035a153a8481d8b/480.webp",
      "w": 480,
      "h": 360,
-     "bajty": 35180,
-     "sha256": "d825cee19128e7a7f71c2c5b4281790da81348fdece39a38eb2896689d548dfa"
+     "bajty": 43594,
+     "sha256": "cab56f40b605ad918c07fc846b092a968b78fad72776e7672d1ce97ca521f15d"
     },
     "|720|avif": {
      "subor": "4035a153a8481d8b/720.avif",
      "w": 720,
      "h": 540,
-     "bajty": 72172,
-     "sha256": "e98301f06a4d962e9d4cde1f51693f22fc302e1726b32402fc617a6533b78ffa"
+     "bajty": 91016,
+     "sha256": "cafac707e8eb6ee13d2b309aabeeeb771a86d3e5d50c7711ebe0ed2db7e4f029"
     },
     "|720|webp": {
      "subor": "4035a153a8481d8b/720.webp",
      "w": 720,
      "h": 540,
-     "bajty": 77820,
-     "sha256": "c053dfbb2286e6834e1c4139284d7a280a874f4ce196fb5b2d452b510d51f8f2"
+     "bajty": 96020,
+     "sha256": "45c8af5fef8a3fc48958cc790c85f773368380d7c675361bedd1691d7b5feacc"
     },
     "|960|avif": {
      "subor": "4035a153a8481d8b/960.avif",
      "w": 960,
      "h": 720,
-     "bajty": 127903,
-     "sha256": "11ba1550fedd06af990baf98649c7db701f78d2133e31afdb3a8da8a4bbf3adb"
+     "bajty": 159615,
+     "sha256": "d0e1dc2c4dfa25577f69861f93b6d866075cd49d780d8f48ef96fca80d99604d"
     },
     "|960|webp": {
      "subor": "4035a153a8481d8b/960.webp",
      "w": 960,
      "h": 720,
-     "bajty": 136178,
-     "sha256": "3dc3f8f409c08f839c74cb81632e7d5c1b8bde52512a6ab2a40e304ec4d40f6d"
+     "bajty": 167030,
+     "sha256": "c00daf7112f17f5e040b0a3ce57a935fe54fc0f1fa270b38a2828a2ed4416878"
     }
    },
+   "titulna": true,
    "hladanie": {
     "avif": {
      "ref_sirka": 1440,
-     "zhoda": 0.99517,
-     "bajty_ref": 269613,
-     "kodovani": 7,
+     "zhoda": 0.9971,
+     "bajty_ref": 314341,
+     "kodovani": 12,
      "kontrola": {
       "sirka": 480,
-      "zhoda": 0.99519
+      "zhoda": 0.9972
      }
     },
     "webp": {
      "ref_sirka": 1440,
-     "zhoda": 0.99522,
-     "bajty_ref": 302820,
+     "zhoda": 0.99721,
+     "bajty_ref": 364232,
      "kodovani": 6,
      "kontrola": {
       "sirka": 480,
-      "zhoda": 0.99538
+      "zhoda": 0.99712
      }
     }
    }
@@ -26448,7 +26491,7 @@
   },
   "e290f74627605ef9fd3e75cbf20374ba5a55584449f92ed94ea294345a38c227": {
    "rel": "bytovy-dom-na-krizovatkach-bratislava/05.jpg",
-   "kluc": "9e6920d015d66a3d0eb7",
+   "kluc": "97ee774ab7b8cfc499b8",
    "predloha": {
     "w": 2000,
     "h": 1500,
@@ -26456,98 +26499,97 @@
     "sha256": ""
    },
    "kvalita": {
-    "avif": 76,
-    "webp": 89
+    "avif": 65,
+    "webp": 83
    },
    "zhoda": {
-    "avif": 0.997,
-    "webp": 0.997
+    "avif": 0.995,
+    "webp": 0.995
    },
    "subory": {
     "|1440|avif": {
      "subor": "e290f74627605ef9/1440.avif",
      "w": 1440,
      "h": 1080,
-     "bajty": 229564,
-     "sha256": "51322a0b67e58b38130e54a650d2f5afc623e751689b93d554f84fd610958638"
+     "bajty": 173674,
+     "sha256": "0010a4010249c96d5834430debc532932bbd82dcd7d1c5f115fb1c302e76edb1"
     },
     "|1440|webp": {
      "subor": "e290f74627605ef9/1440.webp",
      "w": 1440,
      "h": 1080,
-     "bajty": 276800,
-     "sha256": "2b07c72f70136eb68ce5964464fca63ee273d3fa5cdfe2a8401fbe913e2e7c05"
+     "bajty": 206144,
+     "sha256": "99f9a4ccf70b9f331cce985054c767b3e1f267885a00304275f1cdcd457f6ed1"
     },
     "|2000|avif": {
      "subor": "e290f74627605ef9/2000.avif",
      "w": 2000,
      "h": 1500,
-     "bajty": 355547,
-     "sha256": "3094f93058339aa39bed281a4c3f80a100d16da835025f54cd277c27fa05b2ad"
+     "bajty": 280320,
+     "sha256": "daa79f1f29d8712e03982eaf386e31710be05f1cf918e335c6868bb25bda531b"
     },
     "|480|avif": {
      "subor": "e290f74627605ef9/480.avif",
      "w": 480,
      "h": 360,
-     "bajty": 33471,
-     "sha256": "bb319b438e636abdc6248ee04b71dc4f93bf4664c2ba9346469959bb432f9aa3"
+     "bajty": 26225,
+     "sha256": "3a6d3c805b4d94522c57c2893ea0d968311e33c8bce4515d89316350d6df3f6a"
     },
     "|480|webp": {
      "subor": "e290f74627605ef9/480.webp",
      "w": 480,
      "h": 360,
-     "bajty": 40504,
-     "sha256": "244eaedaaea7661386321bb290c16bea43f55a0e59deaacfe2f8e7ca5f07432b"
+     "bajty": 30526,
+     "sha256": "a2c20a0ab459893e04d05641a2b71aadc1f089323f3b27689d3338d393f4ba17"
     },
     "|720|avif": {
      "subor": "e290f74627605ef9/720.avif",
      "w": 720,
      "h": 540,
-     "bajty": 70342,
-     "sha256": "013fc19c3c74b11a76f398da80c183ac3cc5471e75e3d2e587bf65300bc1cf7b"
+     "bajty": 54450,
+     "sha256": "ae5e85ac1da99afd6b4e2b396a8eb743e134f974d56f9c8277a27397f4032a8b"
     },
     "|720|webp": {
      "subor": "e290f74627605ef9/720.webp",
      "w": 720,
      "h": 540,
-     "bajty": 84590,
-     "sha256": "6c6b1d3f8076e44bf6779984ba19a833f5ae84f127f0dad1f4e093cc524c54b3"
+     "bajty": 63044,
+     "sha256": "ac1216f1e359137a29474a151bb88821b4f836271241bf326b3953f0cddfaa74"
     },
     "|960|avif": {
      "subor": "e290f74627605ef9/960.avif",
      "w": 960,
      "h": 720,
-     "bajty": 117682,
-     "sha256": "3d6c15fd8b1fcc0eddf6499ed042bb9c88ee0b13d90356976671a3625d69d242"
+     "bajty": 90318,
+     "sha256": "e14201eb4faff4682acbceb385624497b5f5c988432305c63b5d3c072da255b1"
     },
     "|960|webp": {
      "subor": "e290f74627605ef9/960.webp",
      "w": 960,
      "h": 720,
-     "bajty": 141522,
-     "sha256": "6ad8a79242a60d255d806c7dad8253c67799d7ab8a1253530ad6112e4eac6389"
+     "bajty": 105436,
+     "sha256": "7108c4f8e5291be31ce63b2e4cb44fc169384279ec64ace60db36585b5e5644b"
     }
    },
-   "titulna": true,
    "hladanie": {
     "avif": {
      "ref_sirka": 1440,
-     "zhoda": 0.99704,
-     "bajty_ref": 229564,
+     "zhoda": 0.99527,
+     "bajty_ref": 173674,
      "kodovani": 6,
      "kontrola": {
       "sirka": 480,
-      "zhoda": 0.99786
+      "zhoda": 0.99657
      }
     },
     "webp": {
      "ref_sirka": 1440,
-     "zhoda": 0.99731,
-     "bajty_ref": 276800,
+     "zhoda": 0.9951,
+     "bajty_ref": 206144,
      "kodovani": 6,
      "kontrola": {
       "sirka": 480,
-      "zhoda": 0.99818
+      "zhoda": 0.9967
      }
     }
    }
