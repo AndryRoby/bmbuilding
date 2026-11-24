@@ -12,13 +12,7 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rd-pezinok/01.jpg",
-      "alt": "RD Pezinok, fotka 1 z 2"
-    },
-    {
-      "subor": "obsah/obrazky/rd-pezinok/03.jpg",
-      "alt": "Vizualizácia, RD Pezinok, autor Koneval / Manikova architekti, fotka 2 z 2",
-      "druh": "vizualizacia",
-      "autor": "Koneval / Manikova architekti"
+      "alt": "RD Pezinok, fotka 1 z 1"
     }
   ],
   "zdroj": "web",
@@ -26,5 +20,6 @@
   "datum": "2013-01-09",
   "poradie": 15,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "rodinne"
 }

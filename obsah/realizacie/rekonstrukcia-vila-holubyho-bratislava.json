@@ -12,35 +12,31 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/01.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 1 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 1 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/02.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 2 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 2 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/03.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 3 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 3 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/04.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 4 z 8"
-    },
-    {
-      "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/05.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 5 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 4 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/06.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 6 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, fotka 5 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/09.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, pôvodný stav pred rekonštrukciou, fotka 7 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, pôvodný stav pred rekonštrukciou, fotka 6 z 7"
     },
     {
       "subor": "obsah/obrazky/rekonstrukcia-vila-holubyho-bratislava/10.jpg",
-      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, pôvodný stav pred rekonštrukciou, fotka 8 z 8"
+      "alt": "Rekonštrukcia rodinného domu, Vila Holubyho, Bratislava, pôvodný stav pred rekonštrukciou, fotka 7 z 7"
     }
   ],
   "zdroj": "fb",
@@ -49,5 +45,7 @@
   "poradie": 100,
   "zverejnene": true,
   "rok_prispevku": "2026",
-  "autor": "Ing. arch. Ilja Skoček, Ing. arch. Martin Skoček"
+  "autor": "Ing. arch. Ilja Skoček, Ing. arch. Martin Skoček",
+  "kategoria": "rodinne",
+  "upravene": "2026-11-24"
 }

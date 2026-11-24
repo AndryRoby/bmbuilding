@@ -78,12 +78,47 @@ SVG_KRIZIK = ('<svg width="18" height="18" viewBox="0 0 18 18" fill="none" strok
               'aria-hidden="true"><path d="M4 4l10 10M14 4 4 14"/></svg>')
 # vlasové čiary 12 stĺpcov cez celú stránku (najrozpoznateľnejší prvok štýlu, OLOVNICA-ROZBOR.md 6a)
 CIARY_HTML = '<div class="ciary" aria-hidden="true"><div class="ciary-vnutro">' + '<span></span>' * 12 + '</div></div>'
-SVG_SIPKA_DOLE = ('<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" '
-                  'aria-hidden="true"><path d="M8 2v11M3.5 8.5 8 13l4.5-4.5"/></svg>')
-# ikona rámu fotky pri tlačidle Fotky v páse (ukážka: ikona pôdorysu pri tlačidle Pôdorys)
-SVG_FOTKY = ('<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" '
-             'aria-hidden="true"><path d="M1.5 3.5h13v9h-13zM1.5 10.5l3.5-3.5 3 3 2-2 4.5 4.5"/></svg>')
-# značka pohľadu A pri fotke úvodu (ukážka U:730)
+# ikony sociálnych sietí (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): vlastné obrysy vlasovou čiarou ako šípky
+# a ikona Fotky, nie logá sietí na farebnom podklade; text nesie aria-label odkazu (CSP: inline SVG, nič cudzie)
+# Jednotná sada (ÚVOD v3, Instagram Mária): rovnaký rám 19 x 19 so zaobleným rohom 4,5, čiara 1,5, bodky ako plné
+# kruhy r 1 (nie krátke ťahy, tie mali pri 1,5 px tvar obdĺžnika), znak v optickom strede rámu (11, 11)
+_SIET_SVG = ('<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" '
+             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+             '<rect x="1.75" y="1.75" width="18.5" height="18.5" rx="4.5"/>')
+SVG_FACEBOOK = _SIET_SVG + '<path d="M14.25 6.75h-1.5c-1.45 0-2.5 1.05-2.5 2.5V20.25M8 11.75h5.75"/></svg>'
+SVG_LINKEDIN = (_SIET_SVG + '<path d="M7 10v6.5M10.5 16.5V10M10.5 12.75c0-1.7 1.1-2.75 2.55-2.75s2.45 1 2.45 2.75v3.75"/>'
+                '<circle cx="7" cy="6.9" r="1" fill="currentColor" stroke="none"/></svg>')
+SVG_INSTAGRAM = (_SIET_SVG + '<circle cx="11" cy="11" r="4.1"/>'
+                 '<circle cx="15.9" cy="6.1" r="1" fill="currentColor" stroke="none"/></svg>')
+SVG_PAUZA = ('<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" '
+             'aria-hidden="true" focusable="false"><path class="ikona-pauza" d="M5.5 3v10M10.5 3v10"/>'
+             '<path class="ikona-hraj" d="M4.5 2.8v10.4L13 8z"/></svg>')
+# ikony údajov v hrdinovi úvodu a troch častí Činnosti (ZMENY-KOLO-1.md 3A.2 a 3A.3, skladba podľa vzorov Mária):
+# vlastné obrysy vlasovou čiarou ako šípky a siete, nie plné ikony zo vzoru; význam nesie text vedľa nich
+_IKONA = ('<svg class="ikona" width="{s}" height="{s}" viewBox="0 0 {s} {s}" fill="none" stroke="currentColor" '
+          'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{p}</svg>')
+IKONY_UDAJOV = {
+    'Sídlo': _IKONA.format(s=24, p='<path d="M12 21.25s-6.75-6.1-6.75-11.25a6.75 6.75 0 0 1 13.5 0c0 5.15-6.75 11.25-6.75 11.25z"/>'
+                                   '<circle cx="12" cy="10" r="2.4"/>'),
+    'Na trhu': _IKONA.format(s=24, p='<path d="M3.75 5.75h16.5v14.5H3.75zM3.75 10.25h16.5M8 3.25v4.5M16 3.25v4.5M7.5 14.25h2.5"/>'),
+    'Konateľ': _IKONA.format(s=24, p='<circle cx="12" cy="7.75" r="3.75"/><path d="M4.75 20.25c.7-4.1 3.5-6.5 7.25-6.5s6.55 2.4 7.25 6.5"/>'),
+    'Oprávnenia': _IKONA.format(s=24, p='<path d="M12 3.25 4.75 6v5.25c0 4.5 3.05 8.2 7.25 9.5 4.2-1.3 7.25-5 7.25-9.5V6z"/>'
+                                        '<path d="m8.75 12 2.25 2.25 4.25-4.5"/>'),
+    # časopis (ZMENY-KOLO-1.md 5.7: údaj V médiách v hrdinovi), rovnaká mriežka 24 a hrúbka čiary ako ostatné ikony
+    'V médiách': _IKONA.format(s=24, p='<path d="M4.75 5.25h11.5v13.5a1.5 1.5 0 0 0 1.5 1.5H6.25a1.5 1.5 0 0 1-1.5-1.5z"/>'
+                                       '<path d="M16.25 9.25h3v9.5a1.5 1.5 0 0 1-3 0M7.75 9.25h5.5M7.75 12.75h5.5M7.75 16.25h3.5"/>'),
+}
+# zmienky v médiách pri realizácii (nastavenia.json v_mediach): odkazy len https na tieto weby, inak sa vynechajú
+MEDIA_HOSTITELIA = ('asb.sk', 'linkedin.com', 'archinfo.sk')
+IKONY_CINNOSTI = {
+    'stavebny-manazment': _IKONA.format(s=32, p='<path d="M10 6.75H6.75v21.5h18.5V6.75H22"/><path d="M11.25 4.75h9.5v4h-9.5z"/>'
+                                                '<path d="m11 16 2.75 2.75 5.5-5.5M11 23.75h10"/>'),
+    'stavebny-dozor': _IKONA.format(s=32, p='<circle cx="14" cy="14" r="8.75"/><path d="m20.25 20.25 7.25 7.25"/>'
+                                            '<path d="m10.25 14 2.6 2.6 4.9-4.9"/>'),
+    'stavbyveduci': _IKONA.format(s=32, p='<path d="M3.75 24.25h24.5"/><path d="M6.75 24.25V20.5a9.25 9.25 0 0 1 18.5 0v3.75"/>'
+                                          '<path d="M13 12.25V8.75h6v3.5M16 8.75v8"/>'),
+}
+# značka pohľadu A pri titulnej fotke detailu realizácie (ukážka U:730)
 SVG_POHLAD_ZNAK = ('<svg class="pohlad-znak" width="34" height="22" viewBox="-11 -11 34 22" aria-hidden="true">'
                    '<path d="M5.5-6.5L17 0L5.5 6.5Z"/><circle r="9.5"/><text y="4">A</text></svg>')
 # písma s preloadom (Geist latinka a latinka s diakritikou); Geist Mono bez preloadu: na mobile je až pod prvou
@@ -106,18 +141,17 @@ NOSCRIPT_CSS = 'img[data-src]{display:none}@media (max-width:767px){.lista{trans
 TYPY_FOTIEK = ('HE', 'LH', 'LR', 'R', 'D', 'I', 'P')
 NIE_OBAL = ('D', 'P')
 
-# kategórie realizácií (SMER.md 2.7): odvodené z názvu, potom z textu; pole kategoria v obsahu má prednosť
-KATEGORIE = (('bytove', 'Bytové domy'), ('rodinne', 'Rodinné domy'), ('rekonstrukcie', 'Rekonštrukcie'), ('ine', 'Iné'))
+# kategórie realizácií (SMER.md 2.7): pole kategoria v obsahu má prednosť, inak odvodené z názvu, potom z textu.
+# 1. kolo pripomienok (ZMENY-KOLO-1.md 5.1): len Bytové domy, Rodinné domy a Iné, rekonštrukcie ako druh nie sú
+# (Mário: „bez rekonštrukcie“); polyfunkčné objekty idú do Iné (časť 1, Kategórie)
+KATEGORIE = (('bytove', 'Bytové domy'), ('rodinne', 'Rodinné domy'), ('ine', 'Iné'))
 KAT_VZORY = {
     'rodinne': re.compile(r'^RD\b|rodinn|dvojdom|\bvil[ay]\b', re.I),
-    'rekonstrukcie': re.compile(r'rekonštrukc|stavebné úpravy|nadstavb|\bobnov[ay]\b', re.I),
-    'bytove': re.compile(r'bytov|rezidenci|polyfunkčn|apartmán', re.I),
+    'bytove': re.compile(r'bytov|rezidenci|apartmán', re.I),
 }
-KAT_PORADIE_NAZOV = ('rodinne', 'rekonstrukcie', 'bytove')
-KAT_PORADIE_TEXT = ('rekonstrukcie', 'rodinne', 'bytove')
+KAT_PORADIE_NAZOV = ('rodinne', 'bytove')
+KAT_PORADIE_TEXT = ('rodinne', 'bytove')
 MAX_FOTIEK_NOVINKY = 10
-# pás úvodu ukazuje najlepšie stavby, nikdy všetky (zadanie bmb-fb-uplnost bod 4): najviac 10 kariet
-PAS_MAX = 10
 # zoznam realizácií: JS ukáže prvých REALIZACIE_NARAZ kariet výberu a tlačidlo Zobraziť ďalšie (nastavenia
 # realizacie_naraz); bez JS sú v HTML a viditeľné všetky karty (SEO, odkaz na každú realizáciu)
 REALIZACIE_NARAZ = 12
@@ -127,15 +161,18 @@ CISLA = ' class="cisla"'
 # (brána dizajnu pokus 2, nález 3)
 BODKA = '\u00a0· '
 
-# stred značky pohľadu A v jednotkách výkresu (široká a úzka kompozícia): vľavo pred fasádou, mimo rezu a popisov;
-# styl.css .pohlad-odkaz počíta polohu odkazu z tých istých čísel (viewBox -150 -30 1480 910 a -200 -30 890 910)
-POHLAD_ZNACKA = {'s': (-75, 330), 'u': (-100, 330)}
+# slider stavieb v úvode (1. kolo pripomienok 24. 11. 2026, ZMENY-KOLO-1.md 3.3): poradie a súbory v nastavenia.json
+# uvod_slider; prelínanie a čas na fotku ovláda app.js (data-prelinanie, data-interval v ms)
+SLIDER_PRELINANIE_MS = 1200
+SLIDER_INTERVAL_MS = 8000
+# kotvy úvodu premenované v 1. kole pripomienok (cieľ presmerovania starej adresy -> nový cieľ)
+KOTVY_PREMENOVANE = {'/#sluzby': '/#cinnost'}
 # oddeľovač častí popisu fotky v lightboxe (ten istý reťazec delí a skladá app.js vo funkcii ukaz)
 LB_ODDELOVAC = ' · '
 
 VAROVANIA = []
-# Prísne varovania (fb-ostro A4, OPONENT.md S2): fotka sekcie z nastavenia.json (uvod_foto, firma_foto, postup_foto)
-# alebo realizácia z pas_vyber, ktorá v obsahu chýba. Lokálne je to varovanie a sekcia sa zostaví bez nej; v GitHub
+# Prísne varovania (fb-ostro A4, OPONENT.md S2): fotka slidera úvodu z nastavenia.json (uvod_slider)
+# (realizácia alebo fotka), ktorá v obsahu chýba. Lokálne je to varovanie a sekcia sa zostaví bez nej; v GitHub
 # Actions (GITHUB_ACTIONS=true) z nich main urobí chybu zostavy (kód 1), nasadenie sa nespustí a ostane posledný dobrý web.
 PRISNE_VAROVANIA = []
 
@@ -331,6 +368,8 @@ def nacitaj_firmu(obsah):
         'ic_dph': jeden_riadok(d.get('ic_dph')),
         'zapis': jeden_riadok(d.get('zapis_or')) if d.get('zapis_or_overit') is not True else '',
         'den_zapisu': jeden_riadok(d.get('den_zapisu')),
+        # výpis z obchodného registra (zdroj údajov O firme v úvode): prvá adresa v poli zapis_or_zdroj, len https na orsr.sk
+        'zapis_zdroj': bezpecna_url((re.findall(r'https://\S+', jeden_riadok(d.get('zapis_or_zdroj'))) or [''])[0], ['orsr.sk']),
         'tel': tel,
         'tel_href': tel_href,
         'email': email,
@@ -476,8 +515,9 @@ def avif_dostupny():
 
 
 def kategorie_realizacie(nazov, text, vlastna=None):
-    """Zoznam kľúčov kategórií, prvý je hlavný. Hlavná podľa názvu (rodinné, rekonštrukcie, bytové), potom podľa
-    textu (rekonštrukcie, rodinné, bytové), inak „ine“; ďalšie sú všetky iné zhody v názve a texte."""
+    """Zoznam kľúčov kategórií, prvý je hlavný. Pole kategoria v obsahu (kľúč alebo názov) má prednosť; neznáma
+    hodnota (aj stará „rekonstrukcie“) sa nepoužije. Inak hlavná podľa názvu (rodinné, bytové), potom podľa textu
+    (rodinné, bytové), inak „ine“; ďalšie sú všetky iné zhody v názve a texte."""
     kluce = [k for k, _ in KATEGORIE]
     hlavna = None
     if isinstance(vlastna, str):
@@ -503,7 +543,7 @@ def kategorie_realizacie(nazov, text, vlastna=None):
                 break
     if hlavna is None:
         return ['ine']
-    dalsie = [k for k in ('bytove', 'rodinne', 'rekonstrukcie')
+    dalsie = [k for k in ('bytove', 'rodinne')
               if k != hlavna and (KAT_VZORY[k].search(nazov) or KAT_VZORY[k].search(text))]
     return [hlavna] + dalsie
 
@@ -614,6 +654,8 @@ def nacitaj_novinky(obsah):
         slugy.add(slug)
         vsetky.append({'slug': slug, 'nadpis': nadpis, 'text': text, 'datum': datum, 'upravene': upravene,
                        'fb_url': bezpecna_url(d.get('fb_url'), ['facebook.com', 'fb.com']), 'fotky': fotky,
+                       # zdroj (fb, sprava): odkaz na Facebook firmy bez fb_url len pri príspevku z Facebooku
+                       'zdroj': jeden_riadok(d.get('zdroj')) or 'fb',
                        'obr_dir': f'obrazky-novinky/{slug}',
                        # realizacia (obsah-zmeny.md): slug realizácie tej istej stavby, roky stavby sa berú z nej
                        'realizacia': d.get('realizacia') if isinstance(d.get('realizacia'), str)
@@ -690,8 +732,8 @@ def nacitaj_realizacie(obsah):
             'titulok': jeden_riadok(d.get('titulok')),
             'poradie': poradie,
             'fotky': fotky,
-            # rok_prispevku (obsah-zmeny.md): rok najnovšieho príspevku, len keď roky stavby chýbajú; karta ho
-            # ukáže ako rok bez slova Facebook. obal_vizualizacia: realizácia bez skutočnej fotky (Devín)
+            # rok_prispevku (obsah-zmeny.md): rok najnovšieho príspevku, len keď roky stavby chýbajú; od 1. kola
+            # pripomienok sa na webe neukazuje (roky_karty). obal_vizualizacia: realizácia bez skutočnej fotky (Devín)
             'rok_prispevku': (jeden_riadok(d.get('rok_prispevku'))
                               if re.match(r'^(19|20)\d{2}$', jeden_riadok(d.get('rok_prispevku'))) and not roky else ''),
             'obal_vizualizacia': d.get('obal_vizualizacia') is True,
@@ -1171,18 +1213,15 @@ def sizes_karty_cela(cap):
             f'(min-width: 480px) min(47vw - 48px, {cap}px), min(100vw - 80px, {cap}px)')
 # fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px, inak celá šírka
 SIZES_DETAIL = '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
-# pás, pohľad A, Postup a O firme podľa ukážky Olovnica (PLAN-1-1.md časť 8); pripnutý pás prepne app.js na min(45vh, 480px)
-SIZES_PAS = '(min-width: 1024px) min(30vw, 440px), (min-width: 768px) 42vw, min(80vw, 420px)'
-SIZES_POHLAD = '(min-width: 1024px) max(45vw, min(49vw, 133vh - 437px)), (min-width: 768px) 58vw, calc(100vw - 32px)'
-SIZES_POSTUP = '(min-width: 1024px) min(45.5vw, 880px), (min-width: 768px) 52vw, calc(100vw - 32px)'
-SIZES_FIRMA = '(min-width: 1024px) min(46vw, 880px), (min-width: 768px) 46vw, calc(100vw - 32px)'
-# druh stavby na karte pásu v jednotnom čísle: prvá zhoda v názve, potom v texte realizácie
-DRUHY_KARTY = (('Stavebné úpravy', r'stavebné úpravy'), ('Rekonštrukcia', r'rekonštrukc|nadstavb'),
-               ('Polyfunkčný objekt', r'polyfunkčn'), ('Rezidencia', r'rezidenci'), ('Bytové domy', r'bytové domy'),
+# slider úvodu (3A.2): od 1024 px 7 z 12 stĺpcov s presahom k ľavému okraju okna (asi 58vw) a výškou okna pod
+# hlavičkou; fotka 4 : 3 v ráme cez object-fit: cover je široká 4/3 výšky rámu (133vh - 176 px), ak je to viac.
+# Od 640 px rám 1 : 1, mobil 4 : 5 na celú šírku okna: fotka 4 : 3 je široká 133vw a 167vw.
+SIZES_SLIDER = '(min-width: 1024px) max(58vw, 133vh - 176px), (min-width: 640px) 133vw, 167vw'
+# druh stavby na karte zoznamu v jednotnom čísle: prvá zhoda v názve, potom v texte realizácie. Rekonštrukcia
+# a stavebné úpravy nie sú druh stavby (ZMENY-KOLO-1.md 5.1, „bez rekonštrukcie“), karta ukáže druh budovy
+DRUHY_KARTY = (('Polyfunkčný objekt', r'polyfunkčn'), ('Rezidencia', r'rezidenci'), ('Bytové domy', r'bytové domy'),
                ('Bytový dom', r'bytov'), ('Dvojdom', r'dvojdom'), ('Vila', r'\bvil[ay]\b'),
                ('Rodinný dom', r'(^|\s)RD\b|rodinn'))
-POCET_STAVIEB = {1: 'Jedna stavba', 2: 'Dve stavby', 3: 'Tri stavby', 4: 'Štyri stavby', 5: 'Päť stavieb',
-                 6: 'Šesť stavieb', 7: 'Sedem stavieb', 8: 'Osem stavieb', 9: 'Deväť stavieb', 10: 'Desať stavieb'}
 SIZES_HRDINA = '(min-width:1024px) min(56vw, 1000px), (min-width:768px) 92vw, calc(100vw - 32px)'
 SIZES_GALERIA_PRVA = '(min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)'
 SIZES_GALERIA = '(min-width:640px) min(30vw, 570px), 46vw'
@@ -1238,58 +1277,10 @@ def sizes_pre_cover(sizes, w, h, ram=POMER_RAMU_COVER):
 GALERIA_BUNKY = {'mriezka': (571, 381), 'malo': (868, 579), 'prva': (1165, 784)}
 ZVACSENIE_MAX = 1.25
 SIZES_PRED_PO = '(min-width:768px) 46vw, calc(100vw - 32px)'
-
-
-def cislo_svg(v):
-    return str(int(v)) if float(v).is_integer() else f'{v:g}'
-
-
-def svg_obrys(obdlzniky):
-    """Obrys zjednotenia osovo zarovnaných obdĺžnikov (x0, y0, x1, y1) ako cesta SVG z úsekov H a V, bez vnútorných
-    čiar (rezané konštrukcie schémy: steny, dosky, základ). Slučky v smere hodín (plná plocha vpravo), deterministicky."""
-    xs = sorted({x for o in obdlzniky for x in (o[0], o[2])})
-    ys = sorted({y for o in obdlzniky for y in (o[1], o[3])})
-    plne = set()
-    for i in range(len(xs) - 1):
-        cx = (xs[i] + xs[i + 1]) / 2
-        for j in range(len(ys) - 1):
-            cy = (ys[j] + ys[j + 1]) / 2
-            if any(o[0] <= cx <= o[2] and o[1] <= cy <= o[3] for o in obdlzniky):
-                plne.add((i, j))
-    hrany = {}
-    for i, j in sorted(plne):
-        x0, x1, y0, y1 = xs[i], xs[i + 1], ys[j], ys[j + 1]
-        if (i, j - 1) not in plne:
-            hrany.setdefault((x0, y0), []).append((x1, y0))
-        if (i + 1, j) not in plne:
-            hrany.setdefault((x1, y0), []).append((x1, y1))
-        if (i, j + 1) not in plne:
-            hrany.setdefault((x1, y1), []).append((x0, y1))
-        if (i - 1, j) not in plne:
-            hrany.setdefault((x0, y1), []).append((x0, y0))
-    d = []
-    while hrany:
-        start = min(hrany)
-        body, bod = [start], start
-        while True:
-            konce = hrany[bod]
-            dalsi = konce.pop(0)
-            if not konce:
-                del hrany[bod]
-            bod = dalsi
-            if bod == start:
-                break
-            body.append(bod)
-        n = len(body)
-        rohy = [body[k] for k in range(n)
-                if not (body[k - 1][0] == body[k][0] == body[(k + 1) % n][0] or body[k - 1][1] == body[k][1] == body[(k + 1) % n][1])]
-        if len(rohy) < 3:
-            continue
-        kus = f'M{cislo_svg(rohy[0][0])} {cislo_svg(rohy[0][1])}'
-        for a, b in zip(rohy, rohy[1:]):
-            kus += f'H{cislo_svg(b[0])}' if a[1] == b[1] else f'V{cislo_svg(b[1])}'
-        d.append(kus + 'Z')
-    return ''.join(d)
+# blok V médiách na stránke realizácie (ZMENY-KOLO-1.md 5.7): výrez tabuľky 7 z 12 stĺpcov od 1024 px, fotky strán
+# po dvoch v pravom stĺpci (5 z 12), na mobile celá šírka a dve vedľa seba
+SIZES_MEDIA_TABULKA = '(min-width:1024px) min(56vw, 1000px), calc(100vw - 32px)'
+SIZES_MEDIA_STRANA = '(min-width:1024px) min(19vw, 340px), calc(50vw - 24px)'
 
 
 def nacitaj_pravidla():
@@ -1393,6 +1384,12 @@ class Web:
         self.js = (SABLONA / 'app.js').read_bytes() if (SABLONA / 'app.js').is_file() else b''
         self.js_verzia = hashlib.sha256(self.js).hexdigest()[:10]
         self.logo_svg = (SABLONA / 'logo.svg').read_text(encoding='utf-8')
+        # logo hlavičky v podobe starého webu (štvorec, BM Building, spoločnosť s ručením obmedzeným), text na krivkách
+        # (ops/weby-na-mieru/klienti/bmbuilding/kolo-1/uvod/logo_hlavicka.py); bez neho hlavička so štvorcom logo.svg
+        lh = SABLONA / 'logo-hlavicka.svg'
+        self.logo_hlavicka = lh.read_text(encoding='utf-8') if lh.is_file() else ''
+        if not self.logo_hlavicka:
+            varuj('sablona/logo-hlavicka.svg chýba, hlavička ukáže len štvorec loga')
         self.favicon_svg = (SABLONA / 'logo-favicon.svg').read_text(encoding='utf-8')
         znaky = SABLONA / 'pismo-znaky.txt'
         self.znaky_pisma = set(znaky.read_text(encoding='utf-8').rstrip('\n')) if znaky.is_file() else None
@@ -1400,9 +1397,15 @@ class Web:
         self.domena = self.nastavenia.get('domena', 'https://bmbuilding.sk').rstrip('/')
         # Instagram len s istou adresou (dizajn-olovnica/INSTAGRAM.md); adresa je v šablóne, nie v obsahu
         self.instagram = bezpecna_url(self.nastavenia.get('instagram'), ['instagram.com'])
+        # LinkedIn konateľa (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): len https na linkedin.com, inak sa ikona nezobrazí
+        self.linkedin = bezpecna_url(self.nastavenia.get('linkedin'), ['linkedin.com'])
         self.firma = nacitaj_firmu(obsah)
         self.realizacie = nacitaj_realizacie(obsah)
-        self.novinky = nacitaj_novinky(obsah)
+        # Novinky z webu preč (Andrej 24. 11. 2026 večer, ZMENY-KOLO-1.md 5.7: „pôvodne to chcel dať preč, ale chcel tam
+        # dať ten časopis“): nastavenie "novinky": false v sablona/nastavenia.json. Bez noviniek sa nezostaví /novinky/
+        # ani detail, nie sú v menu, v sitemap ani v odkazoch; súbory v obsah/novinky/ ostávajú (vratné, true = ako predtým)
+        self.novinky_zapnute = self.nastavenia.get('novinky', True) is not False
+        self.novinky = nacitaj_novinky(obsah) if self.novinky_zapnute else []
         for r in self.realizacie + self.novinky:
             for f in r['fotky']:
                 self.nastav_sirky(f)
@@ -1429,6 +1432,7 @@ class Web:
         for n in self.novinky:
             self.priprav_fotky(n, n['nadpis'])
             self.ilustracna_fotka(n)
+        self.media = self.nacitaj_media()
         self.subory = {}      # relatívna cesta -> bajty
         self.obrazky = {}     # relatívna cesta -> (odtlačok, funkcia)
         self.mapa_stranok = []  # (cesta, lastmod)
@@ -1442,6 +1446,149 @@ class Web:
 
     def zmena(self, r):
         return max((d for d in (r['datum'], r['upravene'], self.vydanie) if d), default='')
+
+    # --- v médiách (ZMENY-KOLO-1.md 5.7, 24. 11. 2026 večer): časopis ASB pri Lumière, Archinfo pri Devínskych lúkach
+    def media_fotka(self, d, meno):
+        """Obrázok bloku V médiách zo sablona/media/ (výrez tabuľky, fotky strán): {subor, alt, popis}. Cesta len vnútri
+        sablona/media; chýbajúci alebo pokazený súbor sa vynechá s varovaním. Kóduje sa ako ostatné fotky (AVIF, WebP)."""
+        if not isinstance(d, dict):
+            return None
+        rel = jeden_riadok(d.get('subor'))
+        koren = (SABLONA / 'media').resolve()
+        try:
+            p = (SABLONA / rel).resolve() if rel else None
+        except (OSError, ValueError):
+            p = None
+        if p is None or koren not in p.parents or not p.is_file():
+            varuj(f'v_mediach {meno}: obrázok {rel!r} chýba alebo je mimo sablona/media, vynechaný')
+            return None
+        try:
+            w, h = rozmery_zdroja(p)
+        except Exception:
+            varuj(f'v_mediach {meno}: obrázok {rel!r} sa nedá otvoriť, vynechaný')
+            return None
+        f = {'zdroj': p, 'w': w, 'h': h, 'alt': jeden_riadok(d.get('alt')), 'popis': jeden_riadok(d.get('popis')),
+             'ostrost': 0.0, 'rel': 'media/' + p.name, 'typ': '', 'viz': False, 'autor': '', 'rozmazana': False,
+             'sha': hashlib.sha256(p.read_bytes()).hexdigest()}
+        self.nastav_sirky(f)
+        return f
+
+    def nacitaj_media(self):
+        """Zmienky v médiách pri realizácii (sablona/nastavenia.json v_mediach): slug zverejnenej realizácie -> kotva
+        bloku, nadtitulok, nadpis, odseky vlastného textu, odkazy (len https na MEDIA_HOSTITELIA, s voliteľnou doslovnou
+        citáciou), výrez tabuľky a fotky strán zo sablona/media/, údaje článku pre JSON-LD a text údaja V médiách
+        v hrdinovi úvodu (uvod). Zlá položka sa vynechá s varovaním; skrytá realizácia nikdy (nemá stránku)."""
+        nast = self.nastavenia.get('v_mediach')
+        nast = nast if isinstance(nast, dict) else {}
+        slugy = {r['slug'] for r in self.realizacie}
+        media = {}
+        for slug, d in nast.items():
+            if slug.startswith('_'):
+                continue
+            if not isinstance(d, dict) or slug not in slugy:
+                varuj(f'v_mediach {slug}: realizácia nie je zverejnená alebo položka nie je objekt, vynechané')
+                continue
+            kotva = jeden_riadok(d.get('kotva')) or 'v-mediach'
+            if not SLUG_RE.match(kotva):
+                varuj(f'v_mediach {slug}: kotva {kotva!r} nie je [a-z0-9-], použitá v-mediach')
+                kotva = 'v-mediach'
+            odkazy = []
+            for o in d.get('odkazy') if isinstance(d.get('odkazy'), list) else []:
+                o = o if isinstance(o, dict) else {}
+                url, text = bezpecna_url(o.get('url'), MEDIA_HOSTITELIA), jeden_riadok(o.get('text'))
+                if not url or not text:
+                    varuj(f'v_mediach {slug}: odkaz {o.get("url")!r} nie je https na {", ".join(MEDIA_HOSTITELIA)} '
+                          'alebo nemá text, vynechaný')
+                    continue
+                odkazy.append({'url': url, 'text': text, 'citat': jeden_riadok(o.get('citat'))})
+            nadpis = jeden_riadok(d.get('nadpis')) or 'V médiách'
+            m = {'slug': f'media-{kotva}', 'realizacia': slug, 'kotva': kotva, 'nadpis': nadpis, 'nazov': nadpis,
+                 'miesto': '', 'obr_dir': f'obrazky/media/{kotva}', 'nadtitulok': jeden_riadok(d.get('nadtitulok')),
+                 'text': [jeden_riadok(x) for x in (d.get('text') if isinstance(d.get('text'), list) else [d.get('text')])
+                          if jeden_riadok(x)],
+                 'odkazy': odkazy, 'uvod': jeden_riadok(d.get('uvod')),
+                 'nazov_lightboxu': jeden_riadok(d.get('nazov_lightboxu')) or nadpis,
+                 'strany_nadpis': jeden_riadok(d.get('strany_nadpis')), 'strany_popis': jeden_riadok(d.get('strany_popis')),
+                 'clanok': d.get('clanok') if isinstance(d.get('clanok'), dict) else {}}
+            m['tabulka'] = self.media_fotka(d.get('tabulka'), slug)
+            m['strany'] = [f for f in (self.media_fotka(x, slug) for x in (d.get('strany') if isinstance(d.get('strany'), list) else []))
+                           if f]
+            for i, f in enumerate(([m['tabulka']] if m['tabulka'] else []) + m['strany'], 1):
+                f['nn'] = f'{i:02d}'
+            if not (m['text'] or m['odkazy'] or m['tabulka'] or m['strany']):
+                varuj(f'v_mediach {slug}: bez textu, odkazu aj obrázka, vynechané')
+                continue
+            media[slug] = m
+        return media
+
+    def media_obrazky(self, m):
+        return ([m['tabulka']] if m['tabulka'] else []) + m['strany']
+
+    def v_mediach_blok(self, pre, r):
+        """Blok V médiách na stránke realizácie (kotva z nastavení, napr. #casopis-asb): nadtitulok a nadpis s tým
+        podstatným, veľký výrez tabuľky s popisom zdroja, vlastný text, odkazy von (target _blank, rel noopener) a malá
+        galéria fotiek strán s lightboxom (skupina media-<kotva>, ten istý dialog ako galéria realizácie). Bez položky
+        v nastaveniach prázdny reťazec."""
+        m = self.media.get(r['slug'])
+        if not m:
+            return ''
+        k = m['kotva']
+        obrazky = self.media_obrazky(m)
+        n = len(obrazky)
+
+        def odkaz(f, sizes):
+            plna, alt, atr = self.lb_data(pre, m, f, int(f['nn']), n, m['nazov_lightboxu'], f['popis'], m['slug'],
+                                          nahlad=True, popis='')
+            return (f'<a class="media-odkaz" href="{plna}" data-lightbox {atr}>'
+                    f'{self.img(pre, m, f, sizes, alt=alt or f["alt"])}</a>')
+        tab = ''
+        if m['tabulka']:
+            f = m['tabulka']
+            tab = (f'<figure class="media-tabulka">{odkaz(f, SIZES_MEDIA_TABULKA)}'
+                   + (f'<figcaption>{T(f["popis"])}</figcaption>' if f['popis'] else '') + '</figure>')
+        # meno firmy a rozsah strán „74 až 77“ sa nezalomia
+        text = ''.join(f'<p class="{"uvodna" if i == 0 else "tlmene"}">'
+                       f'{T(p).replace("BM Building", "BM" + chr(160) + "Building").replace(" až ", " až" + chr(160))}</p>'
+                       for i, p in enumerate(m['text']))
+        odkazy = ''
+        if m['odkazy']:
+            li = []
+            for o in m['odkazy']:
+                citat = (f'<span class="media-citat">„{T(o["citat"]).replace("BM Building", "BM" + chr(160) + "Building")}“</span>'
+                         if o['citat'] else '')
+                li.append(f'<li><a class="odkaz-von" href="{esc(o["url"])}" target="_blank" rel="noopener">'
+                          f'{T(o["text"])} {SVG_VON}</a>{citat}</li>')
+            odkazy = f'<ul class="media-odkazy">{"".join(li)}</ul>'
+        strany = ''
+        if m['strany']:
+            li = ''.join(f'<li class="media-strana">{odkaz(f, SIZES_MEDIA_STRANA)}</li>' for f in m['strany'])
+            strany = ('<div class="media-strany-obal">'
+                      + (f'<h3 class="media-podnadpis">{T(m["strany_nadpis"])}</h3>' if m['strany_nadpis'] else '')
+                      + f'<ul class="media-strany">{li}</ul>'
+                      + (f'<p class="media-zdroj">{T(m["strany_popis"])}</p>' if m['strany_popis'] else '') + '</div>')
+        nad = f'<p class="media-nad">{T(m["nadtitulok"])}</p>' if m['nadtitulok'] else ''
+        return (f'<section class="sekcia media-sekcia{"" if obrazky else " media-male"}" id="{k}" aria-labelledby="{k}-nadpis">'
+                '<div class="obsah">'
+                f'<div class="media-hlava">{nad}<h2 class="nadpis" id="{k}-nadpis">{T(m["nadpis"])}</h2></div>'
+                f'<div class="mriezka media-mriezka{"" if tab else " media-bez-tabulky"}">{tab}'
+                f'<div class="media-text">{text}{odkazy}{strany}</div></div></div></section>')
+
+    def ld_media(self, r):
+        """subjectOf pre CreativeWork realizácie: tlačený článok z nastavení v_mediach (clanok), napr. ASB č. 244."""
+        m = self.media.get(r['slug'])
+        c = m['clanok'] if m else {}
+        if not c.get('titulok') or not c.get('periodikum'):
+            return []
+        cislo = {'@type': 'PublicationIssue', 'isPartOf': {'@type': 'Periodical', 'name': jeden_riadok(c['periodikum'])}}
+        if c.get('cislo'):
+            cislo['issueNumber'] = jeden_riadok(c['cislo'])
+        if c.get('datum'):
+            cislo['datePublished'] = jeden_riadok(c['datum'])
+        a = {'@type': 'Article', 'headline': jeden_riadok(c['titulok']), 'isPartOf': cislo}
+        for k, kluc in (('strana_od', 'pageStart'), ('strana_do', 'pageEnd')):
+            if c.get(k):
+                a[kluc] = jeden_riadok(c[k])
+        return [a]
 
     # --- fotky: rozmazané, typ, poradie galérie, obal (FOTKY.md, Pravidlo pre build.py)
     @staticmethod
@@ -1471,6 +1618,10 @@ class Web:
                                   -x[1]['ostrost'] if x[1]['typ'] else x[0]))
         r['galeria'] = [f for _, f in ostre]
         interier_ok = bool(p['interier'].search(nazov))
+        # realizácia, ktorá má len vizualizácie (RD Sklenárska, ZMENY-KOLO-1.md 5.4): karta a obal je prvá
+        # vizualizácia so štítkom, nie prázdny rám (ako obal_vizualizacia v obsahu)
+        if r['galeria'] and all(f.get('viz') for f in r['galeria']):
+            r['obal_vizualizacia'] = True
         viz_obal = bool(r.get('obal_vizualizacia'))
 
         def mozny(f, prah, viz_smie=False):
@@ -1526,6 +1677,11 @@ class Web:
             else:
                 varuj(f'nastavenia karta_foto: výrez {vyrez!r} realizácie {slug} nie je rámik 0 až 1 s výrezom 4 : 5 '
                       'aspoň 768 px zdroja, karta ide zo stredu fotky')
+        # {"subor": ..., "cely_ram": true}: karta mriežky a služieb ukáže výrez 4 : 5 cez celý rám aj pri malom zdroji,
+        # keď predloha (fotky-web, zväčšené Upscaylom) má výrez aspoň KARTA_MIN_OREZ (Dvojdom S 01, Hrnčiarovce 01,
+        # ZMENY-KOLO-1.md 5.3 a 3A.4); bez takej predlohy ostáva celá fotka v ráme (mala_karta)
+        if isinstance(volba, dict) and volba.get('cely_ram') is True:
+            f['cely_ram'] = True
         if len_karta:
             r['karta_len'] = f
             return
@@ -1534,6 +1690,8 @@ class Web:
         if r.get('karta') is not f:
             r['karta_nahradena'] = r.get('karta')
         r['karta'] = f
+        # reprezentatívna fotka (karta_foto) je v galérii prvá (ZMENY-KOLO-1.md 5.3), ostatné ostávajú v poradí
+        r['galeria'] = [f] + [x for x in r['galeria'] if x is not f]
 
     def ilustracna_fotka(self, n):
         """Novinka bez vlastnej použiteľnej fotky (karta None): skutočná ostrá fotka stavby z realizácie podľa
@@ -1741,24 +1899,18 @@ class Web:
 
     @staticmethod
     def roky_karty(r):
-        """Rok alebo roky na karte (zadanie bmb-dokoncenie, Obsah 2): roky stavby; bez nich rok príspevku
-        (rok_prispevku z obsahu, inak rok dátumu príspevku z Facebooku), bez slova Facebook."""
-        if r.get('roky'):
-            return r['roky']
-        if r.get('rok_prispevku'):
-            return r['rok_prispevku']
-        if r.get('zdroj') == 'fb' and r.get('datum'):
-            return r['datum'][:4]
-        return ''
+        """Roky na karte, v detaile a v popise slidera: len roky stavby z poľa roky. 1. kolo pripomienok (Mário na
+        stretnutí 24. 11. 2026, STRETNUTIE-2026-11-24.md: „slovo príspevok preč, rok príspevku preč, len roky“;
+        overenie-1, nález vážne): rok príspevku (rok_prispevku, rok dátumu z Facebooku) sa na webe neukazuje, lebo
+        bez slova príspevok vyzeral ako rok stavby a filter Roky ho aj tak radil do „rok neuvedený“. Pole
+        rok_prispevku ostáva v obsahu (sťahovač ho zachová), build ho už nezobrazuje."""
+        return r.get('roky') or ''
 
     @classmethod
     def roky_stitok(cls, r):
-        """Text kóty a údajov karty: roky stavby; bez nich „príspevok RRRR“, aby sa rok príspevku nečítal ako rok
-        realizácie (brána bmb-fb-uplnost, nález 1; detail má ten istý rok pod popiskom Rok príspevku)."""
-        if r.get('roky'):
-            return r['roky']
-        rok = cls.roky_karty(r)
-        return f'príspevok {rok}' if rok else ''
+        """Text kóty a údajov karty: len roky (1. kolo pripomienok, ZMENY-KOLO-1.md 5.2: slovo príspevok preč, napr.
+        „príspevok 2026“ na „2026“): roky stavby, bez nich rok z roky_karty. Detail ho má pod popiskom Rok."""
+        return cls.roky_karty(r)
 
     @staticmethod
     def rok_filtra(r):
@@ -1767,7 +1919,7 @@ class Web:
         return 0 if r.get('rok_z_datumu') else int(r.get('rok') or 0)
 
     def kedy(self, r):
-        """Roky stavby; bez nich „príspevok RRRR“ (roky_stitok), nikdy slovo Facebook na karte."""
+        """Roky stavby; bez nich rok (roky_stitok), nikdy slovo príspevok ani Facebook na karte."""
         if r['roky']:
             return f'<span class="roky">{T(r["roky"])}</span>'
         return T(self.roky_stitok(r))
@@ -1807,8 +1959,9 @@ class Web:
         return (f'<span class="kota{t}"><span class="kota-text otoc"><span class="vh">{T(text)}</span>'
                 f'<span class="valce" aria-hidden="true">{"".join(casti)}</span></span></span>')
 
-    def akcie(self, trieda='akcie', vyzva=''):
-        """Dve tlačidlá zo zadania: Zavolať (tel:) a Napísať e-mail (mailto:); jedna menovka na zámer."""
+    def akcie(self, trieda='akcie', vyzva='', navyse=''):
+        """Dve tlačidlá zo zadania: Zavolať (tel:) a Napísať e-mail (mailto:); jedna menovka na zámer. navyse: HTML
+        za tlačidlami."""
         f = self.firma
         a = []
         if f['tel_href']:
@@ -1816,17 +1969,26 @@ class Web:
         if f['email']:
             a.append(f'<a class="tlacidlo tlacidlo-obrys" href="mailto:{esc(f["email"])}">Napísať e-mail</a>')
         v = f' {vyzva}' if vyzva else ''
-        return f'<div class="{trieda}"{v}>{"".join(a)}</div>' if a else ''
+        return f'<div class="{trieda}"{v}>{"".join(a)}{navyse}</div>' if a else ''
 
     def socialne(self):
-        """Odkazy na Facebook a Instagram. Instagram len keď je jeho adresa v sablona/nastavenia.json (istá adresa,
-        dizajn-olovnica/INSTAGRAM.md); inak sa odkaz nezobrazí."""
-        out = []
-        if self.firma['facebook']:
-            out.append(f'<a class="odkaz-von" href="{esc(self.firma["facebook"])}">Facebook {SVG_VON}</a>')
-        if self.instagram:
-            out.append(f'<a class="odkaz-von" href="{esc(self.instagram)}">Instagram {SVG_VON}</a>')
-        return out
+        """Sociálne siete ako ikony (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): Facebook z obsah/firma.json, LinkedIn
+        konateľa z sablona/nastavenia.json (len https na linkedin.com), Instagram len keď je jeho adresa v nastaveniach
+        (profil konateľa, Andrej 24. 11. 2026 večer, len https na instagram.com, inak sa ikona vynechá). Ikona je vlastné
+        SVG z jednej sady, názov siete nesie aria-label odkazu; profil sa otvorí v novej karte (target _blank,
+        rel noopener)."""
+        f = self.firma
+        kto = f['konatel'] or 'konateľ'
+        siete = [(f['facebook'], 'Facebook BM Building', SVG_FACEBOOK), (self.linkedin, f'LinkedIn: {kto}', SVG_LINKEDIN),
+                 (self.instagram, f'Instagram: {kto}', SVG_INSTAGRAM)]
+        return [f'<a class="siet" href="{esc(url)}" target="_blank" rel="noopener" aria-label="{esc(meno)}">{svg}</a>'
+                for url, meno, svg in siete if url]
+
+    def siete(self, trieda=''):
+        """Riadok ikon sociálnych sietí (kontakt na úvode, stránka Kontakt, päta); bez sietí nič."""
+        soc = self.socialne()
+        t = f' {trieda}' if trieda else ''
+        return f'<p class="siete{t}">{"".join(soc)}</p>' if soc else ''
 
     def vizitka(self, pre, trieda='', alt_loga=''):
         """Kontaktný blok v poradí banneru na plote: meno, ulica, mesto, tel., e-mail, web (poznávací prvok značky)."""
@@ -1868,12 +2030,6 @@ class Web:
                 ('Číslo účtu', tk.get('ucet', ''))]
         dl = ''.join(f'<div><dt>{T(k)}</dt><dd{CISLA if k in ("IČO", "IČ DPH", "Číslo účtu") else ""}>{T(v)}</dd></div>'
                      for k, v in pole if v)
-        soc = self.socialne()
-        if hlavna and f['facebook']:
-            # na stránke Kontakt aj adresa profilu ako text (starý web mal ikonu Facebooku s odkazom, údaj uvod-facebook-ikona)
-            p = urllib.parse.urlsplit(f['facebook'])
-            adresa_fb = (p.hostname or '').removeprefix('www.') + p.path.rstrip('/')
-            soc[0] = f'<a class="odkaz-von" href="{esc(f["facebook"])}">Facebook: {T(adresa_fb)} {SVG_VON}</a>'
         vyzva = '' if hlavna else ' data-vyzva-dole'
         posobnost = tk.get('posobnost', '')
         return (f'<section class="sekcia kontakt" id="kontakt" aria-labelledby="kontakt-nadpis"{vyzva}>'
@@ -1888,7 +2044,7 @@ class Web:
                 + f'<figcaption class="mapa-spodok"><a class="tlacidlo tlacidlo-obrys" href="{esc(gmaps)}">Navigovať {SVG_SIPKA}</a>'
                 f'<a class="odkaz-von" href="{esc(mapy)}">Mapy.cz {SVG_VON}</a></figcaption></figure></div>'
                 + f'<div class="kontakt-udaje"><h3 class="kontakt-h">{T(tk.get("udaje_nadpis") or "Fakturačné údaje")}</h3><dl class="fakty kontakt-fakty">{dl}</dl>'
-                + (f'<p class="kontakt-pozn">{"".join(soc)}</p>' if soc else '')
+                + self.siete('kontakt-pozn')
                 + '</div></div></section>')
 
     def zaver(self, pre='', hlavny=None, dalej=None):
@@ -1906,9 +2062,10 @@ class Web:
 
     # --- kostra stránky
     def menu(self, pre, aktivne):
-        """Hlavička ukážky (U:692 až U:709, trieda hlava): logo (sablona/logo.svg) namiesto znaku Olovnica, menu
-        podľa starého webu (Činnosť, Realizácie, Postup, Novinky, Oprávnenia, Kontakt), tlačidlo Zavolať (tel:);
-        do 1099 px menu v details (funguje bez JS, app.js dopĺňa Esc a zatvorenie)."""
+        """Pripnutá hlavička na každej stránke (1. kolo pripomienok, ZMENY-KOLO-1.md 3.1 a 3.2): vľavo logo v podobe
+        starého webu (sablona/logo-hlavicka.svg, text na krivkách), menu podľa starého webu bez Postupu (Činnosť,
+        Realizácie, Novinky, Oprávnenia, Kontakt), tlačidlo Zavolať (tel:); do 1099 px menu v details (funguje bez JS,
+        app.js dopĺňa Esc a zatvorenie)."""
         sluzby = list(self.texty['sluzby'])
 
         def a(ciel, text, kluc):
@@ -1918,7 +2075,8 @@ class Web:
             elif aktivne and kluc and (aktivne.startswith(kluc + '/') or (kluc == 'sluzby' and aktivne in sluzby)):
                 cur = ' aria-current="true"'
             return f'<a href="{esc(self.rel(pre, ciel))}"{cur}>{T(text)}</a>'
-        polozky = [('#sluzby', 'Činnosť', 'sluzby'), ('realizacie/', 'Realizácie', 'realizacie'), ('#postup', 'Postup', 'postup')]
+        # Činnosť vedie na doslovný text hneď pod hrdinom úvodu (ZMENY-KOLO-1.md 3A.3), z podstránky ../#cinnost
+        polozky = [('#cinnost', 'Činnosť', 'sluzby'), ('realizacie/', 'Realizácie', 'realizacie')]
         if self.novinky:
             polozky.append(('novinky/', 'Novinky', 'novinky'))
         polozky += [('opravnenia/', 'Oprávnenia', 'opravnenia'), ('kontakt/', 'Kontakt', 'kontakt')]
@@ -1935,21 +2093,27 @@ class Web:
         if f['tel_href']:
             tel = (f'<a class="tlacidlo tlacidlo-male hlavicka-tel" href="tel:{esc(f["tel_href"])}" '
                    f'aria-label="Zavolať {esc(f["tel"])}">Zavolať</a>')
+        if self.logo_hlavicka:
+            vb = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', self.logo_hlavicka)
+            w, h = (round(float(vb.group(1))), round(float(vb.group(2)))) if vb else (478, 100)
+            logo = (f'<img class="znak-logo" src="{esc(pre)}logo-hlavicka.svg" width="{w}" height="{h}" '
+                    'alt="BM Building, spoločnosť s ručením obmedzeným, úvod">')
+        else:
+            logo = f'<img src="{esc(pre)}logo.svg" width="52" height="52" alt="BM Building, úvod">'
         return ('<header class="hlava">\n<div class="obsah">'
-                f'<a class="znak" href="{esc(self.rel(pre, ""))}"><img src="{esc(pre)}logo.svg" width="52" height="52" '
-                f'alt="BM Building, úvod"></a>\n'
+                f'<a class="znak" href="{esc(self.rel(pre, ""))}">{logo}</a>\n'
                 f'<nav class="menu-d" aria-label="Hlavná"><ul class="menu">{d}</ul></nav>\n'
                 f'<div class="hlava-akcie">{tel}<details class="menu-m"><summary class="tlacidlo tlacidlo-obrys tlacidlo-male">Menu</summary>'
                 f'<nav class="menu-panel" aria-label="Hlavná, menu"><ul>{"".join(m)}</ul></nav></details></div>\n'
                 '</div></header>\n')
 
     def pata(self, pre, stlpec_firma=True):
-        """Päta ukážky (U:1152 až U:1161): logo, jedna veta s adresou a IČO, odkazy (Facebook, Instagram len s istou
-        adresou, Oprávnenia, Ochrana osobných údajov), drobné písmo s © a zápisom v registri a nenápadne „Web: ARLing“.
+        """Päta ukážky (U:1152 až U:1161): logo, jedna veta s adresou a IČO, ikony sietí (socialne), odkazy (Oprávnenia,
+        Ochrana osobných údajov), drobné písmo s © a zápisom v registri a nenápadne „Web: ARLing“.
         Stránky a fakturačné údaje sú v sekcii Kontakt (kontakt_sekcia); stlpec_firma ostáva len pre spätnú zhodu."""
         f = self.firma
         veta = f'{f["meno"]}, {self.adresa()}.' + (f' IČO {f["ico"]}.' if f['ico'] else '')
-        odkazy = self.socialne()
+        odkazy = []
         odkazy.append(f'<a href="{esc(self.rel(pre, "opravnenia/"))}">Oprávnenia</a>')
         odkazy.append(f'<a href="{esc(self.rel(pre, "ochrana-udajov/"))}">Ochrana osobných údajov</a>')
         rok = self.najnovsi[:4]
@@ -1960,7 +2124,7 @@ class Web:
         return ('<footer class="pata" data-vyzva-dole>\n<div class="obsah mriezka pata-mriezka">\n'
                 f'<div class="pata-zaver"><a class="znak pata-znak" href="{esc(self.rel(pre, ""))}"><img src="{esc(pre)}logo.svg" '
                 'width="40" height="40" alt="BM Building, úvod" loading="lazy"></a>'
-                f'<p class="pata-veta">{T(veta)}</p><p class="pata-odkazy">{"".join(odkazy)}</p></div>\n'
+                f'<p class="pata-veta">{T(veta)}</p>{self.siete("pata-siete")}<p class="pata-odkazy">{"".join(odkazy)}</p></div>\n'
                 f'<p class="male">{male}</p>\n</div>\n</footer>\n')
 
     def lista(self):
@@ -2004,15 +2168,18 @@ class Web:
             uzol['telephone'] = f['tel']
         if f['email']:
             uzol['email'] = f['email']
-        same = [x for x in (f['facebook'], self.instagram) if x]
-        if same:
-            uzol['sameAs'] = same
+        if f['facebook']:
+            uzol['sameAs'] = [f['facebook']]
         if f['ic_dph']:
             uzol['vatID'] = f['ic_dph']
         if platny_datum(f['den_zapisu']):
             uzol['foundingDate'] = f['den_zapisu']
         if f['konatel']:
             uzol['employee'] = {'@type': 'Person', 'name': f['konatel'], 'jobTitle': 'konateľ'}
+            # LinkedIn aj Instagram (mariobulko) sú profily konateľa, nie firmy: patria k osobe, nie do sameAs firmy
+            osoba = [x for x in (self.linkedin, self.instagram) if x]
+            if osoba:
+                uzol['employee']['sameAs'] = osoba
         return uzol
 
     def ld_breadcrumb(self, kroky):
@@ -2021,11 +2188,13 @@ class Web:
             for i, (c, t) in enumerate(kroky, 1)]}
 
     def stranka(self, cesta, title, description, telo, aktivne, ld_uzly, og_obr='og/bmbuilding.jpg',
-                og_typ='website', do_mapy=True, lastmod=None, zaklad=None, pata_firma=True, trieda='', preload_obr=None):
+                og_typ='website', do_mapy=True, lastmod=None, zaklad=None, pata_firma=True, trieda='', preload_obr=None,
+                css_navyse=''):
         # zaklad (len 404): absolútne cesty od koreňa webu („/“ alebo „/bmbuilding/“) namiesto <base>; s <base> by
         # „Preskočiť na obsah“ (#obsah) viedlo na úvod (brána pokus 2, správnosť 8)
+        # css_navyse (úvod): pravidlá vypočítané z nastavení (stred výrezu fotiek slidera), CSP nedovolí atribút style
         pre = zaklad if zaklad else self.pre(cesta)
-        css = (self.css_uvod if cesta == '' else self.css_sablona).replace('@PRE@', pre)
+        css = (self.css_uvod if cesta == '' else self.css_sablona).replace('@PRE@', pre) + css_navyse
         ld = ld_json({'@context': 'https://schema.org', '@graph': ld_uzly}) if ld_uzly else ''
         # connect-src 'self': Lighthouse a PageSpeed Insights čítajú robots.txt cez stránku (kontrola kolo 1).
         # script-src: vlastný app.js ('self'), jeden vložený skript a JSON-LD cez sha256; žiadne cudzie zdroje,
@@ -2102,8 +2271,12 @@ class Web:
 
     @staticmethod
     def mala_karta(f):
-        """Výrez 4 : 5 zdroja je menší než KARTA_MIN_OREZ: na karte mriežky by bola fotka mäkká (brána bmb-presnost)."""
-        return bool(f) and orez_rozmer(f['w'], f['h'], OREZY['45'])[0] < KARTA_MIN_OREZ
+        """Výrez 4 : 5 zdroja je menší než KARTA_MIN_OREZ: na karte mriežky by bola fotka mäkká (brána bmb-presnost).
+        Fotka s karta_foto cely_ram sa meria predlohou (f['zaklad'], zväčšené Upscaylom), nie zdrojom."""
+        if not f:
+            return False
+        w, h = f['zaklad'] if f.get('cely_ram') and f.get('zaklad') else (f['w'], f['h'])
+        return orez_rozmer(w, h, OREZY['45'])[0] < KARTA_MIN_OREZ
 
     def img_karty(self, pre, r, f, alt, lcp=False):
         """Fotka svetlej karty: výrez 4 : 5 cez celý rám, pri malom zdroji (mala_karta) celá fotka 4 : 3 (na výšku
@@ -2255,14 +2428,17 @@ class Web:
                              o['datum'] and f'vydané {o["datum"]}') if x]
         return nazov + (': ' + ', '.join(casti) if casti else '')
 
-    def otazky_html(self, kluce, h='h3'):
+    def otazky_html(self, kluce, h='h3', prva_otvorena=False):
+        """Rozbaľovacie otázky zo stavebného zákona (details a summary, funguje bez JS), pri každej zdroj Slov-Lex.
+        prva_otvorena: prvá otázka je otvorená (Činnosť na úvode, ako náhľad pred 1. kolom)."""
         z = self.texty['zakon']
         out = []
         for k in kluce:
             q = self.texty['otazky'].get(k)
             if not q:
                 continue
-            out.append(f'<details class="otazka"><summary><{h}>{T(q["otazka"])}</{h}></summary><p>{T(q["odpoved"])}</p>'
+            otv = ' open' if prva_otvorena and not out else ''
+            out.append(f'<details class="otazka"{otv}><summary><{h}>{T(q["otazka"])}</{h}></summary><p>{T(q["odpoved"])}</p>'
                        f'<p class="zdroj">Zdroj: <a href="{esc(z["url"])}">{T(z["nazov"])}, {T(q["zdroj"])}</a></p></details>')
         return ''.join(out)
 
@@ -2309,26 +2485,73 @@ class Web:
                 + (f'<p class="projekt-text">{T(ukazka)}</p>' if ukazka else '') + '</figcaption></figure></li>')
 
     # --- úvod
+    def slider_fotky(self):
+        """Fotky slidera stavieb v úvode (1. kolo pripomienok 24. 11. 2026, ZMENY-KOLO-1.md 3.3): nastavenia.json
+        uvod_slider, zoznam {"slug", "subor", "stred": [x, y]} v pevnom poradí, ktoré vybral klient. Bez súboru fotka
+        karty realizácie. Fotka smie byť aj menšia než prah velka (vybral ju klient), ale musí byť v galérii (nie
+        rozmazaná) a nesmie byť vizualizácia ani pôvodný stav. stred: bod fotky v podieloch 0 až 1, ktorý ostane
+        v ráme pri orezaní (object-position), predvolene stred. Chýbajúca realizácia alebo fotka je prísne varovanie
+        (lokálne sa vynechá, v GitHub Actions chyba zostavy). Výsledok [(r, f, (x, y))] sa počíta raz."""
+        if getattr(self, '_slider', None) is not None:
+            return self._slider
+        zoznam = self.nastavenia.get('uvod_slider')
+        out = []
+        self.slider_orez = {}
+        if not isinstance(zoznam, list) or not zoznam:
+            if self.realizacie:
+                varuj('nastavenia uvod_slider chýba alebo nie je zoznam: úvod bez slidera stavieb')
+            self._slider = self.zalozny_slider() if self.realizacie else out
+            return self._slider
+        podla = {r['slug']: r for r in self.realizacie}
+        for polozka in zoznam:
+            if not isinstance(polozka, dict):
+                varuj(f'nastavenia uvod_slider: položka {polozka!r} nie je objekt, vynechaná')
+                continue
+            slug = jeden_riadok(polozka.get('slug'))
+            subor = jeden_riadok(polozka.get('subor'))
+            r = podla.get(slug)
+            if r is None:
+                varuj_prisne(f'uvod_slider: realizácia {slug!r} nie je v obsahu, fotka vynechaná')
+                continue
+            f = next((x for x in r['galeria'] if x['rel'] == f'{slug}/{subor}'), None) if subor else r['karta']
+            if f is None or f.get('viz') or self.povodny_stav(f):
+                varuj_prisne(f'uvod_slider: fotka {subor or "karty"} realizácie {slug} chýba, je rozmazaná, '
+                             'vizualizácia alebo pôvodný stav, vynechaná')
+                continue
+            if any(x[1] is f for x in out):
+                varuj(f'nastavenia uvod_slider: fotka {f["rel"]} je v zozname dvakrát, druhá vynechaná')
+                continue
+            stred = polozka.get('stred', [0.5, 0.5])
+            if not (isinstance(stred, list) and len(stred) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                                                                       and 0 <= v <= 1 for v in stred)):
+                varuj(f'nastavenia uvod_slider: stred {stred!r} fotky {f["rel"]} nie je [x, y] v podieloch 0 až 1, stred fotky')
+                stred = [0.5, 0.5]
+            # orez_dole: podiel výšky fotky odspodu, ktorý sa v ráme neukáže nikdy, ani v ráme na výšku (vysoké okno,
+            # mobil), kde cover inak ukáže celú výšku fotky na výšku: RD Ahoj 01 má dole cestu s kanálom (ÚVOD v3)
+            orez = polozka.get('orez_dole', 0)
+            if not (isinstance(orez, (int, float)) and not isinstance(orez, bool) and 0 <= orez <= 0.4):
+                varuj(f'nastavenia uvod_slider: orez_dole {orez!r} fotky {f["rel"]} nie je číslo 0 až 0,4, bez orezu')
+                orez = 0
+            if orez:
+                self.slider_orez[f['rel']] = float(orez)
+            out.append((r, f, (float(stred[0]), float(stred[1]))))
+        self._slider = out or self.zalozny_slider()
+        return self._slider
+
+    def zalozny_slider(self):
+        """Keď z uvod_slider neostala žiadna fotka (iný obsah, napríklad testovací), hrdina nie je prázdny: fotka karty
+        prvej realizácie zo záložného výberu (skutočná, nie vizualizácia ani pôvodný stav), s varovaním."""
+        r = next((x for x in self.zalozny_vyber() if not x['karta'].get('viz') and not self.povodny_stav(x['karta'])), None)
+        if r is None:
+            return []
+        varuj(f'uvod_slider: bez použiteľnej fotky, úvod ukáže fotku karty realizácie {r["slug"]}')
+        return [(r, r['karta'], (0.5, 0.5))]
+
     def hrdina_foto(self):
-        """Fotka v ráme úvodu (nastavenia uvod_foto: slug a súbor alebo číslo fotky). Musí byť veľká a ostrá
-        (FOTKY.md bod 3: šírka aspoň 1280 px, ostrosť aspoň 800); inak prvá taká fotka z realizácií; bez nej nič.
-        Nastavená realizácia alebo fotka, ktorá chýba alebo nevyhovuje, je prísne varovanie (v Actions chyba zostavy)."""
-        nast = self.nastavenia.get('uvod_foto') or {}
-        r = next((x for x in self.realizacie if x['slug'] == nast.get('slug')), None)
-        if r:
-            subor = jeden_riadok(nast.get('subor'))
-            nn = str(nast.get('fotka') or '').zfill(2)
-            f = next((x for x in r['galeria'] if (subor and x['rel'] == f'{r["slug"]}/{subor}') or (not subor and x['nn'] == nn)), None)
-            p = self.pravidla['velka']
-            if f and f['w'] >= p['min_sirka'] and f['ostrost'] >= p['min_ostrost'] and f['w'] >= f['h']:
-                return r, f
-            varuj_prisne(f'uvod_foto: fotka {subor or nn} realizácie {r["slug"]} chýba alebo nie je dosť veľká a ostrá na úvod')
-        elif nast.get('slug'):
-            varuj_prisne(f'uvod_foto: realizácia {nast.get("slug")!r} nie je v obsahu')
-        for x in self.realizacie:
-            if x['velka']:
-                return x, x['velka']
-        return None, None
+        """Prvá fotka slidera úvodu (LCP a OG obrázok úvodu), (r, f) alebo (None, None). Nástroje (nastroje/predlohy_web.py,
+        titulné fotky s prísnejším prahom) ju čítajú týmto menom ako predtým fotku pohľadu A."""
+        fotky = self.slider_fotky()
+        return (fotky[0][0], fotky[0][1]) if fotky else (None, None)
 
     def mierka(self, pre):
         """Časová mierka (grafická mierka z ukážky preložená na roky): os od najstaršieho po najnovší rok realizácie,
@@ -2354,9 +2577,11 @@ class Web:
         return (f'<div class="casova-mierka"><span class="mierka-os" aria-hidden="true">{"".join(bunky)}</span>'
                 f'<span class="mierka-pozn">{T(f"Realizácie so známymi rokmi podľa roku ukončenia, {od} až {do}. Modrý dielik: počet stavieb v tom roku.")}</span></div>')
 
-    # --- úvod v časti ukážky Olovnica (PLAN-1-1.md časť 1): úvod, pás prác, Postup, Činnosť, O firme, Kontakt
+    # --- úvod (1. kolo pripomienok 24. 11. 2026): hrdina so sliderom a O firme, Činnosť, Kontakt (pás prác preč, 3A.6)
     def foto_nastavenia(self, kluc):
         """Fotka sekcie z nastavenia.json (slug a súbor), len skutočná ostrá fotka z galérie; inak (None, None).
+        Úvod ju od 1. kola pripomienok nepoužíva (Postup a samostatná sekcia O firme sú preč); ostáva pre nástroje
+        (nastroje/predlohy_web.py číta postup_foto a firma_foto, nenastavené dajú (None, None) bez varovania).
         Nenastavený kľúč je sekcia bez fotky; nastavená realizácia alebo fotka, ktorá chýba, je prísne varovanie
         (v Actions chyba zostavy, fb-ostro A4)."""
         nast = self.nastavenia.get(kluc) or {}
@@ -2384,7 +2609,7 @@ class Web:
                     return nazov
         return ''
 
-    def lb_data(self, pre, r, f, i, n, nazov, popis_udaje, skupina='', nahlad=False):
+    def lb_data(self, pre, r, f, i, n, nazov, popis_udaje, skupina='', nahlad=False, popis=None):
         """Odkaz na plnú fotku a jeho dáta pre lightbox (zmluva PRIPRAVA-BUILD.md bod 3, rozšírená o viac galérií
         na stránke: data-galeria, data-alt; vizualizácia data-viz a data-autor). nahlad: odkaz obsahuje náhľad
         self.img celej fotky (galéria, nie malá fotka), ktorého srcset WebP a zdroj AVIF sú bajtovo rovnaké ako
@@ -2404,7 +2629,7 @@ class Web:
         # data-sirka a data-vyska: plný súbor WebP (odkaz), lightbox fotku nezväčší nad jeho 1,25 násobok
         data.update({'data-sirka': str(f['plna_w']),
                 'data-vyska': str(f['plna_h']), 'data-nazov': esc(nazov),
-                'data-popis': '' if f.get('viz') else esc(self.popis_fotky(r, f)),
+                'data-popis': '' if f.get('viz') else esc(self.popis_fotky(r, f) if popis is None else popis),
                 'data-udaje': esc(popis_udaje), 'data-index': str(i), 'data-alt': esc(alt)})
         if skupina:
             data['data-galeria'] = esc(skupina)
@@ -2423,7 +2648,7 @@ class Web:
                                              f'autor {r["autor"]}' if r.get('autor') else '', r['roky']) if x)
 
     def lightbox_dialog(self, pre, nazov, r, f):
-        """Jeden dialog#lightbox na stránku (úvod: všetky galérie pásu, realizácia a novinka: jej galéria)."""
+        """Jeden dialog#lightbox na stránku (realizácia a novinka: jej galéria)."""
         return self.lightbox_html(f'Fotky: {nazov}', pre + self.obrazok_cesty(r, f)[f['plna_w']], f['max_w'], f['max_h'])
 
     @staticmethod
@@ -2441,8 +2666,8 @@ class Web:
                 f'<button class="lightbox-tl lightbox-dalsia" type="button" data-dalsia><span>Ďalšia</span>{SVG_SIPKA}</button>'
                 f'<button class="lightbox-tl lightbox-zavriet" type="button" data-zavriet>{SVG_KRIZIK}<span>Zavrieť</span></button></dialog>')
 
-    def zalozny_pas(self):
-        """Záložné poradie pre pás (bez pas_vyber alebo na doplnenie chýbajúcich): len s fotkou karty, najprv so
+    def zalozny_vyber(self):
+        """Záložné poradie realizácií pre slider úvodu bez použiteľnej fotky z uvod_slider: len s fotkou karty, najprv so
         skutočnou fotkou (nie len vizualizácia), so známymi rokmi stavby a s najviac fotkami v galérii; pri zhode
         novšia podľa zoznamu realizácií. Nič sa nevymýšľa, len sa vyberá z obsahu."""
         poradie = {r['slug']: i for i, r in enumerate(self.realizacie)}
@@ -2450,457 +2675,284 @@ class Web:
                       key=lambda r: (bool(r['karta'].get('viz')), not (r['roky'] and not r['rok_z_datumu']),
                                      -len(r['galeria']), poradie[r['slug']]))
 
-    def pas_vyber(self):
-        """Realizácie v páse úvodu (zadanie bmb-fb-uplnost bod 4: najlepšie stavby, nikdy všetky): nastavenia.json
-        pas_vyber v poradí zoznamu realizácií (podľa rokov), najviac PAS_MAX. Chýbajúci slug alebo realizácia bez
-        fotky sa vynechá s varovaním a miesto doplní záložný výber (zalozny_pas); bez pas_vyber záložný výber
-        uvod_pocet_realizacii (tiež najviac PAS_MAX) s varovaním. Lokálne nikdy chyba zostavy; chýbajúci slug
-        a realizácia bez fotky sú prísne varovania, v GitHub Actions chyba zostavy (fb-ostro A4)."""
-        n = max(1, min(int(self.nastavenia.get('uvod_pocet_realizacii', 8)), PAS_MAX))
-        vyber = self.nastavenia.get('pas_vyber')
-        podla = {r['slug']: r for r in self.realizacie}
-        poradie = {r['slug']: i for i, r in enumerate(self.realizacie)}
+    def cinnost_casti(self):
+        """Časti doslovného textu Činnosti (texty.json cinnost_doslova) v poradí kľúčov: [(kľúč, časť)]. Časť bez nadpisu
+        alebo iného typu než objekt sa vynechá s varovaním (zlý JSON nesmie zhodiť build)."""
         out = []
-        if isinstance(vyber, list) and vyber:
-            ciel = min(len(vyber), PAS_MAX)
-            for s in vyber:
-                r = podla.get(s) if isinstance(s, str) else None
-                if r is None:
-                    varuj_prisne(f'nastavenia pas_vyber: realizácia {s!r} nie je v obsahu, vynechaná')
-                elif not r['karta']:
-                    varuj_prisne(f'nastavenia pas_vyber: realizácia {s} nemá fotku, vynechaná')
-                elif r not in out:
-                    out.append(r)
-            if len(out) > PAS_MAX:
-                varuj(f'nastavenia pas_vyber: {len(out)} realizácií, pás ukáže prvých {PAS_MAX} zo zoznamu')
-                out = out[:PAS_MAX]
-            if len(out) < ciel:
-                doplnok = [r for r in self.zalozny_pas() if r not in out][:ciel - len(out)]
-                if doplnok:
-                    varuj('nastavenia pas_vyber: doplnené záložným výberom ' + ', '.join(r['slug'] for r in doplnok))
-                out += doplnok
-        else:
-            if self.realizacie:
-                varuj(f'nastavenia pas_vyber chýba alebo nie je zoznam: záložný výber {n} realizácií (najviac fotiek, známe roky)')
-            out = self.zalozny_pas()[:n]
-        return sorted(out, key=lambda r: poradie[r['slug']])
+        for k, c in (self.texty.get('cinnost_doslova') or {}).items():
+            if k.startswith('_'):
+                continue
+            if not isinstance(c, dict) or not jeden_riadok(c.get('nadpis')):
+                varuj(f'texty.json cinnost_doslova.{k}: chýba nadpis alebo nie je objekt, časť vynechaná')
+                continue
+            out.append((k, c))
+        return out
 
-    def karta_pasu(self, pre, r):
-        """Karta pásu z ukážky (U:817 až U:843): fotka 4 : 5 (výrez zo stredu), kóta s rokmi, nadpis s odkazom na
-        stránku realizácie, tlačidlo Fotky (odkaz na galériu, app.js otvorí lightbox), druh a miesto, rola. Za kartou
-        skrytý zoznam fotiek galérie pre lightbox (bez obrázkov, len odkazy s dátami)."""
-        f = r['karta']
-        nm = self.nazov_s_miestom(r)
-        url = esc(self.rel(pre, f'realizacie/{r["slug"]}/'))
-        stitok = '<span class="stitok-viz">Vizualizácia</span>' if f.get('viz') else ''
-        # fotka karty ako v ukážke (U:820 a U:821): skutočný zdroj v data-src a data-srcset, kým sa k pásu človek
-        # nepriblíži (app.js), inak by lenivé fotky ôsmich kariet na mobile súperili s fotkou úvodu o LCP; v src je
-        # spoločný prázdny obrázok 4 : 5 (prazdna-45.webp, CSP nedovolí data:), bez skriptu kópia v noscript
-        # AVIF v data-avif: app.js obalí fotku do picture so zdrojom type=image/avif až pri načítaní; bez skriptu
-        # kópia v noscript len ako WebP (img), lebo picture so zdrojom by sa načítal hneď aj s JS
-        alt = self.alt_bez_cisla(f) or nm
-        realna = self.img(pre, r, f, SIZES_PAS, alt=alt, orez='45')
-        realna = realna[realna.index('<img'):].replace('</picture>', '')
-        foto = self.img(pre, r, f, SIZES_PAS, alt=alt, orez='45', odlozene=True) + f'<noscript>{realna}</noscript>'
-        roky = self.roky_stitok(r)
-        kota = self.kota(roky) if roky else '<span class="kota kota-prazdna" aria-hidden="true"></span>'
-        n = len(r['galeria'])
-        tlacidlo = ''
-        polozky = []
-        udaje_lb = ''
-        if n:
-            tlacidlo = (f'<a class="prepinac" href="{url}#galeria" data-galeria="{esc(r["slug"])}" aria-haspopup="dialog" '
-                        f'aria-label="Fotky: {esc(nm)}, {tvar(n, "fotka", "fotky", "fotiek")}">{SVG_FOTKY}Fotky</a>')
-            udaje_lb = self.udaje_lightboxu(r)
-            # skrátená zmluva pre skryté zoznamy (HTML úvodu, výkon na mobile): plná fotka v href, šírky v data-sirky
-            # (srcset zloží app.js z href), názov a údaje na zozname, alt z názvu a poradia; vizualizácia má vlastný alt
-            # zoznam je skrytý a bez JS sa nepoužije (tlačidlo Fotky vedie na galériu), preto odkazy bez href: cestu
-            # k fotke zloží app.js z data-cesta zoznamu, čísla fotky a šírok (cesty registruje registruj_fotku)
-            for i, g in enumerate(r['galeria'], 1):
-                self.registruj_fotku(r, g)
-                navyse = ''
-                if g.get('viz'):
-                    alt = self.alt_bez_cisla(g)
-                    navyse = (f' data-viz="1" data-autor="{esc(g.get("autor", ""))}"'
-                              f' data-alt="{esc(f"{alt}, fotka {i} z {n}" if n > 1 else alt)}"')
-                # href na plnú fotku (Lighthouse SEO crawlable-anchors, overenie kolo 1); app.js ju berie ako plnú fotku
-                plna = esc(pre + self.obrazok_cesty(r, g)[g['plna_w']])
-                # data-sirky: šírky WebP, data-sirky-avif: šírky AVIF (app.js zloží <nn>-<šírka>.avif), data-sirka
-                # výška plného WebP (lightbox fotku nezväčší nad 1,25 násobok jeho šírky)
-                av = self.sirky_variantu(g, 'avif')
-                navyse += f' data-sirky-avif="{" ".join(str(s) for s in av)}"' if av else ''
-                polozky.append(f'<li><a href="{plna}" data-lightbox data-nn="{g["nn"]}" data-sirky="{" ".join(str(s) for s in g["sirky"])}" '
-                               f'data-vyska="{g["plna_h"]}"{navyse}></a></li>')
-        udaje = BODKA.join(T(x) for x in (self.druh_karty(r), r['miesto']) if x)
-        return (f'<li class="projekt"><figure><div class="projekt-foto">{foto}{stitok}</div><figcaption>{kota}'
-                f'<div class="projekt-riadok"><h3><a href="{url}">{T(r["nazov"])}</a></h3>{tlacidlo}</div>'
-                + (f'<p class="projekt-udaje">{udaje}</p>' if udaje else '')
-                + (f'<p class="projekt-text">{T(r["rola"])}</p>' if r['rola'] else '')
-                + '</figcaption></figure>'
-                + (f'<ul class="lb-zoznam" data-galeria="{esc(r["slug"])}" data-cesta="{esc(pre + r["obr_dir"])}/" '
-                   f'data-nazov="{esc(nm)}" data-udaje="{esc(udaje_lb)}" hidden>'
-                   f'{"".join(polozky)}</ul>' if polozky else '')
-                + '</li>')
+    @staticmethod
+    def zoznam_textov(hodnota, meno):
+        """Zoznam viet z texty.json; iný typ než zoznam je varovanie a prázdny zoznam."""
+        if hodnota is None or isinstance(hodnota, list):
+            return hodnota or []
+        varuj(f'texty.json: {meno} nie je zoznam, vynechané')
+        return []
 
-    def pas_prac(self, pre):
-        """Tmavý pripnutý vodorovný pás prác z ukážky (U:801 až U:951, PLAN-1-1.md 1.4 a 2.4): na počítači sa pás
-        pripne a zvislý posun ho posúva do strany (CSS animation-timeline, app.js zapne triedu pripnute), na mobile
-        a tablete je to natívny posuvník so scroll-snap, pri obmedzenom pohybe obyčajný zoznam (mriežka)."""
-        tp = self.texty['pas']
-        vyber = self.pas_vyber()
-        if not vyber:
-            return ''
-        so_rokmi = [r for r in vyber if r['roky'] and r['rok'] and not r['rok_z_datumu']]
-        pocet = POCET_STAVIEB.get(len(vyber), f'{len(vyber)} stavieb')
-        if so_rokmi:
-            od, do = min(r['rok_od'] for r in so_rokmi), max(r['rok'] for r in so_rokmi)
-            prva = f'{pocet} z rokov {od} až {do}.' if od != do else f'{pocet} z roku {od}.'
-        else:
-            prva = f'{pocet}.'
-        uvodny = f'{prva} {tp["uvodny"]}'
-        karty = [self.karta_pasu(pre, r) for r in vyber]
-        n_vsetky = len(self.realizacie)
-        dalsich = n_vsetky - len(vyber)
-        if dalsich == 1:
-            veta = 'Ďalšia 1 stavba je v zozname realizácií.'
-        elif 2 <= dalsich <= 4:
-            veta = f'Ďalšie {dalsich} stavby sú v zozname realizácií.'
-        elif dalsich > 4:
-            veta = f'Ďalších {dalsich} stavieb je v zozname realizácií.'
-        else:
-            veta = 'Všetky stavby sú aj v zozname realizácií s filtrom.'
-        karty.append(f'<li class="projekt-dalsi"><p>{T(veta)}</p>'
-                     f'<a class="tlacidlo" href="{esc(self.rel(pre, "realizacie/"))}">Všetky realizácie ({n_vsetky}) {SVG_SIPKA}</a></li>')
-        prvy = next((r for r in vyber if r['galeria']), vyber[0])
-        lb = self.lightbox_dialog(pre, self.nazov_s_miestom(prvy), prvy, (prvy['galeria'] or [prvy['karta']])[0])
-        return (f'<section class="prace" id="prace" aria-labelledby="prace-nadpis">{CIARY_HTML}'
-                f'<a class="preskocit preskocit-pas" href="#postup">{T(tp["preskocit"])}</a>'
-                '<div class="prace-lepidlo"><div class="prace-posuvne"><div class="prace-hlava">'
-                f'<h2 class="nadpis" id="prace-nadpis">{T(tp["nadpis"])}</h2><p class="uvodny">{T(uvodny)}</p>'
-                f'<div class="pas-ovladanie"><p class="navod"><span class="navod-mobil">{T(tp["navod_mobil"])}</span>'
-                f'<span class="navod-mys">{T(tp["navod_mys"])}</span><span class="navod-pocitac">{T(tp["navod_pocitac"])}</span></p>'
-                '<div class="sipky" role="group" aria-label="Posun pásu realizácií" hidden>'
-                f'<button class="sipka" type="button" data-smer="-1" aria-controls="pas-prac">{SVG_SIPKA_SPAT}Predošlá</button>'
-                f'<button class="sipka" type="button" data-smer="1" aria-controls="pas-prac">Ďalšia{SVG_SIPKA}</button></div></div></div>'
-                f'<ul class="pas" id="pas-prac" role="list" aria-label="{esc(tp["nadpis"])}" tabindex="0">{"".join(karty)}</ul>'
-                f'</div></div>{lb}</section>')
+    def doslovny_text(self, kluc, c, stlpce=True, uvodna=False):
+        """HTML jednej časti doslovného textu starého webu (texty.json cinnost_doslova, ZMENY-KOLO-1.md časť 4): odseky,
+        potom úvodná veta a body, druhá úvodná veta a body, v tomto poradí a slovo od slova. Jeden zdroj pre Činnosť na
+        úvode aj hlavný text stránky služby. stlpce: zoznam s viac ako štyrmi bodmi na počítači v dvoch stĺpcoch (CSS
+        cinnost-body-dlhe). uvodna: prvý odsek väčším písmom (stránka služby)."""
+        odseky = self.zoznam_textov(c.get('odseky'), f'cinnost_doslova.{kluc}.odseky')
+        trieda = ' class="uvodna"'
+        telo = ''.join(f'<p{trieda if uvodna and i == 0 else ""}>{T(jeden_riadok(o))}</p>' for i, o in enumerate(odseky))
+        for u, b in (('uvod', 'body'), ('uvod_2', 'body_2')):
+            if jeden_riadok(c.get(u)):
+                telo += f'<p class="cinnost-uvod">{T(jeden_riadok(c[u]))}</p>'
+            body = [jeden_riadok(x) for x in self.zoznam_textov(c.get(b), f'cinnost_doslova.{kluc}.{b}') if jeden_riadok(x)]
+            if body:
+                dlhe = ' cinnost-body-dlhe' if stlpce and len(body) > 4 else ''
+                telo += f'<ul class="cinnost-body{dlhe}">' + ''.join(f'<li>{T(x)}</li>' for x in body) + '</ul>'
+        return telo
 
-    # --- výkres v úvode: schéma rezu bytovým domom (PLAN-1-1.md časť 3), vrstvy kreslené cez clip-path
-    def pocet_cinnosti_dozoru(self):
-        s = self.firma['sluzby'].get('stavebny-dozor') if isinstance(self.firma.get('sluzby'), dict) else None
-        return len(s['cinnosti']) if s and s.get('cinnosti') else 0
+    def realizacie_sluzby(self, slug):
+        """Realizácie s rolou služby (texty.json sluzby.<slug>.kluce v poli rola, bez ohľadu na veľkosť písmen): jeden
+        výpočet pre zoznam na stránke služby aj počet v hlave karty Činnosti na úvode."""
+        kluce = (self.texty['sluzby'].get(slug) or {}).get('kluce') or []
+        return [r for r in self.realizacie if any(kl in r['rola'].lower() for kl in kluce)]
 
-    def schema_svg(self, siroka):
-        """Vrstvy schémy (HTML obal s vlastným SVG, rovnaký viewBox) pre širokú (od 768 px) alebo úzku kompozíciu
-        (mobil). Jednotky sú len jednotky výkresu, nič sa nevypisuje ako rozmer."""
-        ts = self.texty['schema']
-        W = 1200 if siroka else 560
-        L, R = (-150, 1330) if siroka else (-200, 690)
-        vb = f'{L} -30 {R - L} 910'
-        s = 's' if siroka else 'u'
-        NP = (240, 360, 480, 600)
-        obd = [(-20, 720, W + 20, 760)]
+    @staticmethod
+    def slovo_realizacie(n):
+        """Slovo k počtu: 1 realizácia, 2 až 4 realizácie, 0 a 5 a viac realizácií."""
+        return 'realizácia' if n == 1 else 'realizácie' if 2 <= n <= 4 else 'realizácií'
 
-        def stena(x0, x1, y0, y1, otvory):
-            y = y0
-            for a, b in sorted(otvory):
-                if a > y:
-                    obd.append((x0, y, x1, a))
-                y = max(y, b)
-            if y < y1:
-                obd.append((x0, y, x1, y1))
-        okna = [(y - 85, y - 30) for y in NP]
-        stena(0, 30, 90, 720, okna)
-        stena(W - 30, W, 90, 720, okna)
-        if siroka:
-            stena(585, 615, 140, 720, [(y - 70, y) for y in NP + (720,)])
-        for y in (120,) + NP:
-            if siroka and y != 120:
-                obd += [(0, y, 900, y + 20), (1160, y, W, y + 20)]
-            else:
-                obd.append((0, y, W, y + 20))
-        obrys = svg_obrys(obd)
-        teren_x = -72 if siroka else -102
-        zem = svg_obrys([(L + 10, 600, 0, 720), (L + 10, 720, -20, 760)]) + svg_obrys([(W, 600, R - 10, 720), (W + 20, 720, R - 10, 760)])
-        teren = f'M{L + 10} 600H{teren_x}M{W} 600H{R - 10}'
-        okna_d = ''.join(f'M{x} {y - 85}V{y - 30}' for y in NP for x in (0, 12, 16, 30, W - 30, W - 16, W - 12, W))
-        schody = ''
-        if siroka:
-            for y in (720, 600, 480, 360):
-                schody += f'M900 {y}' + ''.join(f'V{y - 15 * (k + 1)}H{cislo_svg(900 + 32.5 * (k + 1))}' for k in range(8))
-                schody += f'M932.5 {y}L1160 {y - 105}'
-        krok = 140 if siroka else 120
-        stlpiky = [x for x in range(40, W - 39, krok)]
-        schody += ''.join(f'M{x} 120V80' for x in stlpiky) + f'M{stlpiky[0]} 80H{stlpiky[-1]}'
-        K = W + 70
-        urovne = (120, 240, 360, 480, 600, 720)
-        koty = ''.join(f'M{W + 15} {y}H{K + 12}' for y in urovne) + f'M{K} 120V720'
-        znacky = ''.join(f'M{K - 9} {y + 9}L{K + 9} {y - 9}' for y in urovne)
-        riadok2 = 860 if siroka else 830
-        texty_kot = []
-        # úrovne zdola: 600 až 720 je 1. PP, 480 až 600 1. NP, ... 120 až 240 4. NP
-        useky = [(600, 720), (480, 600), (360, 480), (240, 360), (120, 240)]
-        for (a, b), nazov in zip(useky, ts['urovne']):
-            c = (a + b) // 2
-            texty_kot.append(f'<text x="{K - 12}" y="{c}" transform="rotate(-90 {K - 12} {c})">{T(nazov)}</text>')
-        if siroka:
-            body = (0, 300, 900, W)
-            koty += ''.join(f'M{x} 775V815' for x in body) + f'M0 815V870M{W} 815V870M0 805H{W}M0 {riadok2}H{W}'
-            znacky += ''.join(f'M{x - 9} 814L{x + 9} 796' for x in body) + f'M-9 {riadok2 + 9}L9 {riadok2 - 9}M{W - 9} {riadok2 + 9}L{W + 9} {riadok2 - 9}'
-            for (a, b), faza in zip(((0, 300), (300, 900), (900, W)), ts['fazy']):
-                texty_kot.append(f'<text class="kh" x="{(a + b) // 2}" y="793">{T(faza)}</text>')
-        else:
-            koty += f'M0 775V840M{W} 775V840M0 {riadok2}H{W}'
-            znacky += f'M-9 {riadok2 + 9}L9 {riadok2 - 9}M{W - 9} {riadok2 + 9}L{W + 9} {riadok2 - 9}'
-        bod_x = teren_x + 12
-        bod = f'M{teren_x} 584H{teren_x + 24}L{bod_x} 600Z'
-        ciarka = f'M{teren_x + 24} 600H0'
-        # popisy kontrol: podlažie podľa úrovne, strecha nad doskou, vytýčenie pri výškovom bode
-        px = 307 if siroka else W // 2
-        miesta = {'strecha': 30, '4. NP': 176, '3. NP': 296, '2. NP': 416, '1. NP': 536, '1. PP': 656}
-        popisy = []
-        for k in ts['kontroly']:
-            if k['kde'] == 'teren':
-                x = (L + 0) // 2
-                prvy, _, druhy = k['plocha'].partition(' a ')
-                riadky = [prvy, 'a ' + druhy] if druhy else [k['plocha']]
-                tsp = ''.join(f'<tspan class="plocha" x="{x}" dy="{"1.25em" if j == 0 else "1.15em"}">{T(t)}</tspan>'
-                              for j, t in enumerate(riadky))
-                popisy.append(f'<text class="popis" x="{x}" y="500">{T(k["popis"])}{tsp}</text>')
-            elif k['kde'] in miesta:
-                y = miesta[k['kde']]
-                popisy.append(f'<text class="popis" x="{px}" y="{y}">{T(k["popis"])}'
-                              f'<tspan class="plocha" x="{px}" dy="1.25em">{T(k["plocha"])}</tspan></text>')
-        popisy.append(f'<text class="poznamka-schemy" x="{L + 10}" y="0">{T(ts["nie_v_mierke"])}</text>')
-        # značka pohľadu A pred fasádou mimo rezu (ukážka U:781 až U:786): hrot mieri na fasádu, pod ňou popis v Mono;
-        # nad značkou je v HTML odkaz na fotku (pohlad-odkaz), prechod myšou zvýrazní fotku a fotka značku (overenie kolo 1)
-        ax, ay = POHLAD_ZNACKA['s' if siroka else 'u']
-        if getattr(self, 'ma_pohlad', False):
-            popisy.append(f'<g class="pohlad-znacka" transform="translate({ax} {ay})"><path class="pohlad-hrot" d="M14-10L32 0L14 10Z"/>'
-                          f'<circle class="pohlad-kruh" r="17"/><text class="pohlad-pismeno" y="7.5">A</text></g>'
-                          f'<text class="pohlad-popis" x="{ax}" y="{ay + 52}">{T(ts.get("pohlad", "pohľad A"))}</text>')
+    def cinnost_fakty(self, pre, slug, nadpis):
+        """Hlava karty Činnosti ako technický list (ZMENY-KOLO-1.md 3A.7, náhľad pred 1. kolom): počet realizácií služby
+        s odkazom na realizácie na stránke služby (len keď je aspoň jedna) a popisom z texty.json cinnost.hlava
+        (pocet_popis), osvedčenie SKSI z roku vydania (obsah/firma.json opravnenia podľa cinnost.hlava osvedcenie)
+        s odkazom na Oprávnenia, pod tým nenápadný odkaz na stránku služby. Nič sa nevymýšľa: počet z rolí, rok
+        z dátumu vydania osvedčenia."""
+        tc = self.texty['cinnost']
+        h = (tc.get('hlava') or {}).get(slug) or {}
+        riadky = []
+        if slug in self.texty['sluzby']:
+            n = len(self.realizacie_sluzby(slug))
+            if n:
+                popis = jeden_riadok(h.get('pocet_popis'))
+                riadky.append(f'<li class="cinnost-fakt"><a class="cinnost-pocet" href="{esc(self.rel(pre, slug + "/#real-nadpis"))}">'
+                              f'<span class="cinnost-pocet-c cisla">{n}</span> <span>{self.slovo_realizacie(n)}</span></a>'
+                              + (f'<small>{T(popis)}</small>' if popis else '') + '</li>')
+        osv = jeden_riadok(h.get('osvedcenie'))
+        o = next((x for x in self.firma['opravnenia'] if osv and x['cinnost'] == osv and 'SKSI' in x['organizacia']
+                  and x['rok'].isdigit()), None)
+        if o:
+            riadky.append(f'<li class="cinnost-fakt"><a href="{esc(self.rel(pre, "opravnenia/"))}">'
+                          f'{T("osvedčenie SKSI z roku " + o["rok"])}</a></li>')
+        out = f'<ul class="cinnost-fakty">{"".join(riadky)}</ul>' if riadky else ''
+        if slug in self.texty['sluzby']:
+            out += (f'<p class="cinnost-odkaz"><a class="odkaz-sipka" href="{esc(self.rel(pre, slug + "/"))}">'
+                    f'{T(tc.get("odkaz_sluzba", "Stránka služby"))}<span class="vh">: {nadpis}</span> {SVG_SIPKA}</a></p>')
+        return out
 
-        def vrstva(trieda, obsah, defs=''):
-            return (f'<div class="vrstva {trieda}"><svg viewBox="{vb}" aria-hidden="true" focusable="false">'
-                    + (f'<defs>{defs}</defs>' if defs else '') + f'{obsah}</svg></div>')
-        return ''.join([
-            vrstva('v-teren', f'<path class="zemina" d="{zem}"/><path class="teren" d="{teren}"/>',
-                   f'<pattern id="zemina-{s}" patternUnits="userSpaceOnUse" width="18" height="18" patternTransform="rotate(45)">'
-                   f'<path class="zemina-ciara" d="M9-1V19"/></pattern>'),
-            vrstva('v-srafa', f'<path class="srafa-plocha" d="{obrys}"/>',
-                   f'<pattern id="srafa-{s}" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(45)">'
-                   f'<path class="srafa-ciara" d="M4.5-1V10"/></pattern>'),
-            vrstva('v-obrys', f'<path class="obrys" d="{obrys}"/>'),
-            vrstva('v-okna', f'<path class="okna" d="{okna_d}"/>'),
-            vrstva('v-schody', f'<path class="nabytok" d="{schody}"/>'),
-            vrstva('v-bod', f'<path class="bod-ciarka" d="{ciarka}"/><path class="bod-hrot" d="{bod}"/>'),
-            vrstva('v-koty', f'<path class="koty-ciary" d="{koty}"/><path class="koty-znacky" d="{znacky}"/>'
-                   f'<g class="koty-text">{"".join(texty_kot)}</g>'),
-            vrstva('v-popisy', f'<g class="popisy">{"".join(popisy)}</g>'),
-        ])
-
-    def schema(self, pre):
-        """Animovaný technický výkres úvodu (namiesto pôdorysu ukážky): zjavne schéma rezu bytovým domom, v každom
-        podlaží jedna kontrola stavebného dozoru zo starého webu, pod rezom kóta postupu a počet činností dozoru,
-        ktorý sa pretočí. Dve kompozície (široká od 768 px, úzka na mobile), prepína CSS."""
-        ts = self.texty['schema']
-        n = self.pocet_cinnosti_dozoru()
-        miesto = {'strecha': 'strecha', 'teren': 'pri výškovom bode na teréne'}
-        kontroly = '; '.join(f'{miesto.get(k["kde"], k["kde"])}: {k["popis"].lower() if k["popis"] != "BOZP" else "BOZP"}, '
-                             f'{k["plocha"]}' for k in ts['kontroly'])
-        titul = (f'{ts["titul"]} Kontroly: {kontroly}. Pod rezom kóta postupu: {", ".join(ts["fazy"])}.'
-                 + (f' Stavebný dozor má {n} činností.' if n else ''))
-        kota = ''
-        if n:
-            cisla = ''.join(f'<span class="valec"><span class="stlpec c{ch}"></span></span>' for ch in str(n))
-            kota = f'<span class="plan-kota" aria-hidden="true">{cisla}<span class="kota-slovo"> {T(ts["kota"])}</span></span>'
-        odkaz = ''
-        if 'stavebny-dozor' in self.texty['sluzby'] and n:
-            odkaz = f' <a href="{esc(self.rel(pre, "stavebny-dozor/"))}">{T(ts["odkaz"].replace("{n}", str(n)))}</a>'
-        mierka = ('<span class="mierka" aria-hidden="true"><span class="mierka-pas"></span>'
-                  + ''.join(f'<span class="mierka-c mc-{p}">{T(fz)}</span>' for p, fz in zip((17, 50, 83), ts['fazy']))
-                  + '</span>')
-        # odkaz nad značkou A len pre myš a dotyk (ako v ukážke U:789), fotka je hneď vedľa alebo nad schémou
-        odkaz_a = '<a class="pohlad-odkaz" href="#pohlad-a" tabindex="-1" aria-hidden="true"></a>' if self.ma_pohlad else ''
-        return (f'<figure class="plan uvod-plan" id="schema"><span class="vh" id="schema-titul">{T(titul)}</span>'
-                f'<div class="plan-ramec plan-siroky" role="img" aria-labelledby="schema-titul">{self.schema_svg(True)}{kota}{odkaz_a}</div>'
-                f'<div class="plan-ramec plan-uzky" role="img" aria-labelledby="schema-titul">{self.schema_svg(False)}{kota}{odkaz_a}</div>'
-                f'<figcaption><span><strong>Schéma</strong>{BODKA}{T(ts["popis"])}<br>{T(ts["popis_2"])}{odkaz}</span>'
-                f'{mierka}</figcaption></figure>')
-
-    def pohlad_a(self, pre, r, f):
-        """Pohľad A z ukážky (U:726 až U:731): skutočná fotka jeho stavby (LCP), na mobile výrez 5 : 4 vyrobený
-        build.py (picture), od 768 px celá fotka; popis zo značkou A, názvom, mestom a rokmi z obsahu."""
-        nm = self.nazov_s_miestom(r)
-        alt = self.alt_bez_cisla(f) or nm
-        srcset54, _ = self.orez_srcset(pre, r, f, '54')
-        avif54, _ = self.orez_srcset(pre, r, f, '54', 'avif')
-        mobil = '(max-width: 767px)'
-        zdroje = ((f'<source media="{mobil}" type="image/avif" srcset="{avif54}" sizes="calc(100vw - 32px)">' if avif54 else '')
-                  + f'<source media="{mobil}" type="image/webp" srcset="{srcset54}" sizes="calc(100vw - 32px)">')
-        obr = self.img(pre, r, f, SIZES_POHLAD, lcp=True, trieda='hrdina-foto', alt=alt, zdroje=zdroje)
-        # preload len formátu, ktorý picture naozaj vyberie: AVIF (prehliadač bez AVIF typ preskočí a vezme WebP bez
-        # preloadu), bez AVIF WebP; dva preloady by v prehliadači s AVIF stiahli fotku dvakrát
-        avif = self.srcset(pre, r, f, 'avif')
-        typ, s54, plna = ('image/avif', avif54, avif) if avif54 and avif else ('image/webp', srcset54, self.srcset(pre, r, f))
-        self.preload_hrdina = [
-            f'<link rel="preload" as="image" type="{typ}" imagesrcset="{s54}" imagesizes="calc(100vw - 32px)" '
-            f'media="{mobil}" fetchpriority="high">',
-            f'<link rel="preload" as="image" type="{typ}" imagesrcset="{plna}" imagesizes="{SIZES_POHLAD}" '
-            'media="(min-width: 768px)" fetchpriority="high">']
-        casti = [f'<a href="{esc(self.rel(pre, "realizacie/" + r["slug"] + "/"))}">{T(r["nazov"])}</a>']
-        m = self.mesto(r)
-        if m and m.lower() not in r['nazov'].lower():
-            casti.append(T(m))
-        if r['roky']:
-            casti.append(T(r['roky']))
-        return (f'<figure class="pohlad" id="pohlad-a"><div class="pohlad-ramec">'
-                f'{obr}</div><figcaption>{SVG_POHLAD_ZNAK}<span><strong>{T(self.texty["uvod"].get("pohlad", "Pohľad A"))}:</strong> '
-                f'{BODKA.join(casti)}</span></figcaption></figure>')
-
-    def postup(self, pre):
-        """Postup z ukážky (U:953 až U:993): nadpis a veta vľavo, fotka rozostavanej stavby vpravo, štyri fázy
-        s pretáčaným poradovým číslom (BM nemá doložené trvania), texty zo starého webu a činnosť, ktorá fázu pokrýva."""
-        t = self.texty['postup']
-        r, f = self.foto_nastavenia('postup_foto')
-        foto = ''
-        if f:
-            foto = (f'<figure class="postup-foto">{self.img(pre, r, f, SIZES_POSTUP, alt=self.alt_bez_cisla(f))}'
-                    f'<figcaption>{T(t["foto_popis"])}</figcaption></figure>')
-        return (f'<section class="sekcia postup" id="postup" aria-labelledby="postup-nadpis"><div class="obsah">'
-                f'<div class="mriezka postup-hlava"><div><h2 class="nadpis" id="postup-nadpis">{T(t["nadpis"])}</h2>'
-                f'<p class="uvodny">{T(t["uvodny"])}</p></div>{foto}</div>'
-                f'{self.fazy_html(pre)}</div></section>')
-
-    def fazy_html(self, pre, h='h3'):
-        """Štyri fázy postupu (úvod, stránka stavebného dozoru): pretáčané poradové číslo, názov, text zo starého
-        webu a činnosť, ktorá fázu pokrýva."""
-        fazy = []
-        for i, fz in enumerate(self.texty['postup']['fazy'], 1):
-            cislo = f'{i:02d}'
-            dlzka = ('<span class="faza-dlzka otoc" aria-hidden="true"><span class="valce">'
-                     + ''.join(f'<span class="valec"><span class="stlpec c{ch} i{j}"></span></span>' for j, ch in enumerate(cislo))
-                     + '</span></span>')
-            sl = [k for k in fz.get('sluzby', []) if k in self.texty['sluzby']]
-            odkazy = ' a '.join(f'<a href="{esc(self.rel(pre, k + "/"))}">{T(male(self.texty["sluzby"][k]["menu"]))}</a>' for k in sl)
-            fazy.append(f'<li class="faza">{dlzka}<{h}>{T(fz["nazov"])}</{h}><p>{T(fz["text"])}</p>'
-                        + (f'<p class="vystup">Činnosť: {odkazy}</p>' if odkazy else '') + '</li>')
-        return f'<ol class="fazy">{"".join(fazy)}</ol>'
+    def cinnost_pata(self, pre):
+        """Pod kartami Činnosti (ZMENY-KOLO-1.md 3A.7, ako náhľad pred 1. kolom): veta o osvedčeniach SKSI s dátumami
+        vydania z obsah/firma.json a odkazom Oprávnenia, potom riadok listu „Čo hovorí stavebný zákon“ s rozbaľovacími
+        otázkami z texty.json cinnost.otazky (zdroj Slov-Lex pri každej, prvá otvorená, „Kto je pri kolaudácii?“ nie)."""
+        tc = self.texty['cinnost']
+        out = ''
+        osv = [o for o in self.firma['opravnenia'] if 'SKSI' in o['organizacia'] and o['cinnost'] and o['datum']]
+        if osv:
+            veta = f'{tc.get("sksi_veta", "Osvedčenia Slovenskej komory stavebných inžinierov")}: ' + '; '.join(
+                f'{o["cinnost"]}, vydané {o["datum"]}' for o in osv) + '.'
+            out += (f'<p class="cinnost-sksi">{T(veta)} <a href="{esc(self.rel(pre, "opravnenia/"))}">Oprávnenia</a></p>')
+        otazky = self.otazky_html(self.zoznam_textov(tc.get('otazky'), 'cinnost.otazky'), h='h4', prva_otvorena=True)
+        if otazky:
+            out += (f'<div class="zakon-list" role="group" aria-labelledby="zakon-uvod"><div class="zakon-hlava">'
+                    f'<span class="cinnost-ikona zakon-ikona" aria-hidden="true">§</span>'
+                    f'<h3 class="cinnost-nadpis zakon-nadpis" id="zakon-uvod">{T(tc.get("zakon_nadpis", "Čo hovorí stavebný zákon"))}</h3>'
+                    f'</div><div class="otazky">{otazky}</div></div>')
+        return out
 
     def cinnost(self, pre):
-        """Činnosť v komponente Služby a ceny ukážky (U:995 až U:1051), bez cien: tri služby v poradí starého webu
-        so stránkou, vetou a príkladmi; v stĺpci ceny počet realizácií v tej role (z obsahu) a rok osvedčenia SKSI;
-        v boxe kalkulačky otázky zo stavebného zákona so zdrojom."""
+        """Činnosť hneď pod hrdinom úvodu (ZMENY-KOLO-1.md 3A.3 a 3A.7, menu Činnosť, kotva #cinnost): nadpis sekcie
+        a celý doslovný text stránky Činnosť starého webu z texty.json cinnost_doslova, slovo od slova (opravené len
+        medzery), nič skryté. Podoba technického listu (rozhodnutie Fable 24. 11. 2026 večer): tri služby ako riadky
+        oddelené vlasovou čiarou; vľavo hlava (na počítači pripnutá pod hlavičkou webu) s ikonou, veľkým číslom ako
+        kótou, nadpisom, počtom realizácií, osvedčením SKSI a odkazom na stránku služby; vpravo celý text, dlhé zoznamy
+        v dvoch stĺpcoch s číslami v štýle kót (CSS počítadlo, text bodov ostáva doslovný). Na mobile hlava nad textom.
+        Pod kartami veta o osvedčeniach SKSI a otázky zo zákona (cinnost_pata). Bez odkazov „všetkých N činností“."""
         tc = self.texty['cinnost']
-        poradie = [k for k in tc.get('poradie', []) if k in self.texty['sluzby']]
-        poradie += [k for k in self.texty['sluzby'] if k not in poradie]
-        riadky = []
-        for k in poradie:
-            t = self.texty['sluzby'][k]
-            n = sum(1 for r in self.realizacie if any(kl in r['rola'].lower() for kl in t['kluce']))
-            dokl = [o for o in self.firma['opravnenia'] if o['cinnost'] in t.get('opravnenie', [])]
-            small = ''
-            if len(t.get('opravnenie', [])) == 1 and dokl and dokl[0].get('rok'):
-                small = f'<small>osvedčenie SKSI z roku {dokl[0]["rok"]}</small>'
-            elif n and t.get('pocet_popis'):
-                # počet zlučuje roly z referencií (projektový manažment aj stavebný manažment), overenie kolo 1
-                small = f'<small>{T(t["pocet_popis"])}</small>'
-            cena = (f'<p class="cena"><span class="cisla">{n}</span> {T(tvar(n, "realizácia", "realizácie", "realizácií").split(" ", 1)[1])}{small}</p>'
-                    if n else (f'<p class="cena">{small}</p>' if small else ''))
-            opis = ' '.join(x for x in (t.get('veta', ''), t.get('priklady', '')) if x)
-            # Odkaz na celý zoznam činností zo starého webu na stránke služby (Andrej 23. 11. 2026: Mário „tam chce mať
-            # všetky info“; zoznamy boli len na podstránkach a z úvodu ich nebolo vidno).
-            cin = (self.firma['sluzby'].get(k) or {}).get('cinnosti') or []
-            viac = ''
-            if cin:
-                pocet = len(cin)
-                text_viac = ('Celý popis činnosti' if pocet == 1 else
-                             f'Všetky {tvar(pocet, "činnosť", "činnosti", "činností")}' if pocet <= 4 else
-                             f'Všetkých {tvar(pocet, "činnosť", "činnosti", "činností")}')
-                viac = (f'<a class="odkaz-sipka sluzba-viac" href="{esc(self.rel(pre, k + "/"))}#cinnosti-nadpis">'
-                        f'{T(text_viac)} {SVG_SIPKA}</a>')
-            riadky.append(f'<li class="sluzba"><h3><a href="{esc(self.rel(pre, k + "/"))}">{T(t["menu"])}</a></h3>'
-                          f'<p class="sluzba-opis">{T(opis)}{viac}</p>{cena}</li>')
-        dokl = [f'{o["cinnost"]}, vydané {o["datum"]}' for o in self.firma['opravnenia'] if o['cinnost'] and o['datum']]
-        pozn = ''
-        if dokl:
-            pozn = (f'<p class="cennik-pozn">{T("Osvedčenia Slovenskej komory stavebných inžinierov: " + "; ".join(dokl) + ".")} '
-                    f'<a href="{esc(self.rel(pre, "opravnenia/"))}">Oprávnenia</a></p>')
-        otazky = self.otazky_html(list(self.texty['otazky']), 'h4')
-        box = (f'<div class="kalkulacka zakon-box" role="group" aria-labelledby="zakon-uvod">'
-               f'<h3 id="zakon-uvod">{T(tc["zakon_nadpis"])}</h3><div class="otazky">{otazky}</div></div>') if otazky else ''
-        return (f'<section class="sekcia" id="sluzby" aria-labelledby="sluzby-nadpis"><div class="obsah mriezka sluzby-obal">'
-                f'<div class="sluzby-hlava"><h2 class="nadpis" id="sluzby-nadpis">{T(tc["nadpis"])}</h2>'
-                f'<p class="uvodny">{T(tc["uvodny"])}</p></div>'
-                f'<ul class="cennik">{"".join(riadky)}</ul>{pozn}{box}</div></section>')
+        karty = []
+        for i, (kluc, c) in enumerate(self.cinnost_casti(), 1):
+            slug = jeden_riadok(c.get('slug'))
+            hid = f'cinnost-{slug if SLUG_RE.match(slug) else kluc}'
+            nadpis = T(jeden_riadok(c['nadpis']))
+            telo = self.doslovny_text(kluc, c)
+            ikona = IKONY_CINNOSTI.get(slug, '')
+            karty.append(f'<article class="cinnost-karta" aria-labelledby="{hid}"><div class="cinnost-hlava">'
+                         + (f'<span class="cinnost-ikona">{ikona}</span>' if ikona else '')
+                         + f'<div class="cinnost-cislo" aria-hidden="true">{self.kota(f"{i:02d}", "kota-velka")}</div>'
+                         f'<h3 class="cinnost-nadpis" id="{hid}">{nadpis}</h3>{self.cinnost_fakty(pre, slug, nadpis)}</div>'
+                         f'<div class="cinnost-text">{telo}</div></article>')
+        if not karty:
+            return ''
+        return (f'<section class="sekcia cinnost-sekcia" id="cinnost" aria-labelledby="cinnost-nadpis"><div class="obsah">'
+                f'<h2 class="nadpis" id="cinnost-nadpis">{T(tc["nadpis"])}</h2>'
+                f'<div class="cinnost-karty">{"".join(karty)}</div>{self.cinnost_pata(pre)}</div></section>')
 
-    def o_firme(self, pre):
-        """O firme v komponente Ateliér ukážky (U:1053 až U:1073): fotka hotovej stavby vľavo, text a fakty vpravo
-        (na trhu od 2005 a 20 rokov z Facebooku, konateľ, osvedčenia SKSI, pôsobnosť, sídlo), odkaz na Oprávnenia."""
-        tf = self.texty['firma']
-        r, f = self.foto_nastavenia('firma_foto')
-        foto = ''
-        if f:
-            popis = self.nazov_s_miestom(r) + (f', {r["roky"]}' if r['roky'] else '')
-            foto = (f'<figure class="atelier-foto">{self.img(pre, r, f, SIZES_FIRMA, alt=self.alt_bez_cisla(f))}'
-                    f'<figcaption><a href="{esc(self.rel(pre, "realizacie/" + r["slug"] + "/"))}">{T(popis)}</a></figcaption></figure>')
-        na_trhu = T(tf['na_trhu'])
-        nov = next((n for n in self.novinky if n['slug'] == tf.get('novinka_20')), None)
-        if nov:
-            na_trhu = f'<a href="{esc(self.rel(pre, "novinky/" + nov["slug"] + "/"))}">{na_trhu}</a>'
-        osv = ', '.join(f'{o["cinnost"]} {o["rok"]}' for o in self.firma['opravnenia'] if o['cinnost'] and o['rok'])
-        fakty = [('Na trhu', na_trhu), ('Konateľ', T(self.firma['konatel'])), ('Osvedčenia SKSI', T(osv)),
-                 ('Pôsobí', T(self.firma['posobnost'])), ('Sídlo', T(self.adresa()))]
-        dl = ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in fakty if v)
-        return (f'<section class="sekcia" id="firma" aria-labelledby="firma-nadpis"><div class="obsah mriezka atelier-mriezka">'
-                f'{foto}<div class="atelier-text"><h2 class="nadpis" id="firma-nadpis">{T(tf["nadpis"])}</h2>'
-                f'<p class="uvodna">{T(tf["uvodna"])}</p>' + ''.join(f'<p class="tlmene">{T(p)}</p>' for p in tf['odseky'])
-                + f'<dl class="fakty">{dl}</dl><p class="firma-odkaz"><a class="odkaz-sipka" href="{esc(self.rel(pre, "opravnenia/"))}">'
-                f'Oprávnenia a osvedčenia {SVG_SIPKA}</a></p></div></div></section>')
+    def slider(self, pre, fotky):
+        """Slider stavieb v úvode (ZMENY-KOLO-1.md 3.3 a 3A.2): fotky v ráme cez seba (prelínanie riadi app.js, 8 s na
+        fotku), popis aktuálnej stavby ako štítok v rohu fotky (názov s odkazom na realizáciu, miesto, len roky) a
+        nenápadné ovládanie (na počítači na fotke, na mobile pod ňou): počítadlo v štýle kót a tlačidlá Predchádzajúca,
+        Pozastaviť a Ďalšia. Prvá fotka je LCP (eager, fetchpriority high, preload),
+        ostatné majú skutočný zdroj v data-src, data-srcset a data-avif (tie isté šírky a kódovanie ako ostatné fotky)
+        a app.js ich načíta tesne pred prechodom. Bez JS prvá fotka s popisom, ostatné skryté (NOSCRIPT_CSS
+        img[data-src]) a ovládanie skryté (hidden). Výrez pri orezaní drží stred z nastavení (trieda snimka-N a pravidlo
+        object-position v css_navyse, CSP nedovolí atribút style)."""
+        t = self.texty['uvod']
+        n = len(fotky)
+        snimky, popisy, css = [], [], []
+        preload = []
+        for i, (r, f, (sx, sy)) in enumerate(fotky):
+            je = ' je' if i == 0 else ''
+            alt = self.alt_bez_cisla(f) or self.nazov_s_miestom(r)
+            obr = self.img(pre, r, f, SIZES_SLIDER, lcp=(i == 0), alt=alt, odlozene=(i > 0))
+            if i == 0:
+                # preload len formátu, ktorý picture naozaj vyberie (AVIF, bez neho WebP): dva by stiahli fotku dvakrát
+                avif = self.srcset(pre, r, f, 'avif')
+                typ, s = ('image/avif', avif) if avif else ('image/webp', self.srcset(pre, r, f))
+                preload.append(f'<link rel="preload" as="image" type="{typ}" imagesrcset="{s}" '
+                               f'imagesizes="{SIZES_SLIDER}" fetchpriority="high">')
+            snimky.append(f'<li class="snimka snimka-{i}{je}" data-slug="{esc(r["slug"])}">{obr}</li>')
+            pravidla = []
+            if (sx, sy) != (0.5, 0.5):
+                pravidla.append(f'object-position:{sx * 100:g}% {sy * 100:g}%')
+            # orez_dole: obrázok je vyšší než rám o túto časť, rám (overflow hidden) ju dole odreže pri každom pomere
+            orez = getattr(self, 'slider_orez', {}).get(f['rel'])
+            if orez:
+                pravidla.append(f'height:{100 / (1 - orez):.2f}%')
+            if pravidla:
+                css.append(f'.snimka-{i} img{{{";".join(pravidla)}}}')
+            url = esc(self.rel(pre, f'realizacie/{r["slug"]}/'))
+            udaje = [T(x) for x in (r['miesto'],) if x]
+            roky = self.roky_karty(r)
+            if roky:
+                udaje.append(f'<span class="cisla">{T(roky)}</span>')
+            popisy.append(f'<li class="slider-popis{je}"><a href="{url}">{T(r["nazov"])}</a>'
+                          + (f'<span class="slider-udaje">{BODKA.join(udaje)}</span>' if udaje else '') + '</li>')
+        self.preload_hrdina = preload
+        self.css_slider = '\n'.join(css) + ('\n' if css else '')
+        pocet = f'{n:02d}'
+        ovladanie = ''
+        if n > 1:
+            # počítadlo ako kóta s pretáčanými číslicami (pohybový jazyk pôvodného webu, ÚVOD v3): pri vstupe do obrazu
+            # sa 01 / 11 raz pretočí (app.js trieda otocene); prvá zmena fotky prepíše číslo aktuálnej fotky textom
+            ovladanie = (f'<div class="slider-ovladanie" role="group" aria-label="{esc(t["slider_ovladanie"])}" hidden>'
+                         f'<span class="kota slider-pocet"><span class="kota-text cisla otoc"><span class="slider-cislo">'
+                         f'{self.valce_cisla("01")}</span><span class="kota-slovo"> / </span>'
+                         f'<span class="slider-spolu">{self.valce_cisla(pocet, 2)}</span></span></span>'
+                         f'<button class="slider-tl" type="button" data-slider="-1" aria-controls="slider-snimky" '
+                         f'aria-label="Predchádzajúca">{SVG_SIPKA_SPAT}</button>'
+                         f'<button class="slider-tl slider-pauza" type="button" data-slider="pauza" aria-controls="slider-snimky" '
+                         f'aria-label="Pozastaviť" aria-pressed="false">{SVG_PAUZA}</button>'
+                         f'<button class="slider-tl" type="button" data-slider="1" aria-controls="slider-snimky" '
+                         f'aria-label="Ďalšia">{SVG_SIPKA}</button></div>')
+        return (f'<div class="slider" role="region" aria-label="{esc(t["slider_nazov"])}" '
+                f'data-interval="{SLIDER_INTERVAL_MS}" data-prelinanie="{SLIDER_PRELINANIE_MS}">'
+                f'<ul class="snimky" id="slider-snimky">{"".join(snimky)}</ul>'
+                f'<div class="slider-spodok"><ul class="slider-popisy" aria-live="off">{"".join(popisy)}</ul>'
+                f'{ovladanie}</div></div>')
+
+    @staticmethod
+    def valce_cisla(text, od=0):
+        """Číslice ako pretáčané stĺpce kóty (ako v Web.kota, triedy c0 až c9 a oneskorenie i0 až i9 od indexu od);
+        čítačka číta skrytý text, stĺpce sú pred ňou skryté."""
+        casti = ''.join(f'<span class="valec"><span class="stlpec c{c} i{min(9, od + i)}"></span></span>'
+                        for i, c in enumerate(text) if c.isdigit())
+        return f'<span class="vh">{esc(text)}</span><span class="valce" aria-hidden="true">{casti}</span>'
+
+    def o_firme_text(self):
+        """Dva odseky O firme pod H1 hrdinu (texty.json uvod.o_firme_hrdina, agent ÚVOD v3: pôvodné znenie sekcie
+        O firme bez vety o výročí). Na počítači vpravo pod H1, na mobile pod fotkou s H1. Bez textov nič."""
+        odseky = [jeden_riadok(x) for x in self.zoznam_textov(self.texty['uvod'].get('o_firme_hrdina'), 'uvod.o_firme_hrdina')
+                  if jeden_riadok(x)]
+        if not odseky:
+            return ''
+        # nadtitulok O firme (oprava-2): na mobile a v nižších oknách počítača je blok pod hrdinom a nadtitulok ho
+        # uvedie; vo vysokom okne vpravo pod H1 je len pre čítačku (styl.css .firma-text-nad)
+        nad = jeden_riadok(self.texty['uvod'].get('o_firme_nadpis')) or 'O firme'
+        return ('<div class="firma-text">' + f'<h2 class="firma-text-nad">{T(nad)}</h2>'
+                + ''.join(f'<p>{T(o)}</p>' for o in odseky) + '</div>')
+
+    def o_firme_udaje(self, pre):
+        """Údaje firmy v hrdinovi úvodu ako rad s ikonami zo vzorov (ZMENY-KOLO-1.md 3A.2) v poradí Sídlo, Na trhu,
+        Konateľ, Oprávnenia (s odkazom na stránku Oprávnenia); Sídlo a Oprávnenia cez celý riadok (udaj-siroky), Na trhu
+        a Konateľ vedľa seba. Ikona je v dt a skrytá pred čítačkou. Pod údajmi malým písmom zdroj (výpis z Obchodného
+        registra SR, len adresa orsr.sk z obsah/firma.json zapis_or_zdroj) a tlačidlá Zavolať a Napísať e-mail. Odkaz
+        Vybrané realizácie je preč aj s tmavým pásom (ZMENY-KOLO-1.md 3A.6)."""
+        t = self.texty['uvod']
+        fi = self.firma
+        na_trhu = f'od roku {fi["den_zapisu"][:4]}' if platny_datum(fi['den_zapisu']) else ''
+        udaje = [('Sídlo', T(self.adresa()), True), ('Na trhu', T(na_trhu), False), ('Konateľ', T(fi['konatel']), False),
+                 ('Oprávnenia', f'<a href="{esc(self.rel(pre, "opravnenia/"))}">{T(t["opravnenia"])}</a>', True)]
+        def riadky(zoznam):
+            return ''.join(f'<div class="udaj{" udaj-siroky" if siroky else ""}{" udaj-media" if siroky == "media" else ""}">'
+                           f'<dt>{IKONY_UDAJOV.get(k, "")}<span>{T(k)}</span></dt>'
+                           f'<dd>{v}</dd></div>' for k, v, siroky in zoznam if v)
+        dl = riadky(udaje)
+        zdroj = ''
+        if fi['zapis_zdroj']:
+            zdroj = (f'<p class="firma-zdroj">Zdroj: <a href="{esc(fi["zapis_zdroj"])}">{T(t["zdroj"])}</a></p>')
+        # V médiách (ZMENY-KOLO-1.md 5.7): nenápadný údaj cez celý riadok s odkazom na blok na stránke realizácie
+        # (časopis ASB č. 244 pri Lumière, kotva #casopis-asb); text z nastavení v_mediach uvod. Vlastný rad až za
+        # zdrojom z ORSR, aby zdroj patril len k údajom z registra (oprava-2, nález drobné).
+        media = ''
+        med = next((m for m in self.media.values() if m['uvod']), None)
+        if med:
+            ciel = self.rel(pre, f'realizacie/{med["realizacia"]}/#{med["kotva"]}')
+            # meno firmy sa nezalomí (na mobile „BM“ na konci riadka a „Building“ na ďalšom)
+            text = T(med['uvod']).replace('BM Building', 'BM' + chr(160) + 'Building')
+            odkaz = f'<a href="{esc(ciel)}">{text}</a>'
+            media = f'<dl class="firma-fakty firma-media">{riadky([("V médiách", odkaz, "media")])}</dl>'
+        return (f'<div class="firma-udaje"><dl class="firma-fakty">{dl}</dl>{zdroj}{media}'
+                + self.akcie('uvod-akcie', 'data-vyzva-hore') + '</div>')
+
+    @staticmethod
+    def h1_uvodu(text):
+        """H1 úvodu so sadzbou: slovo so spojovníkom (stavebno-manažérska) sa nezalomí (span.nz, Geist nemá U+2011);
+        veľkosť písma v styl.css je podiel šírky stĺpca, takže slovo sa do riadka vždy zmestí."""
+        return re.sub(r'(?<![\w>-])(\w+-\w+)', r'<span class="nz">\1</span>', T(text))
 
     def uvod(self):
+        """Úvod (1. kolo pripomienok 24. 11. 2026, ZMENY-KOLO-1.md 3A má prednosť pred 3): hrdina na prvú obrazovku
+        so sliderom stavieb vľavo (7 z 12 stĺpcov, presah k ľavému okraju okna, výška okna pod hlavičkou) a vpravo
+        nadtitulok s kľúčovými slovami, H1 doslovne podľa Andreja, údaje s ikonami, zdroj a tlačidlá (kotva #firma).
+        Na mobile a tablete je fotka na celú šírku a nadtitulok s H1 bielym písmom priamo na nej (tmavý prechod v spodnej
+        časti), pod ňou údaje ako kartičky a tlačidlá; jeden DOM, oblasti mriežky v styl.css. Hneď pod hrdinom Činnosť
+        doslovne zo starého webu a Kontakt (na úvode modrý blok). Tmavý pás Vybrané realizácie je preč (Andrej 24. 11.
+        2026 večer, ZMENY-KOLO-1.md 3A.6: „nechať len slideshow“); zoznam je na /realizacie/ a v menu."""
         t = self.texty['uvod']
         pre = ''
-        r, f = self.hrdina_foto()
+        fotky = self.slider_fotky()
+        _, f = self.hrdina_foto()
         self.registruj_og('og/bmbuilding.jpg', f['zdroj'] if f else None, 'Stavebný dozor',
                           'Stavbyvedúci a stavebný manažment, Bratislava a okolie', 'bmbuilding.sk')
-        # meno ako v ukážke: malý riadok a veľké ľahké meno, bodku nad ı v slove Building tvorí olovnica na šnúre
-        # zavesenej na vlasovej čiare (zvislica stavbyvedúceho); čítačka číta skrytý text, nie ı
-        # odbor v dvoch riadkoch („Stavebno-manažérska“ a „spoločnosť“): v jednom riadku by šnúra olovnice nad ı
-        # prešla cez slovo (overenie kolo 1); prvý riadok končí pred ı pri 390 aj 1440 px
-        maly = [x for x in jeden_riadok(t['meno_maly']).rsplit(' ', 1) if x]
-        meno = ('<div class="meno-blok"><h1 class="meno" id="meno">'
-                # riadky ako bloky s medzerou medzi nimi: textContent nadpisu ostane „Stavebno-manažérska spoločnosť“
-                f'<span class="meno-maly">{" ".join(f"<span>{T(x)}</span>" for x in maly)}</span> <span class="vh">BM Building</span>'
-                '<span class="meno-velky" aria-hidden="true">BM Bu<span class="meno-i">ı<span class="olovnica"></span></span>lding</span>'
-                '</h1></div>')
-        fi = self.firma
-        akcie = []
-        if fi['tel_href']:
-            akcie.append(f'<a class="tlacidlo" href="tel:{esc(fi["tel_href"])}">Zavolať {SVG_SIPKA}</a>')
-        if self.realizacie:
-            akcie.append(f'<a class="odkaz-sipka" href="#prace">Pozrieť realizácie {SVG_SIPKA_DOLE}</a>')
-        if t.get('stav'):
-            akcie.append(f'<p class="stav"><span class="stav-bod" aria-hidden="true"></span><span class="stav-text">{T(t["stav"])}</span></p>')
-        text = (f'<div class="uvod-text"><p class="meno-popis">{T(t["popis"])}</p><p class="uvod-veta">{T(t["veta"])}</p>'
-                f'<div class="uvod-akcie" data-vyzva-hore>{"".join(akcie)}</div></div>')
-        foto = self.pohlad_a(pre, r, f) if f else ''
-        # značka pohľadu A vo výkrese len keď je fotka pohľadu A (schema_svg, schema)
-        self.ma_pohlad = bool(f)
-        casti = [f'<section class="uvod{"" if f else " bez-fotky"}" aria-labelledby="meno"><div class="obsah mriezka uvod-mriezka">'
-                 f'{meno}{text}{foto}{self.schema(pre)}</div></section>']
-        if self.realizacie:
-            casti.append(self.pas_prac(pre))
-        casti.append(self.postup(pre))
+        self.preload_hrdina, self.css_slider = [], ''
+        slider = self.slider(pre, fotky) if fotky else ''
+        nad = BODKA.join(T(jeden_riadok(x)) for x in self.zoznam_textov(t.get('nadtitulok'), 'uvod.nadtitulok')
+                         if jeden_riadok(x))
+        hlava = (f'<div class="firma-hlava" id="firma" data-vyzva-hore>'
+                 + (f'<p class="uvod-nadtitulok">{nad}</p>' if nad else '')
+                 + f'<h1 class="uvod-h1" id="uvod-nadpis">{self.h1_uvodu(t["h1"])}</h1></div>')
+        casti = [f'<section class="uvod{"" if slider else " bez-slidera"}" aria-labelledby="uvod-nadpis">'
+                 f'<div class="obsah mriezka uvod-mriezka">{hlava}{slider}{self.o_firme_text()}'
+                 f'{self.o_firme_udaje(pre)}</div></section>']
         casti.append(self.cinnost(pre))
-        casti.append(self.o_firme(pre))
         casti.append(self.kontakt_sekcia(pre))
         uzly = [self.ld_firma(), {'@type': 'WebSite', '@id': self.abs_url('#web'), 'url': self.abs_url(''),
                                   'name': 'BM Building', 'inLanguage': 'sk', 'publisher': {'@id': self.abs_url('#firma')}},
                 {'@type': 'WebPage', '@id': self.abs_url(''), 'url': self.abs_url(''), 'name': t['title'],
                  'isPartOf': {'@id': self.abs_url('#web')}, 'about': {'@id': self.abs_url('#firma')}, 'inLanguage': 'sk'}]
         self.stranka('', t['title'], t['description'], '\n'.join(c for c in casti if c), '', uzly, trieda='stranka-uvod',
-                     preload_obr=self.preload_hrdina if f else None)
+                     preload_obr=self.preload_hrdina or None, css_navyse=self.css_slider)
 
     # --- podstránky
     def podstranka(self, cesta, kroky, title, description, telo, aktivne, uzly_navyse, og='og/bmbuilding.jpg',
@@ -2928,23 +2980,26 @@ class Web:
         return (f'<div class="dalsie"><{nadpis} class="dalsie-nadpis">Ďalšie realizácie</{nadpis}>'
                 f'<ul class="zoznam-dalsie">{"".join(polozky)}</ul></div>')
 
+    def cast_doslova(self, slug):
+        """(kľúč, časť) doslovného textu cinnost_doslova pre stránku služby so slug, inak (None, None)."""
+        return next(((k, c) for k, c in self.cinnost_casti() if jeden_riadok(c.get('slug')) == slug), (None, None))
+
     def stranky_sluzieb(self):
+        """Stránky služieb (1. kolo pripomienok, ZMENY-KOLO-1.md časť 4): hlavný text je presne text starého webu,
+        slovo od slova, z tej istej časti texty.json cinnost_doslova ako Činnosť na úvode (doslovny_text). Naše
+        prepísané odseky, vety, príklady a očíslovaný zoznam činností sú preč; H1, title a description ostávajú.
+        Vpravo doklad SKSI a Zavolať, pod textom realizácie s rolou a otázky zo zákona (bez „Kto je pri kolaudácii?“)."""
         for k, t in self.texty['sluzby'].items():
             cesta = f'{k}/'
             pre = self.pre(cesta)
-            s = self.firma['sluzby'].get(k, {'nazov': t['menu'], 'popis': '', 'cinnosti': []})
-            # dvojstrana ukážky (O firme): text služby vľavo, vpravo box kalkulačky s dokladom SKSI a Zavolať
-            odseky = ''.join(f'<p class="{"uvodna" if i == 0 else "tlmene"}">{T(p)}</p>' for i, p in enumerate(t['odseky']))
-            cinnosti = ''
-            if s['cinnosti']:
-                # zoznam činností zo starého webu ako riadky cenníka ukážky: poradové číslo v Mono, text činnosti
-                fazy = self.fazy_html(pre, 'h3') if k == 'stavebny-dozor' else ''
-                uvod_c = f'<p class="uvodny">{T(t["cinnosti_uvod"])}</p>' if t.get('cinnosti_uvod') else ''
-                cinnosti = (f'<section class="sekcia cinnosti-sekcia" aria-labelledby="cinnosti-nadpis"><div class="obsah">'
-                            f'<div class="sekcia-hlava"><h2 class="nadpis" id="cinnosti-nadpis">{T(t["cinnosti_nadpis"])}'
-                            f' <span class="nadpis-pocet cisla">{len(s["cinnosti"])}</span></h2>{uvod_c}</div>{fazy}<ol class="cinnosti">'
-                            + ''.join(f'<li><span class="cinnost-c cisla" aria-hidden="true">{i:02d}</span><span>{T(c)}</span></li>'
-                                      for i, c in enumerate(s['cinnosti'], 1)) + '</ol></div></section>')
+            kluc_d, cast = self.cast_doslova(k)
+            if cast is None:
+                varuj(f'texty.json cinnost_doslova: chýba časť so slug {k}, stránka služby bez hlavného textu')
+                text = ''
+            else:
+                ikona = IKONY_CINNOSTI.get(k, '')
+                text = ((f'<span class="cinnost-ikona sluzba-ikona" aria-hidden="true">{ikona}</span>' if ikona else '')
+                        + self.doslovny_text(kluc_d, cast, stlpce=False, uvodna=True))
             # doklady v boku sú h2: bok je v DOM pred prvým h2 stránky, h3 by bol skok úrovne po h1
             doklady = self.doklady(pre, t['opravnenie'], nadpis='h2')
             bok = ''
@@ -2955,7 +3010,7 @@ class Web:
                             f'Zavolať <span class="cisla">{T(self.firma["tel"])}</span></a></p>')
                 bok += (f'<p class="bok-odkaz"><a class="odkaz-sipka" href="{esc(self.rel(pre, "opravnenia/"))}">'
                         f'Oprávnenia a osvedčenia {SVG_SIPKA}</a></p></aside>')
-            suvisiace = [r for r in self.realizacie if any(kl in r['rola'].lower() for kl in t['kluce'])]
+            suvisiace = self.realizacie_sluzby(k)
             real = ''
             if suvisiace:
                 naraz = int(self.nastavenia.get('sluzba_pocet_kariet', 4))
@@ -2973,9 +3028,10 @@ class Web:
                         + (self.zoznam_dalsich(pre, zvysok) if zvysok else '')
                         + f'<p class="viac"><a class="odkaz-sipka" href="../realizacie/">Všetky realizácie {SVG_SIPKA}</a></p></div></section>')
             kroky = [('', 'Úvod'), (cesta, t['menu'])]
-            hlava = self.hlava_stranky(pre, kroky, t['h1'], bok=f'<p class="uvodny">{T(t["veta"])}</p>')
-            telo = (hlava + f'\n<div class="obsah mriezka sluzba-obal"><div class="sluzba-hlavne atelier-text">{odseky}</div>{bok}</div>\n'
-                    f'{cinnosti}\n{real}\n{self.otazky_sekcia(t["otazky"], "zakon-nadpis")}')
+            # hlava-sluzba: menší H1 na počítači, aby doslovný text Činnosti začínal vyššie (overenie-1, nález drobné)
+            hlava = self.hlava_stranky(pre, kroky, t['h1'], trieda='hlava-sluzba')
+            telo = (hlava + f'\n<div class="obsah mriezka sluzba-obal"><div class="sluzba-hlavne atelier-text cinnost-text sluzba-doslova">'
+                    f'{text}</div>{bok}</div>\n{real}\n{self.otazky_sekcia(t["otazky"], "zakon-nadpis")}')
             sluzba = {'@type': 'Service', '@id': self.abs_url(cesta + '#sluzba'), 'name': t['h1'], 'serviceType': t['typ_sluzby'],
                       'description': t['description'], 'provider': {'@id': self.abs_url('#firma')},
                       'areaServed': [{'@type': 'City', 'name': 'Bratislava'}, {'@type': 'City', 'name': 'Pezinok'}],
@@ -3232,9 +3288,9 @@ class Web:
 
     def udaje_realizacie(self, r):
         """Údaje realizácie v hlave stránky (dl.fakty ukážky): miesto, druh, rola BM Building s osobou zo starého webu,
-        projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), roky stavby, termín
-        výstavby s mesiacmi a etapy; bez rokov stavby rok príspevku. Weby strán ako text, nie odkaz (cudzie domény
-        sa mohli od starého webu zmeniť)."""
+        projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), Roky a etapy; bez rokov
+        stavby rok pod popiskom Rok. Termín výstavby s mesiacmi nie je (ZMENY-KOLO-1.md 5.2, len roky). Weby strán
+        ako text, nie odkaz (cudzie domény sa mohli od starého webu zmeniť)."""
         druh = ', '.join(self.kat_nazov(k) for k in r['kategorie'] if k != 'ine')
         strany = r.get('strany') or {}
 
@@ -3257,14 +3313,10 @@ class Web:
                 ('Projektant', strana('projektant', r['projektant'])), ('Autor', T(r.get('autor') or '')),
                 ('Investor', strana('investor', r['investor'])),
                 ('Zhotoviteľ', strana('zhotovitel', r['zhotovitel'])), ('Roky', T(r['roky']))]
-        if r.get('termin'):
-            pole.append(('Termín výstavby', T(r['termin'])))
         if r.get('etapy'):
             pole.append(('Etapy', ''.join(f'<span class="fakty-riadok">{T(e)}</span>' for e in r['etapy'])))
-        if not r['roky'] and self.roky_karty(r):
-            # rok príspevku len pod týmto popiskom, nikdy ako Roky (nález 1 brány bmb-fb-uplnost)
-            pole.append(('Rok príspevku', T(self.roky_karty(r))))
-        html_ = ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in pole if v)
+        # bez rokov stavby nie je ani riadok Rok: rok príspevku na web nejde (roky_karty, overenie-1)
+        html_ =''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in pole if v)
         return f'<dl class="fakty udaje">{html_}</dl>' if html_ else ''
 
     def detail_dvojstrana(self, pre, r, nazov, text, roky=''):
@@ -3304,7 +3356,7 @@ class Web:
             if r.get('autor'):
                 vety.append(s_bodkou(f'Autor: {r["autor"]}'))
             if r['roky']:
-                vety.append(s_bodkou(f'Termín: {r["roky"]}'))
+                vety.append(s_bodkou(f'Roky: {r["roky"]}'))
             desc = ''
             for v in vety:
                 skus = (desc + ' ' + v).strip()
@@ -3315,14 +3367,10 @@ class Web:
             pole_html = self.udaje_realizacie(r)
             odseky = [p for p in r['text'].split('\n') if p.strip()]
             text = ''.join(f'<p class="{"uvodna" if i == 0 else "tlmene"}">{T(p)}</p>' for i, p in enumerate(odseky))
-            # realizácia z Facebooku: dátum príspevku a odkaz (príspevok, inak stránka firmy), bez nových faktov
-            fb = r['fb_url'] or self.firma['facebook']
-            if r['zdroj'] == 'fb' and fb:
-                kedy = f' {datum_text(r["datum"])}' if r['datum'] else ''
-                text += (f'<p class="tlmene">{T("Príspevok o tejto stavbe zverejnil BM Building" + kedy + " na")} '
-                         f'<a href="{esc(fb)}">Facebooku</a>.</p>')
-            elif r['fb_url']:
-                text += f'<p class="tlmene"><a href="{esc(r["fb_url"])}">Príspevok na Facebooku</a></p>'
+            # realizácia z Facebooku: odkaz na príspevok (inak stránka firmy) bez slova príspevok (ZMENY-KOLO-1.md 5.2)
+            fb = r['fb_url'] or (self.firma['facebook'] if r['zdroj'] == 'fb' else '')
+            if fb:
+                text += f'<p class="tlmene"><a class="odkaz-von" href="{esc(fb)}">Pozrieť na Facebooku {SVG_VON}</a></p>'
             kroky = [('', 'Úvod'), ('realizacie/', 'Realizácie'), (cesta, r['nazov'])]
             m = self.mesto(r) if self.mesto(r).lower() not in r['nazov'].lower() else ''
             hlava = self.hlava_stranky(pre, kroky, r['nazov'], m, bok=pole_html, trieda='hlava-detail')
@@ -3333,7 +3381,13 @@ class Web:
             self.registruj_og(og, obal['zdroj'] if obal else None, r['nazov'],
                               ', '.join(x for x in (r['rola'], r['roky']) if x), 'BM Building, s.r.o., bmbuilding.sk')
             telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_stitok(r))
-            telo = (hlava + '\n' + telo_detail + '\n' + self.pred_po(pre, r) + galeria + '\n'
+            # V médiách (ZMENY-KOLO-1.md 5.7) hneď pod textom, pred galériou; fotky bloku idú do toho istého dialógu
+            # lightboxu ako galéria (iná skupina), bez galérie dostane stránka dialóg z prvého obrázka bloku
+            media = self.v_mediach_blok(pre, r)
+            m = self.media.get(r['slug'])
+            if media and not galeria and m and self.media_obrazky(m):
+                media += self.lightbox_dialog(pre, m['nazov_lightboxu'], m, self.media_obrazky(m)[0])
+            telo = (hlava + '\n' + telo_detail + '\n' + media + self.pred_po(pre, r) + galeria + '\n'
                     + f'<div class="obsah susedia-obal">{self.susedia(poradie, i, "nazov", "realizácia")}'
                     f'<p class="viac"><a class="odkaz-sipka" href="../">Všetky realizácie {SVG_SIPKA}</a></p></div>')
             obrazky = [self.abs_url(self.obrazok_cesty(r, f)[f['plna_w']]) for f in r['galeria']]
@@ -3352,6 +3406,8 @@ class Web:
                 dielo['datePublished'] = r['datum']
             if r['upravene']:
                 dielo['dateModified'] = r['upravene']
+            if self.ld_media(r):
+                dielo['subjectOf'] = self.ld_media(r)
             self.podstranka(cesta, kroky, title, desc, telo, 'realizacie/' + r['slug'], [dielo], og=og,
                             og_typ='article', lastmod=self.zmena(r), zaver_dalej=self.texty['vyzvy']['realizacia'])
 
@@ -3376,7 +3432,8 @@ class Web:
             kroky_n = kroky + [(cesta_n, n['nadpis'])]
             odseky = ''.join(f'<p class="{"uvodna" if i == 0 else "tlmene"}">{T(p)}</p>'
                              for i, p in enumerate(p for p in n['text'].split('\n') if p.strip()))
-            fb = n['fb_url'] or self.firma['facebook']
+            # odkaz na Facebook len pri príspevku z Facebooku (novinka ASB je z časopisu, nie z Facebooku)
+            fb = n['fb_url'] or (self.firma['facebook'] if n.get('zdroj') == 'fb' else '')
             if fb:
                 odseky += f'<p class="tlmene"><a href="{esc(fb)}">{T("Pôvodný príspevok na Facebooku")}</a></p>'
             galeria = self.galeria(pre_n, n, n['nadpis'], datum_text(n['datum']))
@@ -3386,7 +3443,7 @@ class Web:
             if r_n:
                 fakty.append(('Stavba', f'<a href="{esc(self.rel(pre_n, "realizacie/" + r_n["slug"] + "/"))}">{T(r_n["nazov"])}</a>'))
                 if self.roky_karty(r_n):
-                    fakty.append(('Roky stavby' if r_n['roky'] else 'Rok príspevku', T(self.roky_karty(r_n))))
+                    fakty.append(('Roky' if r_n['roky'] else 'Rok', T(self.roky_karty(r_n))))
             bok_n = '<dl class="fakty udaje">' + ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in fakty) + '</dl>'
             dvoj = self.detail_dvojstrana(pre_n, n, n['nadpis'], odseky)
             telo_n = (self.hlava_stranky(pre_n, kroky_n, n['nadpis'], datum_text(n['datum']), bok=bok_n, trieda='hlava-detail')
@@ -3514,6 +3571,9 @@ class Web:
         for z in d.get('presmerovania', []):
             stara = str(z.get('stara') or '')
             ciel = str(z.get('ciel') or '/')
+            # sekcia Činnosť na úvode má od zmeny 3A kotvu #cinnost (predtým #sluzby); zoznam presmerovaní je kópia
+            # zo seo/PRESMEROVANIA.json, preto sa stará kotva prepíše tu
+            ciel = KOTVY_PREMENOVANE.get(ciel, ciel)
             if not re.match(r'^/[A-Za-z0-9._/-]+$', stara) or '..' in stara or '//' in stara:
                 varuj(f'presmerovanie {stara!r}: neplatná stará cesta, preskočené')
                 continue
@@ -3522,7 +3582,10 @@ class Web:
                 ciel = '/'
             m = re.match(r'^/realizacie/([a-z0-9-]+)/$', ciel)
             if m and m.group(1) not in slugy:
-                varuj(f'presmerovanie {stara}: realizácia {m.group(1)} nie je zverejnená, cieľ /realizacie/')
+                # realizácia skrytá zámerne (zverejnene: false, ZMENY-KOLO-1.md 5.6) ide na zoznam bez varovania;
+                # varuje sa len cieľ, ktorý v obsahu vôbec nie je
+                if not (Path(self.obsah) / 'realizacie' / f'{m.group(1)}.json').is_file():
+                    varuj(f'presmerovanie {stara}: realizácia {m.group(1)} nie je zverejnená, cieľ /realizacie/')
                 ciel = '/realizacie/'
             cesta = stara.strip('/') + '/'
             subor = cesta + 'index.html'
@@ -3549,6 +3612,8 @@ class Web:
         # favicon a logá zo značky (LOGO.md bod 5): SVG priamo zo sablona/, rastre renderované z tých istých ciest
         self.subory['favicon.svg'] = self.favicon_svg.encode('utf-8')
         self.subory['logo.svg'] = self.logo_svg.encode('utf-8')
+        if self.logo_hlavicka:
+            self.subory['logo-hlavicka.svg'] = self.logo_hlavicka.encode('utf-8')
         # prázdny obrázok 4 : 5 vo farbe podkladu karty pásu (src kariet, kým app.js nedosadí skutočnú fotku)
         buf = io.BytesIO()
         Image.new('RGB', (4, 5), (0x2A, 0x2B, 0x2B)).save(buf, 'WEBP', lossless=True)
@@ -3793,10 +3858,10 @@ def main(argv=None):
         web = Web(obsah, nahlad, fotky_web=a.fotky_web.resolve())
         web.postav()
         skontroluj_text(web.subory)
-        # fb-ostro A4 (OPONENT.md S2): v Actions bez fotky sekcie alebo realizácie pásu nič nezapísať a skončiť kódom 1;
+        # fb-ostro A4 (OPONENT.md S2): v Actions bez fotky sekcie alebo realizácie slidera nič nezapísať a skončiť kódom 1;
         # krok nasadenia sa nespustí a na webe ostane posledná dobrá verzia
         if v_actions and PRISNE_VAROVANIA:
-            raise ChybaZostavy('v GitHub Actions chýba fotka sekcie alebo realizácia pásu z nastavenia.json (nič som '
+            raise ChybaZostavy('v GitHub Actions chýba fotka sekcie alebo realizácia slidera z nastavenia.json (nič som '
                                'nezapísal, nasadenie sa nespustí a ostane posledný dobrý web): '
                                + '; '.join(PRISNE_VAROVANIA[:10]))
         kodovanych = zapis(web, vystup)

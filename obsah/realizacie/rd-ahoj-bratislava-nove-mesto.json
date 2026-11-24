@@ -12,43 +12,31 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/01.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 1 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 1 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/02.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 2 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 2 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/03.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 3 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 3 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/04.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 4 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 4 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/05.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 5 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 5 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/06.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 6 z 9"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 6 z 7"
     },
     {
       "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/07.jpg",
-      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 7 z 9"
-    },
-    {
-      "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/08.jpg",
-      "alt": "Vizualizácia, RD Ahoj, Bratislava, Nové Mesto, autor Ing. arch. Ilja Skoček, fotka 8 z 9",
-      "druh": "vizualizacia",
-      "autor": "Ing. arch. Ilja Skoček"
-    },
-    {
-      "subor": "obsah/obrazky/rd-ahoj-bratislava-nove-mesto/09.jpg",
-      "alt": "Vizualizácia, RD Ahoj, Bratislava, Nové Mesto, autor Ing. arch. Ilja Skoček, fotka 9 z 9",
-      "druh": "vizualizacia",
-      "autor": "Ing. arch. Ilja Skoček"
+      "alt": "RD Ahoj, Bratislava, Nové Mesto, fotka 7 z 7"
     }
   ],
   "zdroj": "fb",
@@ -56,6 +44,7 @@
   "datum": "2026-08-25",
   "poradie": 2,
   "zverejnene": true,
-  "upravene": "2026-11-21",
-  "rok_prispevku": "2026"
+  "upravene": "2026-11-24",
+  "rok_prispevku": "2026",
+  "kategoria": "rodinne"
 }

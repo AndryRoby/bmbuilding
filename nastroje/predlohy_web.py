@@ -49,7 +49,11 @@ REF_SIRKA = 1440
 # tejto šírky sa robia zo zdroja v obsah/ Lanczosom (aj mierne zväčšenie), lebo AI textúru zmäkčuje
 # (presnost/meranie/fotky-pred.md časť 10: medián ostrosti 0,64 zdroja proti 0,97 bez AI). 1,25 je ten istý prah
 # ako pri výbere predlohy (fotky-kvalita/zvacsenie.md: pod 1,25 x zdroj len Lanczos) a v pravidle mäkkej fotky (A).
-MODELY_AI = ('high-fidelity-4x',)
+# Všetky modely Upscaylu z PC (C:/Program Files/Upscayl/resources/models), nielen high-fidelity: 1. kolo pripomienok
+# (kolo-1/fotky/UPSCAYL.md) vybralo pre slider ultrasharp-4x a upscayl-standard-4x; predloha z hociktorého modelu
+# je zväčšená AI a pravidlo „zdroj do 1,25 x (titulné 1,6 x) šírky zdroja“ platí pre ňu rovnako (agent ÚVOD v3).
+MODELY_AI = ('high-fidelity-4x', 'ultrasharp-4x', 'remacri-4x', 'ultramix-balanced-4x', 'upscayl-standard-4x',
+             'upscayl-lite-4x', 'digital-art-4x')
 ZDROJ_LANCZOS_MAX = 1.25
 ZDROJ_DO_SIRKY = 'zdroj-do-1.25-sirky-2'
 # titulné fotky (PRAH_TITULNE) berú zdroj Lanczosom až do 1,6 x šírky zdroja: karta novinky Vianočný pozdrav
@@ -294,6 +298,9 @@ def spracuj(uloha):
               'kvalita': kvalita, 'zhoda': uloha['prah'], 'subory': dict(sorted(subory.items()))}
     if uloha.get('titulna'):
         zaznam['titulna'] = True
+    if uloha.get('retus'):
+        # všetky šírky z retušovanej predlohy (zdroj v obsah/ má chybu, ktorú opravuje len predloha)
+        zaznam['predloha']['retus'] = True
     if zdroj_im is not None:
         # šírky do tejto šírky (pri výreze do 1,25 x šírky výrezu zdroja) sú zo zdroja v obsah/, nie z AI predlohy
         zaznam['zo_zdroja_do'] = int(zdroj_im.width * limit)
@@ -377,11 +384,17 @@ def main(argv=None):
         else:
             rozmer, sha_pred = build.rozmery_zdroja(Path(zdroje[sha])), ''
         prah = PRAH_TITULNE if sha in titulne else PRAH
-        zo_zdroja = bool(p and p.get('model') in MODELY_AI)
+        # retušovaná predloha (pole retus v predlohy.json, napr. RD Ahoj 01: rozmazané plochy na gabióne zakryté
+        # klonom gabiónu, kolo 1 24. 11. 2026): zdroj v obsah/ má chybu, ktorú opravuje len predloha, preto sú všetky
+        # šírky z predlohy, nie do 1,25 x (titulné 1,6 x) zo zdroja
+        retus = bool(p and p.get('retus'))
+        zo_zdroja = bool(p and p.get('model') in MODELY_AI and not retus)
         # kľúč bez zmeny pre fotky s pôvodným prahom a bez AI predlohy (nič sa nekóduje znova)
         kluc_text = f'{VERZIA}|{sha_pred or sha}|{rozmer}|{json.dumps(prah, sort_keys=True)}'
         if zo_zdroja:
             kluc_text += '|' + (ZDROJ_DO_SIRKY_TITULNE if sha in titulne else ZDROJ_DO_SIRKY)
+        if retus:
+            kluc_text += '|retus'
         if vyrezy.get(sha):
             kluc_text += '|vyrez45=' + json.dumps(list(vyrezy[sha]))
         kluc = hashlib.sha256(kluc_text.encode()).hexdigest()[:20]
@@ -394,7 +407,8 @@ def main(argv=None):
         ulohy.append({'sha': sha, 'rel': rel.get(sha, ''), 'zdroj': str(zdroje[sha]), 'predloha': p['subor'] if p else '',
                       'model': p.get('model') if p else '', 'sha_predlohy': sha_pred, 'rozmer': list(rozmer),
                       'varianty': varianty, 'prah': prah, 'kluc': kluc, 'ciel': str(ciel),
-                      'titulna': sha in titulne, 'zo_zdroja': zo_zdroja, 'vyrez': list(vyrezy[sha]) if vyrezy.get(sha) else None,
+                      'titulna': sha in titulne, 'zo_zdroja': zo_zdroja, 'retus': retus,
+                      'vyrez': list(vyrezy[sha]) if vyrezy.get(sha) else None,
                       'kvalita': stary.get('kvalita') if hotove else None, 'hladanie': stary.get('hladanie') if hotove else None,
                       'hotove': {k: v for k, v in hotove.items() if k in varianty}})
     print(f'plán: {len(potreba)} fotiek na webe, titulných {len(titulne & set(potreba))}, '

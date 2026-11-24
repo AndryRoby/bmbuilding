@@ -3,7 +3,7 @@
   "slug": "dom-betliarska-bratislava-petrzalka",
   "nazov": "Dom Betliarska",
   "miesto": "Bratislava, Petržalka, Betliarska ulica",
-  "rola": "Projektový manažment",
+  "rola": "Projektový manažment a stavebný dozor",
   "projektant": "CONCEPT Slovakia s.r.o.",
   "roky": "2012 až 2013",
   "text": "Dom na Betliarskej ulici pozostáva z 18 bytov a 35 apartmánov a štúdií.\nSkolaudované 12/2013.",
@@ -12,25 +12,11 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/dom-betliarska-bratislava-petrzalka/01.jpg",
-      "alt": "Dom Betliarska, Bratislava, Petržalka, fotka 1 z 5"
-    },
-    {
-      "subor": "obsah/obrazky/dom-betliarska-bratislava-petrzalka/02.jpg",
-      "alt": "Dom Betliarska, Bratislava, Petržalka, fotka 2 z 5"
-    },
-    {
-      "subor": "obsah/obrazky/dom-betliarska-bratislava-petrzalka/03.jpg",
-      "alt": "Dom Betliarska, Bratislava, Petržalka, fotka 3 z 5"
+      "alt": "Dom Betliarska, Bratislava, Petržalka, fotka 1 z 2"
     },
     {
       "subor": "obsah/obrazky/dom-betliarska-bratislava-petrzalka/05.jpg",
-      "alt": "Dom Betliarska, Bratislava, Petržalka, Betliarska ulica, fotka 4 z 5"
-    },
-    {
-      "subor": "obsah/obrazky/dom-betliarska-bratislava-petrzalka/06.jpg",
-      "alt": "Vizualizácia, Dom Betliarska, Bratislava, Petržalka, Betliarska ulica, autor CONCEPT Slovakia s.r.o., fotka 5 z 5",
-      "druh": "vizualizacia",
-      "autor": "CONCEPT Slovakia s.r.o."
+      "alt": "Dom Betliarska, Bratislava, Petržalka, Betliarska ulica, fotka 2 z 2"
     }
   ],
   "zdroj": "web",
@@ -38,5 +24,6 @@
   "datum": "2013-01-09",
   "poradie": 14,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "bytove"
 }

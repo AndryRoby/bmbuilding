@@ -5,50 +5,42 @@
   "miesto": "Bratislava, Špitálska ulica",
   "rola": "Stavebný dozor",
   "projektant": "DARK BLUE STUDIO, Ing. arch. Peter Štrpka, Ing. arch. Zuzana Čižmárová",
-  "roky": "",
-  "text": "Stavebné úpravy Filmového klubu Lumière na Špitálskej ulici č. 4 v Bratislave pre Slovenský filmový ústav. BM Building tu vykonával stavebný dozor.",
+  "roky": "2022 až 2024",
+  "text": "Stavebné úpravy Filmového klubu Lumière na Špitálskej ulici č. 4 v Bratislave pre Slovenský filmový ústav. BM Building tu vykonával stavebný dozor.\nO rekonštrukcii kina Lumière (2022 až 2024) písal časopis ASB č. 244.",
   "investor": "Slovenský filmový ústav",
-  "zhotovitel": "",
+  "zhotovitel": "NTJ (generálny dodávateľ)",
   "fotky": [
     {
-      "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/01.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 1 z 10"
-    },
-    {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/02.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 2 z 10"
-    },
-    {
-      "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/03.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 3 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 1 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/04.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 4 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 2 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/05.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 5 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 3 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/06.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 6 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 4 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/07.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 7 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 5 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/08.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 8 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 6 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/09.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 9 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 7 z 8"
     },
     {
       "subor": "obsah/obrazky/filmovy-klub-lumiere-spitalska-bratislava/10.jpg",
-      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 10 z 10"
+      "alt": "Stavebné úpravy Filmového klubu Lumière, Špitálska ulica č. 4, Bratislava, fotka 8 z 8"
     }
   ],
   "zdroj": "fb",
@@ -56,5 +48,7 @@
   "datum": "2024-11-26",
   "poradie": 100,
   "zverejnene": true,
-  "rok_prispevku": "2024"
+  "rok_prispevku": "2024",
+  "kategoria": "ine",
+  "upravene": "2026-11-24"
 }

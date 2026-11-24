@@ -3,7 +3,7 @@
   "slug": "bytovy-dom-na-krizovatkach-bratislava",
   "nazov": "Bytový dom, ulica Na Križovatkách",
   "miesto": "Bratislava, ulica Na Križovatkách",
-  "rola": "Projektový manažér",
+  "rola": "Projektový manažér a stavebný dozor",
   "projektant": "Koneval / Manikova architekti",
   "roky": "2014 až 2016",
   "text": "Bytový dom pozostáva z 95 bytov a 2 nebytových priestorov. Objekt má 2 až 6 obytných nadzemných podlaží a polozapustený suterén, v ktorom je parkovanie, pivničné priestory a technické zabezpečenie budovy.",
@@ -88,5 +88,6 @@
   "datum": "2013-01-09",
   "poradie": 8,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "bytove"
 }

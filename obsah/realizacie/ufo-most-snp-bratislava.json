@@ -11,40 +11,72 @@
   "zhotovitel": "INGSTEEL, spol. s r.o.",
   "fotky": [
     {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/10.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 1 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/11.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 2 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/12.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 3 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/13.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 4 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/14.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 5 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/15.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 6 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/16.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 7 z 17"
+    },
+    {
+      "subor": "obsah/obrazky/ufo-most-snp-bratislava/17.jpg",
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 8 z 17"
+    },
+    {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/01.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 1 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 9 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/02.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 2 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 10 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/03.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 3 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 11 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/04.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 4 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 12 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/05.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 5 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 13 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/06.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 6 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 14 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/07.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 7 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 15 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/08.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 8 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 16 z 17"
     },
     {
       "subor": "obsah/obrazky/ufo-most-snp-bratislava/09.jpg",
-      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 9 z 9"
+      "alt": "Reštaurácia UFO, nástupný priestor na Moste SNP, Bratislava, Most SNP, fotka 17 z 17"
     }
   ],
   "zdroj": "fb",
@@ -52,5 +84,6 @@
   "datum": "2025-11-15",
   "poradie": 3,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "ine"
 }

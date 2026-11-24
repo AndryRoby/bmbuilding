@@ -21,23 +21,23 @@
     {
       "slug": "stavebny-dozor",
       "nazov": "Stavebný dozor",
-      "kratky_popis": "Kontrolujeme dodržiavanie podmienok povolenia stavby, postup prác podľa časového plánu výstavby a zmlúv, kvalitu materiálov a odstraňovanie vád. Zúčastníme sa aj na kolaudačnom konaní.",
+      "kratky_popis": "V rámci výkonu stavebný dozor ponúkame tieto činnosti:",
       "cinnosti": [
-        "Oboznámenie sa s podkladmi (projekt, zmluvy, rozhodnutie o stavebnom zámere alebo stavebné povolenie a územné rozhodnutie)",
+        "oboznámenie sa s podkladmi (projekt, zmluvy, stavebné povolenia, územné rozhodnutie)",
         "Odovzdanie staveniska a zabezpečenie zápisu o tom do stavebného denníka",
         "Protokolárne odovzdanie základného smerového a výškového vytýčenia stavby zhotoviteľovi",
-        "Kontrola dodržiavania podmienok vydaných na uskutočnenie stavby, najmä rozhodnutia o stavebnom zámere alebo stavebného povolenia a územného rozhodnutia",
+        "Kontrola dodržiavania podmienok vydaných na uskutočnenie stavby najmä stavebného povolenia a územného rozhodnutia",
         "Odsúhlasovanie dodatkov a zmien projektu",
         "Bezodkladné informovanie investora o všetkých závažných okolnostiach",
         "Kontrola vecnej a cenovej správnosti a úplnosti oceňovaných podkladov a platobných dokladov",
         "Kontrola vhodnosti stavebných materiálov a prevádzky technického vybavenia na stavbe",
         "Kontrola odborného ukladania stavebných materiálov a stavebných hmôt",
-        "Kontrola tých častí diela, ktoré boli v ďalšom postupe zakryté alebo sa stali neprístupnými, a zapísanie výsledkov kontroly do stavebného denníka",
+        "Kontrola tých častí diela, ktoré boli v ďalšom postupe zakryté alebo sa stali neprístupnými a zapísanie výsledkov kontroly do stavebného denníka",
         "Preberanie vykonaných stavebných prác zo strany dodávateľa",
         "Spolupráca s projektantom",
         "Sledovanie, či zhotoviteľ vykonáva predpísané a dohodnuté skúšky materiálov, konštrukcií a prác",
         "Sledovanie vedenia stavebného denníka",
-        "Uplatňovanie námetov smerujúcich k zhospodárneniu výstavby",
+        "Uplatňovanie námetov, smerujúcich k zhospodárneniu výstavby",
         "Kontrola postupu prác podľa časového plánu výstavby a zmlúv",
         "Kontrola odstránenia vád a nedorobkov",
         "Kontrola dodržiavania BOZP",
@@ -47,29 +47,23 @@
     {
       "slug": "stavbyveduci",
       "nazov": "Stavbyvedúci",
-      "kratky_popis": "Podľa stavebného zákona riadime a koordinujeme stavebné práce a iné činnosti na stavenisku a na stavbe a vedieme o nich evidenciu v stavebnom denníku.",
+      "kratky_popis": "Stavebný zákon ukladá stavbyvedúcemu riadiť a koordinovať stavebné práce a iné činnosti na stavenisku a na stavbe a viesť o nich evidenciu v stavebnom denníku.",
       "cinnosti": [
-        "Riadenie a koordinácia stavebných prác a iných činností na stavenisku a na stavbe a vedenie evidencie o nich v stavebnom denníku",
-        "Určovanie začatia a ukončenia jednotlivých činností na stavenisku a na stavbe",
-        "Riadenie vykonávania stavebných prác a iných činností na stavenisku a na stavbe",
-        "Organizovanie pohybu osôb na stavenisku a na stavbe",
-        "Kontrola výrobkov a materiálov pre stavbu, zisťovanie ich kvality a vhodnosti na zabudovanie do stavby, určovanie spôsobu ich skladovania na stavenisku",
-        "Dávanie príkazov na okamžité zastavenie stavebných prác a iných činností na stavenisku a na stavbe, ak sa vyskytla prekážka, pre ktorú je ich ďalšie vykonávanie neprípustné",
-        "Koordinácia poradia stavebných prác",
-        "Vykázanie cudzích osôb zo staveniska a zo stavby"
+        "Stavebný zákon ukladá stavbyvedúcemu riadiť a koordinovať stavebné práce a iné činnosti na stavenisku a na stavbe a viesť o nich evidenciu v stavebnom denníku.",
+        "určovať začatie a ukončenie jednotlivých činností na stavenisku a na stavbe,",
+        "riadiť vykonávanie stavebných prác a iných činností na stavenisku a na stavbe,",
+        "organizovať pohyb činnosti osôb na stavenisku a na stavbe,",
+        "kontrolovať výrobky a materiály pre stavbu, zisťovať ich kvalitu a vhodnosť na zabudovanie do stavby, určovať spôsob ich skladovania na stavenisku,",
+        "dávať príkazy na okamžité zastavenie stavebných prác a iných činností na stavenisku a na stavbe, ak sa vyskytla prekážka, pre ktorú je ich ďalšie vykonávanie neprípustné,",
+        "koordinovať poradie stavebných prác,",
+        "vykázať cudzie osoby zo staveniska a zo stavby."
       ]
     },
     {
       "slug": "stavebny-manazment",
       "nazov": "Stavebný manažment",
-      "kratky_popis": "Sme stavebno-manažérska spoločnosť, ktorá poskytuje podporné služby investorom a developerom pri realizácii ich projektov. Zabezpečíme bezproblémový prechod z projektovej do realizačnej fázy.",
-      "cinnosti": [
-        "Koordinácia všetkých profesií, riadenie a kontrola stavby počas prípravy, realizácie až po kolaudáciu",
-        "Odhaľovanie a obmedzovanie rizík a využitie poskytnutých príležitostí",
-        "Plnenie cieľov investora alebo užívateľa v požadovanej kvalite, v určenom termíne a za vopred určené náklady",
-        "Riadenie a koordinácia procesu zadania stavebných prác za klienta",
-        "Zabezpečenie uzatvorenia zmlúv s dodávateľom stavby vrátane koordinácie ich právnej kontroly"
-      ]
+      "kratky_popis": "BM Building, s.r.o je stavebno-manažérska spoločnosť, ktorá poskytuje podporné služby investorom a developerom pri realizácii ich projektov.",
+      "cinnosti": []
     }
   ],
   "opravnenia": [

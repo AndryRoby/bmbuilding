@@ -3,7 +3,7 @@
   "slug": "bytove-domy-vtacnik-bratislava",
   "nazov": "Bytové domy Vtáčnik, Tupého ulica",
   "miesto": "Bratislava, Tupého ulica",
-  "rola": "Projektový manažér",
+  "rola": "Projektový manažér a stavebný dozor",
   "projektant": "Koneval / Manikova architekti",
   "roky": "2016 až 2018",
   "text": "Bytové domy sú navrhnuté ako mestské vilové domy. Projekt tvorí sedem bytových domov, ktoré sú voči sebe posunuté tak, aby si neprekážali vo výhľade na mesto. V jednom bytovom dome je 14 bytových jednotiek v tejto skladbe: 2 x 2-izbové, 6 x 3-izbové, 6 x 4-izbové.",
@@ -104,5 +104,6 @@
   "datum": "2013-01-09",
   "poradie": 5,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "bytove"
 }

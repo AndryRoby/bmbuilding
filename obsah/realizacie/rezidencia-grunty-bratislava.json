@@ -3,7 +3,7 @@
   "slug": "rezidencia-grunty-bratislava",
   "nazov": "Rezidencia Grunty",
   "miesto": "Bratislava, Karlova Ves",
-  "rola": "Projektový manažment",
+  "rola": "Projektový manažment a stavebný dozor",
   "projektant": "Ing. arch. Dušan Dinaj, autorizovaný architekt",
   "roky": "2007 až 2009",
   "text": "Rezidenčná štvrť pozostáva z 9 objektov, v ktorých je 105 bytov a 6 obchodných priestorov. Projektový manažment zabezpečovali Vazex, s.r.o. a BM Building s.r.o.",
@@ -12,23 +12,19 @@
   "fotky": [
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/01.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 1 z 5"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 1 z 4"
     },
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/02.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 2 z 5"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 2 z 4"
     },
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/03.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 3 z 5"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 3 z 4"
     },
     {
       "subor": "obsah/obrazky/rezidencia-grunty-bratislava/04.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 4 z 5"
-    },
-    {
-      "subor": "obsah/obrazky/rezidencia-grunty-bratislava/08.jpg",
-      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 5 z 5"
+      "alt": "Rezidencia Grunty, Bratislava, Karlova Ves, fotka 4 z 4"
     }
   ],
   "zdroj": "web",
@@ -36,5 +32,6 @@
   "datum": "2013-01-09",
   "poradie": 18,
   "zverejnene": true,
-  "upravene": "2026-11-21"
+  "upravene": "2026-11-24",
+  "kategoria": "bytove"
 }

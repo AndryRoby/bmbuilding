@@ -1,27 +1,64 @@
 {
- "_poznamka": "Nastavenia zostavy (nie obsah). uvod_foto: realizácia a súbor (subor, napr. 05.jpg) alebo číslo fotky (fotka) v ráme úvodu; fotka musí mať aspoň 1280 px a ostrosť aspoň 800 (sablona/fotky-pravidla.json, velka), inak build vezme prvú takú fotku z realizácií a varuje. uvod_pocet_realizacii: koľko štvorcov realizácií s vhodnou fotkou je na úvode. sluzba_pocet_kariet: koľko štvorcov realizácií má stránka služby, ostatné ako zoznam. realizacie_na_stranu: do tohto počtu je zoznam realizácií jedna stránka, nad ním stránky po desaťročiach. zaklad_nahladu: cesta náhľadu na github.io (repozitár bmbuilding), použije sa len v 404.html. vydanie: deň poslednej zmeny šablóny alebo textov stránok (RRRR-MM-DD), ide do lastmod v sitemap; pri zmene sablona/ ho posuň. instagram: adresa profilu https://www.instagram.com/<profil>/ len keď je istá (dizajn-olovnica/INSTAGRAM.md); null = odkaz na Instagram sa nezobrazí. Facebook je v obsah/firma.json.",
+ "_poznamka": "Nastavenia zostavy (nie obsah). sluzba_pocet_kariet: koľko štvorcov realizácií má stránka služby, ostatné ako zoznam. realizacie_na_stranu: do tohto počtu je zoznam realizácií jedna stránka, nad ním stránky po desaťročiach. zaklad_nahladu: cesta náhľadu na github.io (repozitár bmbuilding), použije sa len v 404.html. vydanie: deň poslednej zmeny šablóny alebo textov stránok (RRRR-MM-DD), ide do lastmod v sitemap; pri zmene sablona/ ho posuň. instagram: profil konateľa (Andrej 24. 11. 2026 večer, ZMENY-KOLO-1.md 3A.6), len https na instagram.com, inak alebo pri null sa ikona nezobrazí. linkedin: profil konateľa, len https na linkedin.com, inak sa ikona nezobrazí. Facebook je v obsah/firma.json.",
+ "_uvod_slider": "Slider stavieb v hrdinovi úvodu (1. kolo pripomienok 24. 11. 2026, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md 3.3): pevné poradie, ktoré vybral klient, vždy reprezentatívna fotka stavby. subor: súbor z galérie realizácie (bez neho fotka karty), stred: bod fotky [x, y] v podieloch 0 až 1, ktorý ostane v ráme pri orezaní (object-position). orez_dole: podiel výšky fotky odspodu, ktorý sa neukáže nikdy, ani v ráme na výšku (agent ÚVOD v3: RD Ahoj 01 má dole cestu s kanálom a obrubníkom, preto 0,17 a stred vyššie, aby bol vidno dom so strechou a fasádou). Fotka smie byť menšia než prah velka (vybral ju klient), ale nie rozmazaná, vizualizácia ani pôvodný stav; chýbajúca realizácia alebo fotka sa lokálne vynechá s varovaním, v GitHub Actions je chyba zostavy. Súbory a stredy sú finálne podľa agentov FOTKY a UPSCAYL (kolo-1, 24. 11. 2026): Vtáčnik, Na Križovatkách a Ventúrska je fotka karty (karta_foto), predlohy zväčšené Upscaylom sú v D:/ARLing-media/klienti/bmbuilding/web-predlohy/predlohy.json. Lumière 08 má stred x 0,2, aby nápis KINO LUMIERE ostal celý aj v ráme 4 : 5 na mobile a pri okne 1255 x 1260 (ÚVOD v3, snímky stredov všetkých 11 fotiek pri 390, 1255, 1440 a 1920 px).",
+ "uvod_slider": [
+  {"slug": "rd-ahoj-bratislava-nove-mesto", "subor": "01.jpg", "stred": [0.5, 0.2], "orez_dole": 0.17},
+  {"slug": "dvojdom-s-bratislava", "subor": "01.jpg", "stred": [0.45, 0.5]},
+  {"slug": "rekonstrukcia-okanikova-bratislava", "subor": "05.jpg", "stred": [0.57, 0.5]},
+  {"slug": "novostavba-rd-nitrianske-hrnciarovce", "subor": "01.jpg", "stred": [0.52, 0.5]},
+  {"slug": "filmovy-klub-lumiere-spitalska-bratislava", "subor": "08.jpg", "stred": [0.2, 0.5]},
+  {"slug": "ufo-most-snp-bratislava", "subor": "10.jpg", "stred": [0.5, 0.68]},
+  {"slug": "bytove-domy-vtacnik-bratislava", "subor": "09.jpg", "stred": [0.54, 0.5]},
+  {"slug": "bytovy-dom-na-krizovatkach-bratislava", "subor": "01.jpg", "stred": [0.47, 0.5]},
+  {"slug": "rekonstrukcia-vila-holubyho-bratislava", "subor": "01.jpg", "stred": [0.5, 0.45]},
+  {"slug": "rekonstrukcia-venturska-bratislava", "subor": "06.jpg", "stred": [0.55, 0.5]},
+  {"slug": "rd-kalvaria-bratislava", "subor": "01.jpg", "stred": [0.5, 0.46]}
+ ],
  "domena": "https://bmbuilding.sk",
- "uvod_foto": {
-  "slug": "rekonstrukcia-okanikova-bratislava",
-  "subor": "05.jpg"
- },
- "uvod_pocet_realizacii": 8,
- "_pas_vyber": "Realizácie v tmavom páse úvodu (slugy, poradie podľa rokov ako zoznam realizácií); chýbajúci slug sa vynechá s varovaním, bez zoznamu prvých uvod_pocet_realizacii s fotkou. postup_foto a firma_foto: fotky sekcií Postup a O firme (slug a súbor).",
- "pas_vyber": ["ufo-most-snp-bratislava", "dvojdom-s-bratislava", "rekonstrukcia-okanikova-bratislava", "novostavba-rd-nitrianske-hrnciarovce", "bytove-domy-vtacnik-bratislava", "bytovy-dom-rosnicka-bratislava", "filmovy-klub-spitalska-bratislava", "rekonstrukcia-venturska-bratislava"],
- "_karta_foto": "Fotka karty realizácie (pás úvodu, mriežka realizácií a služieb, titulná fotka detailu): slug -> súbor z jej galérie. Len keď predvolená fotka karty má malý zdroj a na karte je mäkká (linka bmb-presnost, ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md): výrez 4 : 5 zo stredu má mať aspoň 768 px, aby pri karte pásu 480 CSS px a hustote 2 nepripadalo na 1 px zdroja viac než 1,25 px obrazovky. Fotka musí byť v galérii (nie rozmazaná, nie vizualizácia ani pôvodný stav), inak build varuje a nechá predvolenú. Obsah sa nemení. Hodnota {\"subor\": ..., \"vyrez\": [x0, y0, x1, y1]} berie výrez 4 : 5 karty (pás aj mriežka) len z tohto rámika fotky v podieloch 0 až 1, výrez musí mať aspoň 768 px zdroja (Hrnčiarovce 09: viac domu, menej holej hliny, 960 x 1200 px). Hodnota {\"subor\": ..., \"detail\": false} zmení len kartu mriežky a služieb, titulná fotka detailu a pás ostávajú (Kalvária: 02 má v rohu neostré listy, 01 by bola na detail malá). Karta, ktorej výrez 4 : 5 má menej než 676 px zdroja, ukáže celú fotku 4 : 3 alebo 3 : 4 v strede rámu (build.py img_karty, brána bmb-presnost pokus 1).",
- "karta_foto": {"novostavba-rd-nitrianske-hrnciarovce": {"subor": "09.jpg", "vyrez": [0.26, 0.067, 0.74, 0.868]}, "dvojdom-s-bratislava": "05.jpg", "bytove-domy-vtacnik-bratislava": "12.jpg", "bytovy-dom-rosnicka-bratislava": "09.jpg", "filmovy-klub-spitalska-bratislava": "17.jpg", "rekonstrukcia-5-ambulancii-pre-lekarov": "09.jpg", "rd-kalvaria-bratislava": {"subor": "01.jpg", "detail": false}},
- "_postup_firma_foto": "postup_foto a firma_foto: pole fotky má pri 1920 px 868 CSS px (6 z 12 stĺpcov), pri hustote 2 teda 1736 px obrazovky; výrez 3 : 2 zdroja má mať aspoň 1389 px, aby zväčšenie nebolo nad 1,25 (brána bmb-presnost pokus 1, nález 3: Vtáčnik 07 má 960 px a Na Križovatkách 02 1280 px). Pri zmene fotky Postupu treba zmeniť aj texty.json postup.foto_popis. 23. 11. 2026 Andrej chcel do O firme „oveľa krajší obrázok z krajšej realizácie, niečo reprezentatívne“: Andrej vybral Bytové domy Vtáčnik 09.jpg „v dobrej kvalite“ (1978 x 1461, výrez 3 : 2 má 1978 px, teda bez zväčšenia aj pri hustote 2). Aby fotka nebola na úvode dvakrát, karta Vtáčnika v páse (karta_foto) je odvtedy 12.jpg (1440 x 1080, najostrejšia zo 74 fotiek na šírku, výrez 4 : 5 má 864 px).",
- "postup_foto": {"slug": "novostavba-rd-nitrianske-hrnciarovce", "subor": "14.jpg"},
- "firma_foto": {"slug": "bytove-domy-vtacnik-bratislava", "subor": "09.jpg"},
+ "_karta_foto": "Fotka karty realizácie (mriežka realizácií a služieb, titulná fotka detailu; tmavý pás úvodu je od ÚVOD v3 preč): slug -> súbor z jej galérie. Len keď predvolená fotka karty má malý zdroj a na karte je mäkká (linka bmb-presnost, ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md): výrez 4 : 5 zo stredu má mať aspoň 768 px, aby pri karte pásu 480 CSS px a hustote 2 nepripadalo na 1 px zdroja viac než 1,25 px obrazovky. Fotka musí byť v galérii (nie rozmazaná, nie vizualizácia ani pôvodný stav), inak build varuje a nechá predvolenú. Obsah sa nemení. Hodnota {\"subor\": ..., \"vyrez\": [x0, y0, x1, y1]} berie výrez 4 : 5 karty (pás aj mriežka) len z tohto rámika fotky v podieloch 0 až 1, výrez musí mať aspoň 768 px zdroja (Hrnčiarovce 09: viac domu, menej holej hliny, 960 x 1200 px). Hodnota {\"subor\": ..., \"detail\": false} zmení len kartu mriežky a služieb, titulná fotka detailu a pás ostávajú (Kalvária: 02 má v rohu neostré listy, 01 by bola na detail malá). Karta, ktorej výrez 4 : 5 má menej než 676 px zdroja, ukáže celú fotku 4 : 3 alebo 3 : 4 v strede rámu (build.py img_karty, brána bmb-presnost pokus 1). 1. kolo pripomienok (ZMENY-KOLO-1.md 5.3, 24. 11. 2026): karta_foto je reprezentatívna fotka stavby, ktorú vybral klient (RD Ahoj 01, Vila Holubyho 01, Lumière 08, Dvojdom S 01, Hrnčiarovce 01, Rosnička 01, Betliarska 01, Most 10; Vtáčnik 09, Okánikova 05, Na Križovatkách 01, Ventúrska 06 podľa slidera), a v galérii je prvá. {\"subor\": ..., \"cely_ram\": true}: karta mriežky a služieb ukáže výrez 4 : 5 cez celý rám, keď predloha zväčšená Upscaylom (fotky-web) má výrez aspoň 676 px (zdroj Dvojdomu S 01, Hrnčiaroviec 01, Rosničky 01 a Betliarskej 01 je menší; Rosnička a Betliarska zväčšené Upscaylom agentom ÚVOD v3, kolo-1/fotky/UPSCAYL.md).",
+ "karta_foto": {"rd-ahoj-bratislava-nove-mesto": "01.jpg", "rekonstrukcia-vila-holubyho-bratislava": "01.jpg", "filmovy-klub-lumiere-spitalska-bratislava": "08.jpg", "dvojdom-s-bratislava": {"subor": "01.jpg", "cely_ram": true}, "novostavba-rd-nitrianske-hrnciarovce": {"subor": "01.jpg", "cely_ram": true}, "bytovy-dom-rosnicka-bratislava": {"subor": "01.jpg", "cely_ram": true}, "dom-betliarska-bratislava-petrzalka": {"subor": "01.jpg", "cely_ram": true}, "ufo-most-snp-bratislava": "10.jpg", "bytove-domy-vtacnik-bratislava": "09.jpg", "rekonstrukcia-okanikova-bratislava": "05.jpg", "bytovy-dom-na-krizovatkach-bratislava": "01.jpg", "rekonstrukcia-venturska-bratislava": "06.jpg", "rd-kalvaria-bratislava": {"subor": "01.jpg", "detail": false}},
  "sluzba_pocet_kariet": 4,
  "realizacie_na_stranu": 300,
- "_realizacie_naraz": "Koľko kariet ukáže zoznam realizácií naraz (app.js, tlačidlo Zobraziť ďalšie s počtom zvyšných); bez JS sú viditeľné všetky. 0 = všetky naraz. Pás úvodu (pas_vyber) má najviac 10 kariet (build.py PAS_MAX): chýbajúci slug sa vynechá s varovaním a miesto doplní záložný výber, bez pas_vyber záložný výber uvod_pocet_realizacii s varovaním.",
+ "_realizacie_naraz": "Koľko kariet ukáže zoznam realizácií naraz (app.js, tlačidlo Zobraziť ďalšie s počtom zvyšných); bez JS sú viditeľné všetky. 0 = všetky naraz.",
  "realizacie_naraz": 12,
  "_opravnenia_obrazky": "Zakryté obrázky osvedčení SKSI na stránke Oprávnenia: evidenčné číslo z obsah/firma.json -> súbor v sablona/opravnenia/ (kópia zakrytej verzie z ops/weby-na-mieru/klienti/bmbuilding/opravnenia/, rodné číslo a dátum narodenia zakryté; originály z D: nikdy). Build ich zmenší alebo prevedie na WebP do opravnenia/<meno>-<šírka>.webp a pre hustotu 2 zväčší najviac 2-krát len Lanczosom s jemným doostrením, bez AI (build.py ZVACSENIE_DOKLADU, overenie v ops/weby-na-mieru/klienti/bmbuilding/presnost/oprava-fotky.md); zdroj PNG sa nemení.",
  "opravnenia_obrazky": {"00912*10*": "opravnenia/osvedcenie-sksi-stavbyveduci-2003.png", "09903": "opravnenia/osvedcenie-sksi-stavebny-dozor-2010.png"},
  "_opravnenia_register": "Verejný zoznam SKSI (verejnyportal.sksi.sk): evidenčné číslo z obsah/firma.json -> adresa výsledku vyhľadávania (priezvisko Bulko, evidenčné číslo, typ zoznamu). Adresy otvorené 21. 11. 2026 (HTTP 200, nájdený 1 záznam), dôkaz v ops/weby-na-mieru/klienti/bmbuilding/opravnenia/register/. Odkaz len na hostiteľa verejnyportal.sksi.sk; bez kľúča sa odkaz nezobrazí.",
  "opravnenia_register": {"00912*10*": "https://verejnyportal.sksi.sk/search/eyJmb19sYXN0IjoiQnVsa28iLCJmcm9udF9ldmMiOiIwMDkxMiIsInF1YWwiOjIsImNvZGVzIjpbXSwiZnJvbnRfb3JkZXIiOiJmb19sYXN0IiwiZnJvbnRfb3JkZXJfdHlwZSI6ImFzYyJ9", "09903": "https://verejnyportal.sksi.sk/search/eyJmb19sYXN0IjoiQnVsa28iLCJmcm9udF9ldmMiOiIwOTkwMyIsInF1YWwiOjMsImNvZGVzIjpbXSwiZnJvbnRfb3JkZXIiOiJmb19sYXN0IiwiZnJvbnRfb3JkZXJfdHlwZSI6ImFzYyJ9"},
- "vydanie": "2026-11-22",
+ "vydanie": "2026-11-24",
  "zaklad_nahladu": "/bmbuilding/",
- "instagram": null
+ "linkedin": "https://www.linkedin.com/in/m%C3%A1rio-bulko-aa176ba0/",
+ "instagram": "https://www.instagram.com/mariobulko/",
+ "_novinky": "Novinky z webu preč (Andrej 24. 11. 2026 večer, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md 5.7: novinky ostali len kvôli časopisu, ten je teraz pri realizácii Lumière a v hrdinovi úvodu). false: nezostaví sa /novinky/ ani detail novinky, nie sú v menu, v sitemap ani v odkazoch. Súbory v obsah/novinky/ ostávajú; true (alebo bez kľúča) vráti Novinky ako predtým.",
+ "novinky": false,
+ "_v_mediach": "Zmienky v médiách pri realizácii (ZMENY-KOLO-1.md 5.7, prieskum ops/weby-na-mieru/klienti/bmbuilding/novinky-navrh/MEDIA.md, zápis kolo-1/novinky/NOVINKY-ASB.md): slug zverejnenej realizácie -> kotva bloku na jej stránke, nadtitulok, nadpis, text (vlastné vety, fakty bez rozpočtu), odkazy (len https na asb.sk, linkedin.com a archinfo.sk; citat = doslovná veta zo zdroja), tabulka a strany (obrázky zo sablona/media/, popis pod obrázkom a v lightboxe), clanok (JSON-LD subjectOf) a uvod (text údaja V médiách v hrdinovi úvodu, odkaz na kotvu). Online článok na asb.sk je iný článok o tej istej rekonštrukcii, BM Building v ňom nie je, preto odkaz bez takého tvrdenia. Tabuľka so Stavebný dozor BM Building je len v tlačenom ASB č. 244, s. 77 (Máriova fotka strany z LinkedInu, výrez narovnaný a zväčšený Upscaylom upscayl-standard-4x, bez riadku Rozpočet). Fotky dvojstrán sú Máriove z LinkedInu, zápis z kontrolného dňa vedľa časopisu je rozmazaný. Snímky z webu asb.sk na web nejdú.",
+ "v_mediach": {
+  "filmovy-klub-lumiere-spitalska-bratislava": {
+   "kotva": "casopis-asb",
+   "nadtitulok": "Článok v časopise ASB",
+   "nadpis": "Časopis ASB č. 244: stavebný dozor BM Building",
+   "nazov_lightboxu": "Časopis ASB č. 244, február 2024",
+   "text": ["V časopise ASB č. 244 (február 2024) vyšiel na stranách 74 až 77 článok „Kino Lumière: od požiaru k veľkému návratu“ o rekonštrukcii kina Lumière.", "V tabuľke údajov o stavbe na strane 77 je BM Building uvedený ako stavebný dozor rekonštrukcie (realizácia 2022 až 2024)."],
+   "tabulka": {"subor": "media/asb-244-s77-tabulka.jpg", "alt": "Tabuľka údajov o stavbe z časopisu ASB č. 244, strana 77: Rekonštrukcia kina Lumière, Bratislava-Staré Mesto. Investor Slovenský filmový ústav, projektant DARK BLUE studio, architekti Zuzana Čižmárová a Peter Štrpka, stavebný dozor BM Building, generálny dodávateľ NTJ, realizácia 2022 až 2024", "popis": "Zdroj: ASB č. 244, s. 77"},
+   "strany_nadpis": "Článok v tlači",
+   "strany": [
+    {"subor": "media/asb-244-s74-75.jpg", "alt": "Časopis ASB č. 244, strany 74 a 75: začiatok článku Kino Lumière: od požiaru k veľkému návratu", "popis": "Strany 74 a 75. Foto strán: Mário Bulko"},
+    {"subor": "media/asb-244-s76-77.jpg", "alt": "Časopis ASB č. 244, strany 76 a 77: pokračovanie článku a tabuľka údajov o stavbe", "popis": "Strany 76 a 77. Foto strán: Mário Bulko"}
+   ],
+   "strany_popis": "Foto strán: Mário Bulko, časopis ASB č. 244, február 2024",
+   "odkazy": [
+    {"text": "Článok o rekonštrukcii na asb.sk", "url": "https://www.asb.sk/architektura/slovo-ohen-uz-ani-nehovoria-kino-lumiere-ohlasil-navrat-po-poziari-z-roku-2022-velkolepou-rekonstrukciou"},
+    {"text": "Fotky strán na LinkedIne (Mário Bulko)", "url": "https://www.linkedin.com/posts/m%C3%A1rio-bulko-aa176ba0_%C4%8Dasopis-asb-activity-7168634252186533888-aFUi"}
+   ],
+   "clanok": {"titulok": "Kino Lumière: od požiaru k veľkému návratu", "periodikum": "ASB", "cislo": "244", "datum": "2024-02", "strana_od": "74", "strana_do": "77"},
+   "uvod": "Časopis ASB č. 244 (2024), kino Lumière"
+  },
+  "bytovy-dom-devinske-luky-bratislava": {
+   "kotva": "v-mediach",
+   "nadpis": "V médiách",
+   "odkazy": [
+    {"text": "Bytový dom Devínske lúky na Archinfo.sk", "url": "https://www.archinfo.sk/diela/bytovy-dom/bytovy-dom-devinske-luky.html", "citat": "Hlavný manažér stavby: Ing. Mário Bulko / BM Building"}
+   ]
+  }
+ }
 }
