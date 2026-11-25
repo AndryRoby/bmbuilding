@@ -1,6 +1,9 @@
 # Obsah webu z arling-obsah: stiahne realizácie, novinky a fotky z Facebooku a zo správy do obsah/, uloží zmenu do main,
 # zostaví web a nasadí GitHub Pages.
 # Premenná repozitára OBSAH_API, napríklad https://arling-obsah.<subdoména>.workers.dev/api/bmbuilding (verejné API, bez tajomstva).
+# Nasadzuje len GitHub Pages. Pri ceste FTP na WebHouse ide ostrý web na doménu ručne (build.py --hosting apache
+# a WinSCP, postup SPUSTENIE-FTP.md v priečinku klienta): úloha FTP tu zámerne nie je, lebo súbory nahraté jedným
+# FTP účtom smie na WebHouse meniť len ten účet a prvý beh by išiel neoverený rovno na ostrý web.
 name: Obsah
 
 on:
@@ -118,6 +121,11 @@ jobs:
         env:
           BMB_OSTRY: ${{ vars.BMB_OSTRY }}
         run: python build.py
+
+      # .zostava.json je zoznam súborov, ktoré zostava zapísala (zostava ho číta pri ďalšom behe na mazanie starých
+      # výstupov); na web nepatrí, artefakt Pages by ho zverejnil (audit naplno 25. 11. 2026, položka 42).
+      - name: Odstrániť zoznam zostavy z webu
+        run: rm -f web/.zostava.json
 
       - uses: actions/configure-pages@v5
 

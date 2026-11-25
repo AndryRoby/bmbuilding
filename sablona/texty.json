@@ -1,20 +1,22 @@
 {
  "_poznamka": "Texty stránok mimo realizácií. Zdroj: ops/weby-na-mieru/klienti/bmbuilding/stary-web/*.md (texty služieb od 1. kola pripomienok doslovne z cinnost_doslova), FAKTY-WEB.md, seo/ORSR.md, seo/DOPYT.md (title, description, H1, otázky so zdrojom v zákone č. 25/2025 Z. z.). Nové fakty sem len so zdrojom. 1. kolo pripomienok 24. 11. 2026 (ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md): úvod bez mena s olovnicou, schémy a Postupu; hrdina so sliderom stavieb a blokom O firme; po zmene 3A (24. 11. večer) H1 doslovne podľa Andreja a Činnosť doslovne zo starého webu (cinnost_doslova).",
  "zakon": {
-  "nazov": "Slov-Lex, zákon č. 25/2025 Z. z. (stavebný zákon), znenie účinné od 1. 11. 2025",
-  "url": "https://www.slov-lex.sk/static/pdf/2025/25/ZZ_2025_25_20251101.pdf"
+  "_poznamka": "Zdroj otázok zo zákona (audit naplno 25. 11. 2026, položky 3 a 10): odkaz na stránku predpisu na Slov-Lexe bez dátumu časovej verzie (ukazuje práve účinné znenie, kanonická adresa stránky 25. 11. 2026 bola .../20251101, od 1. 1. 2027 bude znenie po novele 243/2026 Z. z.), nie na PDF znenia, ktoré 31. 12. 2026 skončí. Adresa otvorená 25. 11. 2026: HTTP 200, titulok „25/2025 Z. z. Stavebný zákon a o zmene a doplnení niektorých zákonov (Stavebný zákon) | Slov-Lex“; história verzií https://static.slov-lex.sk/static/SK/ZZ/2025/25/ (6 verzií, posledná od 1. 1. 2027). „v znení neskorších predpisov“ platí pre obe znenia.",
+  "nazov": "Slov-Lex, zákon č. 25/2025 Z. z. (stavebný zákon) v znení neskorších predpisov",
+  "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2025/25/"
  },
  "otazky": {
   "co-robi-dozor": {
    "otazka": "Čo robí stavebný dozor?",
-   "odpoved": "Osoba, ktorú stavebník poverí vykonávať stavebný dozor, je podľa stavebného zákona oprávnená najmä sledovať postup stavebných prác z hľadiska súladu s overeným projektom a technickými predpismi, kontrolovať vhodnosť stavebných výrobkov na zabudovanie do stavby, bezodkladne informovať stavebníka o závažných okolnostiach výstavby a kontrolovať vedenie stavebného denníka.",
-   "_odpoved_zdroj": "§ 36 ods. 1 úvodná veta a písm. a), c), e), h) zákona č. 25/2025 Z. z., znenie od 1. 11. 2025 (PDF Slov-Lex stiahnuté 21. 11. 2026, sha256 c301603a…80d8, ops/weby-na-mieru/klienti/bmbuilding/dokoncenie/zakon-oprava1/): „je oprávnená najmä a) sledovať…“",
+   "odpoved": "Osoba, ktorú stavebník poverí vykonávať stavebný dozor, podľa stavebného zákona najmä sleduje postup stavebných prác z hľadiska súladu s overeným projektom stavby a technickými predpismi, kontroluje vhodnosť stavebných výrobkov na zabudovanie do stavby, bezodkladne informuje stavebníka o všetkých závažných okolnostiach priebehu výstavby a kontroluje vedenie stavebného denníka.",
+   "_odpoved_zdroj": "§ 36 ods. 1 úvodná veta a písm. a), c), e), h) zákona č. 25/2025 Z. z. v oboch zneniach (audit naplno 25. 11. 2026, položka 3). Znenie od 1. 11. 2025 do 31. 12. 2026: „je oprávnená najmä a) sledovať…“ (https://static.slov-lex.sk/static/SK/ZZ/2025/25/20251101.html, PDF v ops/weby-na-mieru/klienti/bmbuilding/dokoncenie/zakon-oprava1/text.txt r. 2217). Znenie od 1. 1. 2027 po novele 243/2026 Z. z.: „je povinná najmä a) sledovať…“ (https://static.slov-lex.sk/static/SK/ZZ/2025/25/20270101.html). Písmená a), c), e), h) sú v oboch zneniach rovnaké, preto veta „najmä sleduje…“ bez slova oprávnená alebo povinná platí pred 1. 1. 2027 aj po ňom; „overeným projektom stavby“ a „o všetkých závažných okolnostiach priebehu výstavby“ doslovne podľa písm. a) a e). Obe znenia otvorené na slov-lex.sk 25. 11. 2026.",
    "zdroj": "§ 36 ods. 1 písm. a), c), e), h)"
   },
   "rozdiel": {
    "otazka": "Aký je rozdiel medzi stavebným dozorom a stavbyvedúcim?",
-   "odpoved": "Stavebný dozor vykonáva osoba poverená stavebníkom a stavbu kontroluje. Stavbyvedúci stavbu riadi: organizuje, riadi, koordinuje a kontroluje stavebné práce, spravuje stavenisko a vedie stavebný denník. Oboje sú podľa zákona vyhradené činnosti vo výstavbe.",
-   "zdroj": "§ 36 ods. 1, § 37 ods. 1 a § 34 ods. 2 písm. b) a c)"
+   "odpoved": "Stavebný dozor vykonáva osoba poverená stavebníkom a stavbu kontroluje. Stavbyvedúci stavbu riadi: organizuje, riadi, koordinuje a kontroluje stavebné práce, spravuje stavenisko a vedie stavebný denník. Stavebný dozor aj vedenie uskutočňovania stavebných prác sú podľa zákona vyhradené činnosti vo výstavbe. Výkon stavebného dozoru pri stavebných úpravách, drobných stavbách a stavbách, na ktoré sa vyžaduje ohlásenie, sa však za vyhradenú činnosť nepovažuje.",
+   "_odpoved_zdroj": "§ 36 ods. 1, § 37 ods. 1, § 34 ods. 2 písm. b) a c) a § 34 ods. 4 písm. b) zákona č. 25/2025 Z. z. (audit naplno 25. 11. 2026, položka 10: veta „Oboje sú vyhradené činnosti“ bola bez výnimky z ods. 4). Ods. 4 písm. b): „Za vyhradenú činnosť vo výstavbe sa nepovažuje … výkon činnosti stavebného dozoru pri stavebných úpravách, drobných stavbách a stavbách, na ktoré sa vyžaduje ohlásenie.“ § 37 ods. 1 a § 34 ods. 2 a 4 sú v zneniach od 1. 11. 2025 aj od 1. 1. 2027 rovnaké; v § 36 ods. 1 sa úvodná veta mení z „je oprávnená najmä“ na „je povinná najmä“ (novela 243/2026 Z. z.), preto odpovede hovoria „najmä sleduje…“, čo platí v oboch zneniach (slov-lex.sk 20251101.html a 20270101.html, otvorené 25. 11. 2026).",
+   "zdroj": "§ 36 ods. 1, § 37 ods. 1, § 34 ods. 2 písm. b) a c) a ods. 4 písm. b)"
   }
  },
  "uvod": {
@@ -181,7 +183,8 @@
   "poznamka_bez_obrazkov": "Údaje sú prepísané z osvedčení. Obrázky osvedčení nezverejňujeme, lebo obsahujú osobné údaje.",
   "register_overit": "Overiť v registri SKSI",
   "register_nadpis": "Obchodný register",
-  "register": "V obchodnom registri má spoločnosť zapísaný výkon činnosti stavbyvedúceho od 27. 7. 2005 a výkon činnosti stavebného dozoru od 4. 12. 2012.",
+  "_register": "Veta bez dátumov zápisu (audit naplno 25. 11. 2026, položka 5): dátumy 27. 7. 2005 a 4. 12. 2012 sme pridali my (starý web ich nemal) a pri stavbách s dozorom z rokov pred nimi (RD Pezinok 2011 až 2012, Betliarska 2012 až 2013) pôsobili ako rozpor. Roly realizácií sú Máriove a nemenia sa. Zdroj: výpis ORSR (register_zdroj), činnosti zapísané v registri v ops/weby-na-mieru/klienti/bmbuilding/seo/ORSR.md r. 24 a 25.",
+  "register": "V obchodnom registri má spoločnosť zapísaný výkon činnosti stavbyvedúceho aj stavebného dozoru.",
   "register_zdroj": "https://www.orsr.sk/vypis.asp?ID=60136&SID=2&P=0"
  },
  "kontakt": {
@@ -202,7 +205,15 @@
   "h1": "Ochrana osobných údajov",
   "github_url": "https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#data-collection",
   "github_privacy_url": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
-  "uoou_url": "https://dataprotection.gov.sk/"
+  "uoou_url": "https://dataprotection.gov.sk/",
+  "webhouse": {
+   "_poznamka": "Časť Hosting pri zostave build.py --hosting apache (FTP na WebHouse, audit naplno 25. 11. 2026, položka 1). Údaje len z verejných stránok WebHouse, prečítané 25. 11. 2026: meno, sídlo a IČO z „Ochrana osobných údajov a používanie cookies“ bod 1 (aktualizované aug 09, teda 2026); sprostredkovateľ a logy z „Podmienky spracúvania osobných údajov - DPA“ čl. 1 bod 1 a čl. 45 bod 1 a 2, Európsky hospodársky priestor čl. 29 bod 1, prenos do tretej krajiny len s podmienkami kapitoly V GDPR čl. 30 bod 1 (aktualizované aug 08); uchovávanie bezpečnostných logov počas obdobia primeraného ich účelu z bodu 7 informácií o ochrane osobných údajov (presnú lehotu WebHouse neuvádza). Zápis logov: https://helpdesk.webhouse.sk/647265-Serverov%C3%A9-logy---pr%C3%ADstupov%C3%A9-logy-chybov%C3%A9-logy- (access logy zapisujú všetky požiadavky návštevníka). Pri zmene podmienok WebHouse text prečítať znova.",
+   "meno": "WebHouse, s. r. o.",
+   "adresa": "Paulínska 20, 917 01 Trnava",
+   "ico": "36 743 852",
+   "dpa_url": "https://helpdesk.webhouse.sk/742599-Podmienky-sprac%C3%BAvania-osobn%C3%BDch-%C3%BAdajov---DPA-spolo%C4%8Dnosti-WebHouse-s-r-o",
+   "ochrana_url": "https://helpdesk.webhouse.sk/333948-Ochrana-osobn%C3%BDch-%C3%BAdajov-a-pou%C5%BE%C3%ADvanie-cookies"
+  }
  },
  "chyba": {
   "title": "Stránka sa nenašla | BM Building",
@@ -210,8 +221,8 @@
   "veta": "Adresa mohla patriť starému webu alebo obsahuje preklep. Pokračujte na úvod, na realizácie alebo nám zavolajte."
  },
  "vyzvy": {
-  "_poznamka": "Texty výziev (dizajn 3, ops/weby-na-mieru/klienti/bmbuilding/dizajn-3/SMER.md 10): zaver je druhý riadok plachty na konci stránky, realizacia na stránke realizácie. Jedna menovka na zámer: Zavolať, Napísať e-mail.",
-  "zaver": "Potrebujete stavebný dozor? Ozvite sa.",
+  "_poznamka": "Texty výziev (dizajn 3, ops/weby-na-mieru/klienti/bmbuilding/dizajn-3/SMER.md 10): zaver je druhý riadok plachty na konci stránky, realizacia na stránke realizácie. Jedna menovka na zámer: Zavolať, Napísať e-mail. zaver je všeobecná výzva v Kontakte na úvode, /realizacie/, /opravnenia/ a /ochrana-udajov/, preto menuje všetky tri služby v poradí Činnosti (audit naplno 25. 11. 2026, položka 20); stránky služieb majú vlastnú výzvu (sluzby.<slug>.zaver).",
+  "zaver": "Potrebujete stavebný manažment, stavebný dozor alebo stavbyvedúceho? Ozvite sa.",
   "realizacia": "Podobná stavba? Zavolajte."
  },
  "novinky": {

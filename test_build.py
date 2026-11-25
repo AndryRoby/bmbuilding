@@ -219,7 +219,7 @@ def rychla_avif(p, s, v, pomer=None, box=None):
     return buf.getvalue()
 
 
-def postav(vystup, obsah=None, nahlad=False, prostredie=None, rychle=False, fotky_web=None):
+def postav(vystup, obsah=None, nahlad=False, prostredie=None, rychle=False, fotky_web=None, hosting=None):
     argv = ['--vystup', str(vystup)]
     if obsah:
         argv += ['--obsah', str(obsah)]
@@ -227,9 +227,11 @@ def postav(vystup, obsah=None, nahlad=False, prostredie=None, rychle=False, fotk
         argv.append('--nahlad')
     if fotky_web:
         argv += ['--fotky-web', str(fotky_web)]
+    if hosting:
+        argv += ['--hosting', hosting]
     out, err = io.StringIO(), io.StringIO()
-    # testy bežia rovnako lokálne aj v GitHub Actions: premenné CI nastaví len test, ktorý ich skúša
-    env = {k: v for k, v in os.environ.items() if k not in ('GITHUB_ACTIONS', 'BMB_OSTRY')}
+    # testy bežia rovnako lokálne aj v GitHub Actions: premenné CI a hostingu nastaví len test, ktorý ich skúša
+    env = {k: v for k, v in os.environ.items() if k not in ('GITHUB_ACTIONS', 'BMB_OSTRY', 'BMB_HOSTING')}
     env.update(prostredie or {})
     with mock.patch.dict(os.environ, env, clear=True), redirect_stdout(out), redirect_stderr(err):
         if rychle:
@@ -539,6 +541,7 @@ class TestSkutocnyObsah(unittest.TestCase):
                   'realizacie/index.html', 'opravnenia/index.html', 'kontakt/index.html', 'ochrana-udajov/index.html',
                   '404.html', 'index.php/index.html', 'index.php/cinnost/index.html', 'fonts/geist-latin.woff2',
                   'fonts/geist-latin-ext.woff2', 'fonts/geist-mono-latin.woff2', 'fonts/geist-mono-latin-ext.woff2',
+                  'fonts/geist-mono-cisla.woff2',
                   'fonts/OFL-Geist.txt', 'og/bmbuilding.jpg', 'favicon.svg', 'favicon.ico', 'apple-touch-icon.png',
                   'logo.svg', 'logo.png', 'app.js'):
             self.assertTrue((self.ostry / c).is_file(), c)
@@ -1001,14 +1004,19 @@ class TestZnacka(unittest.TestCase):
         self.assertIn('(min-width: 1024px) and (max-height: 820px) max(', sizes0)
         self.assertIn(f'imagesizes="{sizes0}" fetchpriority="high"', obr[0])
         self.assertNotIn('-54.', obr[0])
-        # preload len Geist latinka a diakritika; Geist Mono bez preloadu (PLAN-1-1.md časť 8 bod 3, LCP na mobile)
+        # preload Geist latinka a diakritika; z Geist Mono len podmnožina číslic na stránke, ktorá Mono kreslí (úvod:
+        # valce kót), za fotkou a logom (audit naplno 25. 11. 2026, položka 44; celá latinka Mono bez preloadu)
         self.assertEqual(preload, [f'<link rel="preload" href="fonts/{p}" as="font" type="font/woff2" crossorigin>'
-                                   for p in ('geist-latin.woff2', 'geist-latin-ext.woff2')])
+                                   for p in ('geist-latin.woff2', 'geist-latin-ext.woff2', build.PISMO_MONO_CISLA)])
+        self.assertLess(s.index('logo-hlavicka.svg" as="image"'), s.index(f'fonts/{build.PISMO_MONO_CISLA}'))
         ukazka = KOREN.parent / 'arling-sk' / 'web' / 'ukazky' / 'architekti' / 'fonts'
         for meno in ('geist-latin.woff2', 'geist-latin-ext.woff2', 'geist-mono-latin.woff2', 'geist-mono-latin-ext.woff2'):
             self.assertEqual((self.ostry / 'fonts' / meno).read_bytes(), (KOREN / 'sablona' / meno).read_bytes())
             if ukazka.is_dir():
                 self.assertEqual((KOREN / 'sablona' / meno).read_bytes(), (ukazka / meno).read_bytes(), meno)
+        # podmnožina je naša (nastroje/pismo_mono_cisla.py), v ukážke nie je
+        self.assertEqual((self.ostry / 'fonts' / build.PISMO_MONO_CISLA).read_bytes(),
+                         (KOREN / 'sablona' / build.PISMO_MONO_CISLA).read_bytes())
         self.assertIn('SIL Open Font License', (self.ostry / 'fonts' / 'OFL-Geist.txt').read_text(encoding='utf-8'))
         lic = (KOREN / 'LICENCIE.md').read_text(encoding='utf-8')
         for kus in ('Geist', 'OFL-Geist.txt', 'Arimo'):
@@ -1314,12 +1322,14 @@ class TestStranky(unittest.TestCase):
                                      self.info(f'{slug}/')['telo'])
             n = sum(1 for r in zverejnene if any(kl in (r.get('rola') or '').lower() for kl in kluce[slug]))
             m = re.search(r'<a class="cinnost-pocet" href="' + slug + r'/#real-nadpis"><span class="cinnost-pocet-c cisla">(\d+)</span>'
-                          r' <span>(realizáci\w+)</span></a>', hlava)
+                          r' <span>(realizáci\w+)</span><span class="vh">: ([^<]+)</span></a>', hlava)
             if n:
                 self.assertIsNotNone(m, slug)
                 self.assertEqual(int(m.group(1)), n, slug)
                 self.assertEqual(int(pocet_sluzby.group(1)), n, slug)
                 self.assertEqual(m.group(2), 'realizácia' if n == 1 else 'realizácie' if n < 5 else 'realizácií')
+                # služba v prístupnom mene odkazu (audit naplno 25. 11. 2026, položka 30), viditeľný text bez zmeny
+                self.assertEqual(m.group(3).replace(chr(160), ' '), build.male(self.texty['sluzby'][slug]['menu']), slug)
             else:
                 self.assertIsNone(m, slug)
             # nenápadný odkaz na stránku služby, nadpis bez odkazu
@@ -1803,8 +1813,10 @@ class TestStranky(unittest.TestCase):
         self.assertIn('.firma-fakty>.udaj:nth-child(odd){grid-column:span 2}', pc)
         self.assertIn('.firma-fakty.firma-media>.udaj{grid-column:1/-1}', pc)
         self.assertLess(pc.index('.firma-fakty>.udaj:nth-child(odd)'), pc.index('.firma-fakty.firma-media>.udaj'))
-        # úzky počítač (1024 až 1099 px): hodnota pod ikonou bez odsadenia (meno konateľa sa nezalomí)
-        self.assertIn('.udaj dd{margin-left:0}', ''.join(css_bloky(css, '@media (min-width:1024px) and (max-width:1099px)')))
+        # úzky počítač (1024 až 1119 px, o posuvník 17 px nad 1099 px; oprava po overení): hodnota pod ikonou bez
+        # odsadenia (meno konateľa sa nezalomí)
+        self.assertIn('.udaj dd{margin-left:0}', ''.join(css_bloky(css, '@media (min-width:1024px) and (max-width:1119px)')))
+        self.assertNotIn('.udaj dd{margin-left:0}', ''.join(css_bloky(css, '@media (min-width:1024px) and (max-width:1099px)')))
         # Činnosť a zákon na mriežke 12 stĺpcov: hlava 1 až 4, text a otázky od 5. stĺpca; veta SKSI od 5. čiary
         self.assertIn('.cinnost-karta,.zakon-list{grid-template-columns:repeat(var(--stlpce),minmax(0,1fr));'
                       'column-gap:var(--medzera)}', pc)
@@ -2083,14 +2095,15 @@ class TestStranky(unittest.TestCase):
              'fw': None, 'sha': '0' * 64}
         povodne = self.w.predlohy
         try:
+            # bez predlohy ani súboru vo fotky-web ani plná šírka, ani 840 (audit naplno, položka 43)
             self.w.predlohy = None
             self.assertEqual(self.w.sirky_slidera(f, 'avif'), [480, 720, 960, 1440, 1920, 2400])
             self.w.predlohy = {}
-            self.assertEqual(self.w.sirky_slidera(f, 'avif'), [480, 720, 960, 1440, 1920, 2400, 2844])
+            self.assertEqual(self.w.sirky_slidera(f, 'avif'), [480, 720, 840, 960, 1440, 1920, 2400, 2844])
             self.assertEqual(self.w.sirky_slidera(f, 'webp'), [480, 720, 960, 1440])
             for w in (2400, 2406, 2640):
                 g = dict(f, zaklad=(w, 1600), sirky_avif=build.sirky_pre(w))
-                self.assertEqual(self.w.sirky_slidera(g, 'avif'), build.sirky_pre(w), w)
+                self.assertEqual(self.w.sirky_slidera(g, 'avif'), sorted(build.sirky_pre(w) + [840]), w)
         finally:
             self.w.predlohy = povodne
 
@@ -2213,7 +2226,8 @@ class TestStranky(unittest.TestCase):
         24 px zjednodušený podľa oficiálnych značiek (Facebook plné f, LinkedIn plné in, Instagram fotoaparát čiarou
         1,75) v optickom strede; hover (len myš) a focus-visible: na papieri modrý podklad a biela ikona, v modrom bloku
         biely podklad a modrá ikona; prechod 160 ms, pri obmedzenom pohybe žiadny; v Kontakte od 1024 px názov siete
-        15 px, v päte čipy 44 px. Adresy len z nastavení a firma.json (nič napevno v build.py)."""
+        15 px, v päte tiež čipy 48 px (audit naplno 25. 11. 2026, položka 33; predtým 44 px). Adresy len z nastavení
+        a firma.json (nič napevno v build.py)."""
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
         zaklad = css_bez_blokov(css)
         mys = ''.join(css_bloky(css, '@media (hover:hover) and (pointer:fine)'))
@@ -2232,11 +2246,11 @@ class TestStranky(unittest.TestCase):
         # modrý blok úvodu: biela vlasová čiara 40 %, pri hover a fokuse biely podklad a modrá ikona
         self.assertIn('.stranka-uvod .kontakt .siet{color:#fff;--cip-ciara:rgba(255,255,255,.4);--cip-ikona:#fff;'
                       '--cip-plocha:#fff;--cip-ikona-aktivna:var(--modra)}', zaklad)
-        # názov siete len na počítači a len v Kontakte, 15 px; päta 44 px
+        # názov siete len na počítači a len v Kontakte, 15 px; päta bez vlastnej menšej veľkosti (čipy 48 px)
         self.assertIn('.siet-meno{display:none;font-size:15px;', zaklad)
         self.assertIn('.kontakt .siet-meno{display:inline}', pc)
-        self.assertIn('.pata-siete .siet-cip{width:44px;height:44px}', zaklad)
-        self.assertIn('.pata-siete .siet{min-height:44px}', zaklad)
+        self.assertNotIn('.pata-siete .siet-cip{', css)
+        self.assertNotIn('.pata-siete .siet{', css)
         # obmedzený pohyb: čip bez prechodu
         reduce = css.split('@media (prefers-reduced-motion:reduce){', 1)[1].split('{transition:none}', 1)[0]
         for sel in ('.siet', '.siet-cip', '.siet-meno'):
@@ -2371,7 +2385,8 @@ class TestStranky(unittest.TestCase):
         for li in popisy:
             udaje = re.search(r'<span class="slider-udaje">(.*)</span>$', li).group(1)
             if re.search(r'\d{4}', udaje):
-                self.assertRegex(udaje, r'<span class="cisla nz">\d{4}( až \d{4})?</span>$')
+                # rozsah s pevnými medzerami okolo „až“ (sadzba, audit naplno 25. 11. 2026, položka 16)
+                self.assertRegex(udaje, r'<span class="cisla nz">\d{4}( až \d{4})?</span>$')
         # mobil: kratší názov do 1023 px (od doladenia-2 aj 1024 až 1099 px), od 1100 px celý
         mobil = ''.join(css_bloky(css, '@media (max-width:1023px)'))
         self.assertIn('.slider-nazov-kratky{display:none}', css_bez_blokov(css))
@@ -2763,6 +2778,9 @@ console.log(JSON.stringify({ neskoro: beh('neskoro'), chyba: beh('chyba') }));
                           html.unescape(karta).replace(' ', ' '), slug)
             porovnaj(c['polozky'], polozky(karta.split('<div class="cinnost-text">', 1)[1]), f'úvod {slug}')
             doslova = self.info(f'{slug}/')['telo'].split('sluzba-doslova">', 1)[1].split('<aside', 1)[0]
+            # odkaz Všetky realizácie pod doslovným textom služby bez realizácií (položka 29) nie je text zadania
+            doslova, n = self.ODKAZ_VSETKY_REALIZACIE.subn('', doslova)
+            self.assertEqual(n, 0 if self.w.realizacie_sluzby(slug) else 1, slug)
             porovnaj(c['polozky'], polozky(doslova), f'/{slug}/')
         self.assertEqual([bez(w) for _, w in nadpisy], [bez(z) for z, _ in nadpisy])
 
@@ -3016,6 +3034,15 @@ console.log(JSON.stringify(v));
         self.assertEqual(json.loads(p.stdout), {'esc_zabranene': True, 'otvorene_po_esc': False, 'fokus': ['summary'],
                                                 'otvorene_po_enter': True, 'zatvorene_esc_zabranene': False,
                                                 'fokus_zatvorene': []})
+
+    def test_hlavna_nezalomitelne_galeria_a_pismena(self):
+        """Kontrola zadania 26. 11. 2026 (drobné): odkaz „Galéria, 8 fotiek“ v popise titulnej fotky detailu sa na
+        telefóne lámal za čiarkou a výpočet písmen „a), c), e), h)“ v zdroji otázok zo zákona sa lámal pred „e), h)“.
+        Medzera za čiarkou je v oboch prípadoch nezalomiteľná."""
+        self.assertEqual(build.sadzba('písm. a), c), e), h) zákona'), 'písm.\u00a0a),\u00a0c),\u00a0e),\u00a0h) zákona')
+        self.assertEqual(build.sadzba('(a), b) a c)'), '(a),\u00a0b) a\u00a0c)')
+        lum = self.info('realizacie/filmovy-klub-lumiere-spitalska-bratislava/')['telo']
+        self.assertIn('<a href="#galeria">Galéria,\u00a08\u00a0fotiek</a>', lum.replace('&nbsp;', '\u00a0'))
 
     def test_hlavna_bok_tlacidlo_320(self):
         """Kontrola 3 v prehliadači (nález drobné): pri 320 px bolo tlačidlo Zavolať s číslom v boku služby (251,8 px)
@@ -3381,7 +3408,9 @@ console.log(JSON.stringify(v));
             self.assertIn('fetchpriority="high"', foto, r['slug'])
             self.assertNotIn('loading="lazy"', foto, r['slug'])
             self.assertIn(f'obrazky/{r["slug"]}/{r["karta"]["nn"]}-', foto, r['slug'])
-            self.assertIn(f'sizes="{build.sizes_pre_cover(build.SIZES_DETAIL, r["karta"]["w"], r["karta"]["h"])}"', foto)
+            # detail s údajmi pri fotke: fotka pri 1024 až 1279 px cez celú šírku (oprava po overení, SIZES_DETAIL_UDAJE)
+            sizes = build.SIZES_DETAIL_UDAJE if 'detail-s-udajmi' in telo else build.SIZES_DETAIL
+            self.assertIn(f'sizes="{build.sizes_pre_cover(sizes, r["karta"]["w"], r["karta"]["h"])}"', foto)
             self.assertIn('<strong>Pohľad A:</strong>', foto)
             if len(r['galeria']) > 1:
                 self.assertIn('<a href="#galeria">Galéria', foto)
@@ -3441,6 +3470,9 @@ console.log(JSON.stringify(v));
         # (všetky roky z termínu musia na stránke byť); texty služieb sú doslovne starý web, takže údaj služby, ktorého
         # overenie bolo podľa nášho prepísaného znenia, je pokrytý, keď je na stránke celé pôvodné znenie (povodne)
         podla_id = {u['id']: u for u in json.loads(udaje.read_text(encoding='utf-8'))}
+        # jednotný zápis tej istej roly (sablona/nastavenia.json rola_zapis, audit naplno 25. 11. 2026, položka 14):
+        # „Projektový manažér“ zo starého webu je na stránke v zápise „Projektový manažment a stavebný dozor“
+        rola_zapis = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8')).get('rola_zapis') or {}
 
         def pokryte(riadok):
             u = podla_id.get(riadok.split()[1])
@@ -3453,6 +3485,12 @@ console.log(JSON.stringify(v));
                 return bool(roky) and all(r in text for r in roky)
             if u['typ'] in ('sluzba', 'sluzba-bod'):
                 return self.norm_medzery(u['povodne']) in text
+            if u['typ'] == 'rola':
+                m = re.match(r'realizacie/([a-z0-9-]+)/index\.html$', u['stranka'])
+                povodna = build.zaciatok_velky(build.jeden_riadok((self.realizacie.get(m.group(1)) or {}).get('rola'))) if m else ''
+                nova = rola_zapis.get(povodna, '')
+                return (bool(nova) and all(self.norm_medzery(o).casefold() in povodna.casefold() for o in u['overenie'])
+                        and self.norm_medzery(nova) in text)
             return False
         # referencie úvodu starého webu boli v tmavom páse; ten je preč (ZMENY-KOLO-1.md 3A.6, „nechať len
         # slideshow“), stavba je pokrytá, keď je v zozname realizácií (/realizacie/, menu Realizácie)
@@ -3545,14 +3583,23 @@ console.log(JSON.stringify(v));
         s = re.sub(r'\s+', ' ', s.replace(chr(160), ' ')).strip()
         return re.sub(r'\(\s+', '(', re.sub(r'\s+([.,:])', r'\1', s))
 
+    # služba bez realizácie s jej rolou (Stavbyvedúci) má pod doslovným textom odkaz Všetky realizácie ako ostatné
+    # služby (audit naplno 25. 11. 2026, položka 29): navigácia na konci hlavného stĺpca, nie text; text pred ním
+    # ostáva slovo od slova
+    ODKAZ_VSETKY_REALIZACIE = re.compile(r'<p class="viac"><a class="odkaz-sipka" href="\.\./realizacie/">Všetky realizácie '
+                                         r'<svg[^>]*>.*?</svg></a></p>(?=</div>)')
+
     def test_sluzby_doslova_zo_stareho_webu(self):
         # hlavný text stránky služby je slovo od slova text starého webu (zadanie časť 4) po normalizácii medzier;
-        # nič iné v hlavnom stĺpci, ten istý text ako Činnosť na úvode (jeden zdroj texty.json cinnost_doslova)
+        # nič iné v hlavnom stĺpci okrem odkazu Všetky realizácie pri službe bez realizácií (položka 29), ten istý
+        # text ako Činnosť na úvode (jeden zdroj texty.json cinnost_doslova)
         uvod = self.info('')['telo']
         for k, ocak in self.DOSLOVNE_SLUZBY.items():
             telo = self.info(f'{k}/')['telo']
             hlavny = telo.split('<div class="sluzba-hlavne atelier-text cinnost-text sluzba-doslova">', 1)[1]
             hlavny = hlavny.split('<aside class="kalkulacka sluzba-bok"', 1)[0]
+            hlavny, n = self.ODKAZ_VSETKY_REALIZACIE.subn('', hlavny)
+            self.assertEqual(n, 0 if self.w.realizacie_sluzby(k) else 1, k)
             text = html.unescape(re.sub(r'<[^>]+>', ' ', hlavny))
             self.assertEqual(self.norm_medzery(text), self.norm_medzery(ocak), k)
             # zápis na webe: opravené len medzery, inak presne (bez medzery pred bodkou, bez medzery po zátvorke)
@@ -3823,7 +3870,9 @@ console.log(JSON.stringify(v));
             self.assertIn('data-vyzva-dole', s.split('<section class="sekcia kontakt" id="kontakt"', 1)[1][:80], cesta)
             # spodná lišta na mobile ako v ukážke: Zavolať a Napísať e-mail
             self.assertIn('<nav class="lista" aria-label="Rýchly kontakt"><a class="tlacidlo" ' + tel, s, cesta)
-            self.assertIn('<a class="tlacidlo tlacidlo-obrys" ' + mail + '>Napísať e-mail</a></nav>', s, cesta)
+            # pod 320 px „E-mail“ (audit naplno 25. 11. 2026, položka 35, styl.css lista-kratky)
+            self.assertIn('<a class="tlacidlo tlacidlo-obrys" ' + mail + '><span class="lista-dlhy">Napísať e-mail</span>'
+                          '<span class="lista-kratky">E-mail</span></a></nav>', s, cesta)
             self.assertIn('class="tlacidlo tlacidlo-male hlavicka-tel" ' + tel, s.split('</header>', 1)[0], cesta)
         # na /kontakt/ je sekcia Kontakt hlavným obsahom (raz, bez výzvy záveru)
         kontakt = self.info('kontakt/')['telo']
@@ -4163,7 +4212,9 @@ console.log(JSON.stringify(v));
         self.assertTrue(skript.startswith("script-src 'self' 'sha256-"), skript)
         self.assertEqual(len(re.findall(r'<script src=', s)), 1)
         self.assertRegex(s, r'<script src="app\.js\?v=[0-9a-f]{10}" defer></script>')
-        self.assertEqual((self.ostry / 'app.js').read_bytes(), (KOREN / 'sablona' / 'app.js').read_bytes())
+        # web dostáva app.js zhustený bez komentárov (audit naplno 25. 11. 2026, položka 45, test_45_app_js_zhusteny)
+        self.assertEqual((self.ostry / 'app.js').read_text(encoding='utf-8'),
+                         build.zhusti_js((KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')))
         js = (self.ostry / 'app.js').read_text(encoding='utf-8')
         for zakazane in ('innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write', 'eval(', 'new Function',
                          'setTimeout("', "setTimeout('", 'fetch(', 'XMLHttpRequest', 'localStorage', 'cookie'):
@@ -4269,11 +4320,13 @@ console.log(JSON.stringify(v));
         self.assertIn('.projekt{flex:none;min-width:0}', obmedzeny)
 
     def test_texty_podla_zdroja(self):
-        # § 36 ods. 1: „je oprávnená najmä a) sledovať…“; manažment: výber dodávateľa starý web neuvádza ako činnosť;
-        # počet realizácií manažmentu je s popisom, že zlučuje projektový a stavebný manažment
+        # § 36 ods. 1: do 31. 12. 2026 „je oprávnená najmä a) sledovať…“, od 1. 1. 2027 „je povinná najmä“ (novela
+        # 243/2026 Z. z.); veta „najmä sleduje…“ platí pre obe znenia (audit naplno 25. 11. 2026, položka 3);
+        # manažment: výber dodávateľa starý web neuvádza ako činnosť
         q = self.texty['otazky']['co-robi-dozor']['odpoved']
-        self.assertIn('je podľa stavebného zákona oprávnená najmä sledovať', q)
-        self.assertNotIn('najmä sleduje', q)
+        self.assertIn('podľa stavebného zákona najmä sleduje postup stavebných prác', q)
+        self.assertNotIn('oprávnená', q)
+        self.assertNotIn('povinná', q)
         # naše prepísané texty služieb (priklady, odseky, veta) sú od 1. kola preč, text je doslovne starý web
         m = self.texty['sluzby']['stavebny-manazment']
         self.assertNotIn('priklady', m)
@@ -4412,7 +4465,8 @@ console.log(JSON.stringify(v));
         ramec = re.search(r'\n\.pohlad-ramec\{([^}]*)\}', css).group(1)
         self.assertNotIn('background', ramec)
         self.assertIn('.detail .pohlad-ramec{aspect-ratio:3/2;height:auto;background:var(--vapno-2)}', css)
-        self.assertRegex(css, r'\.stranka-uvod \.kontakt\{content-visibility:auto;contain-intrinsic-size:auto \d+px\}')
+        # Kontakt na úvode bez content-visibility (audit naplno 25. 11. 2026, položka 40: mimo stromu prístupnosti)
+        self.assertNotIn('content-visibility', css)
         self.assertIn('.projekt-riadok{display:flex;align-items:flex-start;', css)
 
     # --- oprava po bráne (pokus 1, 21. 11. 2026) ---------------------------------------------------------------
@@ -4580,7 +4634,9 @@ console.log(JSON.stringify(v));
         vizitka Kontaktu na 4 stĺpce, výrez tabuľky V médiách na 3 stĺpce s textom od 5. stĺpca po pravý okraj a fotkami
         strán na 6 z 8 stĺpcov textu, karta Činnosti bez zoznamov v dvoch stĺpcoch bez delenia odsekov a stránka služby
         s dlhým zoznamom (trieda riadky-N) so zoznamom v dvoch stĺpcoch so spoločnými riadkami, krátkym zoznamom na šírku
-        stĺpca zoznamu a boxom s dokladom na 4 stĺpce. Od 2561 px (obsah na strope) slider bez presahu k okraju okna,
+        stĺpca zoznamu a boxom s dokladom na 4 stĺpce; stránka služby bez zoznamu (Stavebný manažment) s textom cez 8
+        stĺpcov a odsekmi v dvoch stĺpcoch a Ďalšie realizácie v štyroch stĺpcoch (audit naplno 25. 11. 2026, časť 2).
+        Od 2561 px (obsah na strope) slider bez presahu k okraju okna,
         jediný ďalší prah. Do 1920 px platia tie isté hodnoty ako predtým (--sirka 1760 px, --h1-strop 4rem). Mriežka,
         vlasové čiary a hlavička idú cez tú istú --sirka, slider k ľavej hrane okna cez 100cqw (posuvník)."""
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
@@ -4589,6 +4645,8 @@ console.log(JSON.stringify(v));
         self.assertEqual([r.strip() for r in bloky[0].split('\n') if r.strip()], [
             ':root{--sirka:min(100vw - 160px,2400px);--h1-strop:max(4rem,min(5vw - 32px,7svh))}',
             '.detail .detail-foto{max-width:none}',
+            # oprava po overení: do 1920 px tabuľka a text detailu od 8. stĺpca, od 1921 px ako predtým od 9.
+            '.detail-s-udajmi .detail-udaje,.detail-s-udajmi .detail-text{grid-column:9/-1}',
             '.kontakt-mapa{grid-column:9/-1}',
             '.media-tabulka{grid-column:1/4}',
             '.media-text{grid-column:5/-1}',
@@ -4600,7 +4658,17 @@ console.log(JSON.stringify(v));
             '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body[class*="riadky-"]{display:grid;'
             'grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera);grid-auto-flow:column;max-width:none}',
             '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body:not([class*="riadky-"])'
-            '{max-width:calc((100% - var(--medzera)) / 2)}'])
+            '{max-width:calc((100% - var(--medzera)) / 2)}',
+            # audit naplno 25. 11. 2026, položka 25: Stavebný manažment (bez zoznamu) text cez 8 stĺpcov, odseky v dvoch
+            # stĺpcoch, box na 4 stĺpce; kontrola širokého rozloženia: Ďalšie realizácie v štyroch stĺpcoch pod kartami
+            '.sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne{grid-column:1/9;display:grid;grid-template-columns:'
+            'repeat(2,minmax(0,1fr));grid-template-rows:auto auto auto 1fr;column-gap:var(--medzera);align-content:start}',
+            '.sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne>:not(p),.sluzba-obal:not(:has(.cinnost-body)) '
+            '.sluzba-hlavne>.uvodna{grid-column:1/-1}',
+            '.sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne>.uvodna+p{grid-row:span 2}',
+            '.sluzba-obal:not(:has(.cinnost-body)) .sluzba-bok{grid-column:9/-1}',
+            '.zoznam-dalsie{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--medzera)}',
+            '.zoznam-dalsie li{align-content:start}'])
         self.assertEqual(css.count('1921px'), 1)
         self.assertNotIn('1920px', css)
         # ultraširoké okno: jediný ďalší prah, len slider bez presahu, za blokom širokého okna
@@ -4979,7 +5047,8 @@ class TestDocasnyObsah(unittest.TestCase):
         web = self.tmp / 'web'
         self.assertEqual(postav(web, self.obsah)[0], 0)
         d = stranka_info(web / 'realizacie' / 'plna' / 'index.html')['desc']
-        self.assertIn('Projektant: Kappa 1 s.r.o. Roky: 2019.', d)
+        # jeden rok pod popiskom Rok (audit naplno 25. 11. 2026, položka 2)
+        self.assertIn('Projektant: Kappa 1 s.r.o. Rok: 2019.', d)
         self.assertNotIn('Termín', d)
         self.assertNotIn('..', d)
 
@@ -5601,8 +5670,9 @@ class TestStovkyRealizacii(unittest.TestCase):
             self.assertNotRegex(img, r'-(4[89]\d|[5-9]\d\d|\d{4,})-45\.webp')
             self.assertRegex(img, r'width="\d+" height="\d+"')
         self.assertLess(len(gzip.compress(s.encode('utf-8'), 9)), 40 * 1024)
-        css = (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8')
-        self.assertIn('content-visibility:auto', css)
+        css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        # bez content-visibility (audit naplno 25. 11. 2026, položka 40); karty ju nemajú kvôli subgrid
+        self.assertNotIn('content-visibility', css)
         uvod = (self.web / 'index.html').read_text(encoding='utf-8')
         # úvod bez pásu aj pri 120 realizáciách (ZMENY-KOLO-1.md 3A.6): len slider so záložnou fotkou
         self.assertNotIn('id="prace"', uvod)
@@ -5682,7 +5752,8 @@ def data_zoznamu(web):
         'naraz': int(re.search(r'data-zoznam data-naraz="(\d+)"', telo).group(1)),
         'stav': html.unescape(stav.group(1)),
         'karty': [{'poradie': int(a['data-poradie']), 'druh': a.get('data-druh', ''), 'rok': a.get('data-rok', ''),
-                   'mesto': a.get('data-mesto', ''), 'nazov': html.unescape(n)} for a, n in zip(li, mena)],
+                   'mesto': a.get('data-mesto', ''), 'nazov': html.unescape(n), 'neskor': 'data-neskor' in a}
+                  for a, n in zip(li, mena)],
         'druhy': re.findall(r'<button class="filter" type="button" data-druh="([a-z]*)"', telo),
         'roky': moznosti('data-roky'), 'mesta': moznosti('data-mesto'), 'zoradit': moznosti('data-zoradit'),
     }
@@ -5741,7 +5812,8 @@ def chyby_zoznamu(web, app_js=None):
             if s['zoradit'] != 'nazov':
                 vyber.sort(key=lambda x: x['poradie'], reverse=s['zoradit'] == 'najstarsie')
             n = len(vyber)
-            m = min(n, ukazat) if naraz else n
+            # zvyšok najviac polovica dávky sa ukáže naraz s dávkou (audit naplno 25. 11. 2026, položka 17)
+            m = n if not naraz or n - ukazat <= naraz // 2 else ukazat
             kde = f'krok {i} {k} pri {dict(s)}'
             if s['zoradit'] != 'nazov':
                 ocak = [x['poradie'] for x in vyber[:m]]
@@ -5764,12 +5836,24 @@ def chyby_zoznamu(web, app_js=None):
                 chyby.append(f'{kde}: prázdny výsledok skrytý {st["prazdne_skryte"]} pri {n} kartách')
             if st['filtre_skryte']:
                 chyby.append(f'{kde}: filtre ostali skryté')
+            # data-neskor (karty za prvou dávkou do spustenia app.js, položka 46) app.js hneď zmaže
+            if st.get('neskor'):
+                chyby.append(f'{kde}: karty {st["neskor"]} majú ešte data-neskor')
             if k and k['akcia'] == 'viac' and s['zoradit'] != 'nazov':
                 ocak_f = vyber[bolo]['poradie'] if bolo < n else None
                 if st['fokus'] != ocak_f:
                     chyby.append(f'{kde}: fokus na karte {st["fokus"]}, čakaný {ocak_f} (prvá nová)')
             elif k and k['akcia'] != 'viac' and st['fokus'] is not None:
                 chyby.append(f'{kde}: fokus sa presunul na kartu {st["fokus"]} bez Zobraziť ďalšie')
+            # po Zrušiť filter (tlačidlo v prázdnom výsledku, ktorý sa skryje) fokus na tlačidle Všetky, nie na body
+            # (oprava po overení, WCAG 2.4.3); iný krok fokus na tlačidlo filtra nepresúva
+            ocak_d = '' if k and k['akcia'] == 'zrusit' else None
+            if st.get('fokus_druh') != ocak_d:
+                chyby.append(f'{kde}: fokus na tlačidle filtra {st.get("fokus_druh")!r}, čakané {ocak_d!r}')
+            # karta s fokusom sa posunie do okna najkratšou cestou (položka 36), inak sa nič neposúva
+            ocak_p = {'poradie': st['fokus'], 'block': 'nearest'} if st['fokus'] is not None else None
+            if st['posun'] != ocak_p:
+                chyby.append(f'{kde}: posun do okna {st["posun"]}, čakaný {ocak_p}')
             q = '&'.join(f'{a}={s[a]}' for a in ('druh', 'roky', 'mesto') if s[a]) + (
                 ('&' if filtruje else '') + f'zoradit={s["zoradit"]}' if s['zoradit'] != 'najnovsie' else '')
             if k and st['search'] != (f'?{q}' if q else ''):
@@ -5777,9 +5861,14 @@ def chyby_zoznamu(web, app_js=None):
 
     # riadok stavu z HTML (build.py, doladenie-1) je ten istý text, aký app.js napíše bez filtra v adrese: pri pomalej
     # sieti sa po spustení skriptu nič nezmení ani neposunie
-    m0 = min(n_vsetky, naraz) if naraz else n_vsetky
+    m0 = n_vsetky if not naraz or n_vsetky - naraz <= naraz // 2 else naraz
     if d['stav'] != (f'Zobrazené: {m0} z {n_vsetky}' if m0 < n_vsetky else ''):
         chyby.append(f'riadok stavu v HTML „{d["stav"]}“ nie je stav po spustení app.js bez filtra')
+    # data-neskor v HTML práve na kartách, ktoré app.js po spustení bez filtra neukáže (položka 46): do spustenia app.js
+    # nie sú v rozložení, ich fotky sa nesťahujú
+    neskor = [k['poradie'] for k in karty if k['neskor']]
+    if neskor != [k['poradie'] for k in sorted(karty, key=lambda x: x['poradie'])[m0:]]:
+        chyby.append(f'data-neskor v HTML na kartách {neskor}, čakané za prvými {m0}')
     _, stavy = spravanie_zoznamu(web, kroky, app_js=app_js)
     porovnaj(stavy, kroky, {'druh': '', 'roky': '', 'mesto': '', 'zoradit': 'najnovsie'})
     # spustenie s adresou ?druh=…&zoradit=najstarsie (stav z adresy, bez zápisu)
@@ -7193,6 +7282,1916 @@ class TestPresnostFotky(unittest.TestCase):
         self.assertIn('.projekt-riadok>h3{align-self:stretch}', css)
         self.assertIn('.detail .detail-foto{grid-column:1/8;max-width:1000px}', css)
         self.assertIn('min(56vw, 1000px)', build.SIZES_DETAIL)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+class TestAuditNaplno(unittest.TestCase):
+    """Audit naplno živého náhľadu 25. 11. 2026, časť 1 (texty a dáta): položky 2, 3, 5, 7, 10, 12, 14, 16, 20, 21,
+    29, 30, 41 a 42 zoznamu audit-naplno/synteza/ZOZNAM.md (záznam ops/weby-na-mieru/klienti/bmbuilding/kolo-1/
+    brana-3/AUDIT-OPRAVY.md). Nad skutočným obsahom, ostrý web aj náhľad; obsah/ sa nemení."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry, cls.nahlad, cls.w, cls.obsah = s['ostry'], s['nahlad'], s['web'], s['realizacie']
+        cls.texty = json.loads((KOREN / 'sablona' / 'texty.json').read_text(encoding='utf-8'))
+        cls.nast = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8'))
+        cls.firma = json.loads((KOREN / 'obsah' / 'firma.json').read_text(encoding='utf-8'))
+
+    def stranka(self, cesta, web=None):
+        web = web or self.ostry
+        return stranka_info(web / cesta / 'index.html' if cesta else web / 'index.html')
+
+    @staticmethod
+    def udaje(telo):
+        """Údaje v hlave detailu (dl.fakty.udaje): popisok -> text hodnoty, pevné medzery ako medzery."""
+        dl = telo.split('<dl class="fakty udaje">', 1)[1].split('</dl>', 1)[0]
+        return {html.unescape(re.sub(r'<[^>]+>', '', k)): html.unescape(re.sub(r'<[^>]+>', '', v)).replace('\u00a0', ' ')
+                for k, v in re.findall(r'<dt>(.*?)</dt><dd>(.*?)</dd>', dl, re.S)}
+
+    def test_2_druh_stavby_a_rok_v_detaile(self):
+        """Položka 2: detail má druh stavby z karty v jednotnom čísle (nie názov filtra „Rodinné domy“), pri jednom
+        roku popisok Rok (detail aj description); Apartmánový dom v DRUHY_KARTY mení len Ventúrsku, Betliarska ostáva
+        Bytový dom; bez druhu z názvu a textu (Okánikova, Dom pod lesom) kategória filtra pod popiskom Kategória."""
+        ocak = {'rd-ahoj-bratislava-nove-mesto': ('Druh stavby', 'Rodinný dom'),
+                'rd-kalvaria-bratislava': ('Druh stavby', 'Rodinný dom'),
+                'rekonstrukcia-venturska-bratislava': ('Druh stavby', 'Apartmánový dom'),
+                'dom-betliarska-bratislava-petrzalka': ('Druh stavby', 'Bytový dom'),
+                'bytovy-dom-haanova-bratislava': ('Druh stavby', 'Bytový dom'),
+                'polyfunkcny-objekt-budatinska-bratislava': ('Druh stavby', 'Polyfunkčný objekt'),
+                'rekonstrukcia-okanikova-bratislava': ('Kategória', 'Bytové domy'),
+                'dom-pod-lesom': ('Kategória', 'Rodinné domy')}
+        for slug, (popisok, hodnota) in ocak.items():
+            self.assertEqual(self.udaje(self.stranka(f'realizacie/{slug}/')['telo']).get(popisok), hodnota, slug)
+        zoznam = self.stranka('realizacie/')['telo']
+        for r in self.w.realizacie:
+            info = self.stranka(f'realizacie/{r["slug"]}/')
+            u = self.udaje(info['telo'])
+            druh = self.w.druh_karty(r)
+            # ten istý druh ako na karte zoznamu
+            self.assertEqual(u.get('Druh stavby', ''), druh, r['slug'])
+            karta = zoznam.split(f'realizacie/{r["slug"]}/"', 2)[2].split('</li>', 1)[0]
+            m = re.search(r'<p class="projekt-udaje">(.*?)</p>', karta)
+            udaje_karty = html.unescape(re.sub(r'<[^>]+>', '', m.group(1))) if m else ''
+            if druh:
+                self.assertTrue(udaje_karty == druh or udaje_karty.startswith(druh + '\u00a0· '), (r['slug'], udaje_karty))
+                self.assertNotIn('Kategória', u, r['slug'])
+            if r['roky']:
+                popisok = 'Rok' if re.fullmatch(r'\d{4}', r['roky']) else 'Roky'
+                self.assertEqual(u.get(popisok), r['roky'], r['slug'])
+                self.assertNotIn({'Rok': 'Roky', 'Roky': 'Rok'}[popisok], u, r['slug'])
+                if r['roky'] in info['desc']:
+                    self.assertIn(f'{popisok}: {r["roky"]}.', info['desc'], r['slug'])
+            else:
+                self.assertNotIn('Rok', u, r['slug'])
+                self.assertNotIn('Roky', u, r['slug'])
+        ufo = self.stranka('realizacie/ufo-most-snp-bratislava/')
+        self.assertEqual(self.udaje(ufo['telo']).get('Rok'), '2025')
+        self.assertTrue(ufo['desc'].endswith('Rok: 2025.'), ufo['desc'])
+        # Iné (most, kino, SFÚ) bez druhu aj bez kategórie
+        for k in ('Druh stavby', 'Kategória'):
+            self.assertNotIn(k, self.udaje(ufo['telo']))
+        nazvy = [n for n, _ in build.DRUHY_KARTY]
+        self.assertLess(nazvy.index('Apartmánový dom'), nazvy.index('Bytový dom'))
+        self.assertEqual([build.Web.popisok_rokov(x) for x in ('2025', '2013 až 2014', '2009', '2021\u00a0až\u00a02022')],
+                         ['Rok', 'Roky', 'Rok', 'Roky'])
+
+    def test_3_10_otazky_zo_zakona_v_oboch_zneniach(self):
+        """Položky 3 a 10: odpoveď „Čo robí stavebný dozor?“ platí pre znenie § 36 ods. 1 do 31. 12. 2026 („je
+        oprávnená najmä“) aj od 1. 1. 2027 („je povinná najmä“, novela 243/2026 Z. z.), slová podľa písm. a), c), e),
+        h); zdroj vedie na stránku predpisu bez dátumu časovej verzie; rozdiel s výnimkou § 34 ods. 4 písm. b)."""
+        z = self.texty['zakon']
+        self.assertEqual(z['url'], 'https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2025/25/')
+        self.assertNotRegex(z['url'], r'\d{8}|\.pdf')
+        self.assertEqual(z['nazov'], 'Slov-Lex, zákon č. 25/2025 Z. z. (stavebný zákon) v znení neskorších predpisov')
+        q = self.texty['otazky']['co-robi-dozor']['odpoved']
+        for kus in ('najmä sleduje postup stavebných prác z hľadiska súladu s overeným projektom stavby a technickými predpismi',
+                    'kontroluje vhodnosť stavebných výrobkov na zabudovanie do stavby',
+                    'bezodkladne informuje stavebníka o všetkých závažných okolnostiach priebehu výstavby',
+                    'kontroluje vedenie stavebného denníka'):
+            self.assertIn(kus, q)
+        r = self.texty['otazky']['rozdiel']
+        self.assertNotIn('Oboje', r['odpoved'])
+        self.assertIn('Stavebný dozor aj vedenie uskutočňovania stavebných prác sú podľa zákona vyhradené činnosti', r['odpoved'])
+        self.assertIn('Výkon stavebného dozoru pri stavebných úpravách, drobných stavbách a stavbách, na ktoré sa '
+                      'vyžaduje ohlásenie, sa však za vyhradenú činnosť nepovažuje.', r['odpoved'])
+        self.assertTrue(r['zdroj'].endswith('§ 34 ods. 2 písm. b) a c) a ods. 4 písm. b)'), r['zdroj'])
+        for subor in stranky(self.ostry):
+            s = subor.read_text(encoding='utf-8')
+            self.assertNotIn('ZZ_2025_25_', s, subor)
+            self.assertNotIn('oprávnená najmä', s.replace('\u00a0', ' '), subor)
+        for cesta in ('', 'stavebny-dozor/', 'stavbyveduci/'):
+            telo = self.stranka(cesta)['telo']
+            zdroje = re.findall(r'<p class="zdroj">Zdroj: <a href="([^"]+)">(.*?)</a></p>', telo)
+            self.assertTrue(zdroje, cesta)
+            for url, text in zdroje:
+                self.assertEqual(url, z['url'], cesta)
+                self.assertIn('v znení neskorších predpisov', html.unescape(text).replace('\u00a0', ' '), cesta)
+
+    def test_5_obchodny_register_bez_datumov(self):
+        """Položka 5: veta Obchodný register na /opravnenia/ bez dátumov zápisu činností (pri starších stavbách
+        s dozorom pôsobili ako rozpor), zdroj ORSR ostáva; roly realizácií sa nemenia."""
+        veta = self.texty['opravnenia']['register']
+        self.assertEqual(veta, 'V obchodnom registri má spoločnosť zapísaný výkon činnosti stavbyvedúceho aj stavebného dozoru.')
+        li = self.stranka('opravnenia/')['telo'].split('<ul class="cennik register">', 1)[1].split('</ul>', 1)[0]
+        self.assertIn(f'<p class="sluzba-opis">{veta}</p>', li.replace('\u00a0', ' '))
+        self.assertNotRegex(li, r'2005|2012')
+        self.assertIn('Zdroj: <a href="https://www.orsr.sk/vypis.asp?', li)
+
+    def test_7_llms_txt_a_roboti_ai_v_ostrom_behu(self):
+        """Položka 7 (ops/runbook.md, checklist zverejnenia): ostrý robots.txt menuje GPTBot, ClaudeBot, PerplexityBot,
+        Google-Extended a Bingbot v jednej skupine s Allow (RFC 9309 2.1) pred skupinou pre všetkých; ostrý web má
+        llms.txt (llmstxt.org) a každý jeho odkaz má stránku; náhľad nemá ani jedno."""
+        robots = (self.ostry / 'robots.txt').read_text(encoding='utf-8')
+        skupiny = [g.splitlines() for g in robots.strip().split('\n\n')]
+        self.assertEqual(skupiny, [[f'User-agent: {b}' for b in ('GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'Bingbot')]
+                                   + ['Allow: /'], ['User-agent: *', 'Allow: /'], ['Sitemap: https://bmbuilding.sk/sitemap.xml']])
+        self.assertEqual((self.nahlad / 'robots.txt').read_text(encoding='utf-8'), 'User-agent: *\nDisallow: /\n')
+        self.assertFalse((self.nahlad / 'llms.txt').exists())
+        llms = (self.ostry / 'llms.txt').read_text(encoding='utf-8')
+        riadky = llms.splitlines()
+        self.assertEqual(riadky[0], f'# {self.firma["meno"]}')
+        self.assertEqual(riadky[2], '> ' + self.texty['uvod']['description'])
+        for nadpis in ('## Služby', '## Realizácie', '## Firma'):
+            self.assertIn(nadpis, riadky)
+        odkazy = re.findall(r'^- \[(.+?)\]\((\S+?)\)(?:: (.+))?$', llms, re.M)
+        ciele = [u for _, u, _ in odkazy]
+        self.assertEqual(len(ciele), len(set(ciele)))
+        # každý odkaz v llms.txt má stránku ostrého webu
+        for _, u, _ in odkazy:
+            self.assertTrue(u.startswith('https://bmbuilding.sk/'), u)
+            self.assertTrue((self.ostry / u[len('https://bmbuilding.sk/'):] / 'index.html').is_file(), u)
+        ocak = ([f'https://bmbuilding.sk/{s}/' for s in self.texty['sluzby']]
+                + [f'https://bmbuilding.sk/realizacie/{r["slug"]}/' for r in self.w.realizacie]
+                + [f'https://bmbuilding.sk/{c}' for c in ('realizacie/', 'opravnenia/', 'kontakt/', 'ochrana-udajov/')])
+        self.assertEqual(sorted(ciele), sorted(ocak))
+        # údaje firmy z firma.json, popis realizácie z jej údajov (rola zo zápisu na webe, Rok pri jednom roku)
+        for kus in (self.firma['telefon'], self.firma['email'], self.firma['ico'], self.firma['ic_dph'],
+                    'Podhorská 9, 902 01 Pezinok', self.firma['zapis_or'], 'stavbyvedúci, vydané 5. 11. 2003'):
+            self.assertIn(kus, llms)
+        self.assertIn('(https://bmbuilding.sk/realizacie/ufo-most-snp-bratislava/): Rola BM Building: projektový manažment '
+                      'a stavebný dozor.', llms)
+        self.assertIn('Rok: 2025.', llms)
+        for zle in ('!', '\u2013', '\u2014', '\u00a0', 'manažér a stavebný dozor'):
+            self.assertNotIn(zle, llms)
+        skryte = set(self.obsah_vsetky()) - {r['slug'] for r in self.w.realizacie}
+        self.assertTrue(skryte)
+        for slug in skryte:
+            self.assertNotIn(slug, llms)
+
+    @staticmethod
+    def obsah_vsetky():
+        return [p.stem for p in (KOREN / 'obsah' / 'realizacie').glob('*.json')]
+
+    def test_7_llms_txt_escapuje_udaje_z_obsahu(self):
+        """Položka 7, vkladanie (AGENTS.md bod 12b): údaje z obsahu idú do markdownu llms.txt s escapovaním znakov
+        odkazu a HTML; jediné ciele odkazov sú stránky webu."""
+        tmp = Path(tempfile.mkdtemp(prefix='bmb-test-llms-'))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        obsah = maly_obsah(tmp)
+        p = obsah / 'realizacie' / 'plna.json'
+        d = json.loads(p.read_text(encoding='utf-8'))
+        d['nazov'] = 'Bytový dom [Skúška](javascript:alert(9)) `kód`'
+        p.write_text(json.dumps(d, ensure_ascii=False), encoding='utf-8')
+        kod, out, err = postav(tmp / 'web', obsah)
+        self.assertEqual(kod, 0, err)
+        llms = (tmp / 'web' / 'llms.txt').read_text(encoding='utf-8')
+        self.assertIn('- [Bytový dom \\[Skúška\\](javascript:alert(9)) \\`kód\\`, Bratislava](https://bmbuilding.sk/realizacie/plna/)', llms)
+        self.assertIn('\\<script\\>alert(1)\\</script\\>', llms)
+        self.assertNotIn('<script>', llms)
+        ciele = re.findall(r'(?<!\\)\]\(([^)]*)\)', llms)
+        self.assertTrue(ciele)
+        for u in ciele:
+            self.assertTrue(u.startswith('https://bmbuilding.sk/'), u)
+        # náhľad toho istého obsahu llms.txt nemá (ani po ostrom behu v tom istom priečinku)
+        self.assertEqual(postav(tmp / 'web', obsah, nahlad=True)[0], 0)
+        self.assertFalse((tmp / 'web' / 'llms.txt').exists())
+
+    def test_12_og_obrazok_nahladu_z_adresy_nahladu(self):
+        """Položka 12: v náhľade og:image a twitter:image z adresy náhľadu (odkaz vo WhatsAppe s obrázkom), súbor
+        v náhľade je; canonical a og:url ostávajú na bmbuilding.sk, ostrý web má og:image na doméne."""
+        adresa = self.nast['adresa_nahladu']
+        self.assertEqual(adresa, 'https://arling.sk/bmbuilding/')
+        for cesta in ('', 'realizacie/rd-pezinok/', 'stavebny-dozor/', 'kontakt/'):
+            n = self.stranka(cesta, self.nahlad)['html']
+            o = self.stranka(cesta)['html']
+            og_n = re.search(r'<meta property="og:image" content="([^"]+)">', n).group(1)
+            self.assertEqual(re.search(r'<meta name="twitter:image" content="([^"]+)">', n).group(1), og_n)
+            self.assertTrue(og_n.startswith(adresa + 'og/'), og_n)
+            self.assertTrue((self.nahlad / og_n[len(adresa):]).is_file(), og_n)
+            canon = 'https://bmbuilding.sk/' + cesta
+            for web in (n, o):
+                self.assertIn(f'<link rel="canonical" href="{canon}">', web)
+                self.assertIn(f'<meta property="og:url" content="{canon}">', web)
+            self.assertIn(f'<meta property="og:image" content="https://bmbuilding.sk/{og_n[len(adresa):]}">', o)
+            self.assertIn(f'<meta name="twitter:image" content="https://bmbuilding.sk/{og_n[len(adresa):]}">', o)
+        self.assertIn(f'<meta property="og:image" content="{adresa}og/bmbuilding.jpg">',
+                      (self.nahlad / '404.html').read_text(encoding='utf-8'))
+        # JSON-LD aj v náhľade na doméne
+        for u in self.stranka('', self.nahlad)['ld']:
+            for k in ('url', 'logo', 'image'):
+                if isinstance(u.get(k), str):
+                    self.assertTrue(u[k].startswith('https://bmbuilding.sk/'), (k, u[k]))
+        # bez adresy náhľadu alebo s adresou bez https ide obrázok z domény
+        stare = (self.w.nahlad, self.w.adresa_nahladu)
+        try:
+            self.w.nahlad = True
+            self.assertEqual(self.w.og_abs_url('og/x.jpg'), 'https://arling.sk/bmbuilding/og/x.jpg')
+            self.w.adresa_nahladu = build.bezpecna_url('http://arling.sk/bmbuilding/').rstrip('/')
+            self.assertEqual(self.w.og_abs_url('og/x.jpg'), 'https://bmbuilding.sk/og/x.jpg')
+            self.w.nahlad = False
+            self.w.adresa_nahladu = stare[1]
+            self.assertEqual(self.w.og_abs_url('og/x.jpg'), 'https://bmbuilding.sk/og/x.jpg')
+        finally:
+            self.w.nahlad, self.w.adresa_nahladu = stare
+
+    def test_14_jednotny_zapis_roly(self):
+        """Položka 14: „Projektový manažér a stavebný dozor“ (Vtáčnik, Devínske lúky, Na Križovatkách, Okánikova)
+        má na webe zápis „Projektový manažment a stavebný dozor“ cez nastavenia.json rola_zapis; obsah sa nemení,
+        počty realizácií služieb ostávajú, text realizácie („pôsobil ako projektový manažér“) tiež."""
+        stara, nova = 'Projektový manažér a stavebný dozor', 'Projektový manažment a stavebný dozor'
+        self.assertEqual(self.nast['rola_zapis'], {stara: nova})
+        povodne = sorted(s for s, d in self.obsah.items() if d.get('rola') == stara)
+        self.assertEqual(povodne, ['bytove-domy-vtacnik-bratislava', 'bytovy-dom-devinske-luky-bratislava',
+                                   'bytovy-dom-na-krizovatkach-bratislava', 'rekonstrukcia-okanikova-bratislava'])
+        zoznam = self.stranka('realizacie/')['telo'].replace('\u00a0', ' ')
+        for slug in povodne:
+            r = next(x for x in self.w.realizacie if x['slug'] == slug)
+            self.assertEqual(r['rola'], nova, slug)
+            self.assertTrue(self.udaje(self.stranka(f'realizacie/{slug}/')['telo'])['Rola BM Building'].startswith(nova), slug)
+            karta = zoznam.split(f'realizacie/{slug}/"', 2)[2].split('</li>', 1)[0]
+            self.assertIn(f'<p class="projekt-text">{nova}</p>', karta, slug)
+        for subor in stranky(self.ostry):
+            t = subor.read_text(encoding='utf-8').replace('\u00a0', ' ')
+            # jediný výskyt starého zápisu je veta textu realizácie Okánikova (obsah, nie pole rola)
+            self.assertEqual(t.count('manažér a stavebný dozor'), t.count('pôsobil ako projektový manažér a stavebný dozor'), subor)
+        for slug, t in self.texty['sluzby'].items():
+            n = sum(1 for d in self.obsah.values() if any(k in (d.get('rola') or '').lower() for k in t['kluce']))
+            self.assertEqual(len(self.w.realizacie_sluzby(slug)), n, slug)
+
+    def test_14_21_zapis_v_nastaveniach_bez_padu(self):
+        """Položky 14 a 21: zlé položky rola_zapis, mena_zapis a text_zapis sú varovanie, nie pád; kus textu, ktorý
+        v realizácii nie je, je varovanie; chýbajúca realizácia sa preskočí; nahradí sa aj alt fotky."""
+        tmp = Path(tempfile.mkdtemp(prefix='bmb-test-zapis-'))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        obsah = maly_obsah(tmp)
+        sablona = sablona_s_nastaveniami(
+            tmp, rola_zapis={'Stavebný dozor': 'Stavebný dozor a TDI', '_poznamka': 'x', 'Zlá': 5},
+            mena_zapis='nie je objekt',
+            text_zapis={'plna': [['Skúška', 'skúška'], ['Nie je v texte', 'x'], 'zlé'], 'nie-je-v-obsahu': [['a', 'b']]})
+        err = io.StringIO()
+        with mock.patch.object(build, 'SABLONA', sablona), redirect_stderr(err):
+            w = build.Web(obsah, False)
+        plna = next(r for r in w.realizacie if r['slug'] == 'plna')
+        self.assertEqual(plna['rola'], 'Stavebný dozor a TDI')
+        self.assertEqual(plna['nazov'], 'Bytový dom skúška')
+        self.assertEqual([f['alt'] for f in plna['fotky']], ['Pohľad z ulice', 'Bytový dom skúška, Bratislava, Skúšobná ulica'])
+        e = err.getvalue()
+        self.assertIn("nastavenia rola_zapis: 'Zlá' -> 5 nie je dvojica textov", e)
+        self.assertIn('nastavenia mena_zapis nie je objekt', e)
+        self.assertIn("nastavenia text_zapis: 'Nie je v texte' v realizácii plna nie je", e)
+        self.assertIn("nastavenia text_zapis: plna 'zlé' nie je dvojica", e)
+        self.assertNotIn('nie-je-v-obsahu', e)
+
+    def test_16_pevne_medzery_roky_a_pocet(self):
+        """Položka 16: „2021 až 2022“ a „8 fotiek“ sa nezalomia (pevné medzery v sadzba a tvar); zoznam na
+        /stavebny-dozor/, údaje a text detailov bez rozsahu rokov s obyčajnou medzerou."""
+        self.assertEqual(build.sadzba('2021 až 2022'), '2021\u00a0až\u00a02022')
+        self.assertEqual(build.sadzba('v rokoch 2018 až 2021.'), 'v\u00a0rokoch 2018\u00a0až\u00a02021.')
+        self.assertEqual(build.sadzba('2 až 6 obytných'), '2\u00a0až\u00a06 obytných')
+        self.assertEqual(build.sadzba('až 2022'), 'až 2022')
+        self.assertEqual([build.tvar(n, 'fotka', 'fotky', 'fotiek') for n in (1, 3, 8)],
+                         ['1\u00a0fotka', '3\u00a0fotky', '8\u00a0fotiek'])
+        for s in self.texty['sluzby']:
+            telo = self.stranka(f'{s}/')['telo']
+            if '<ul class="zoznam-dalsie">' in telo:
+                zoznam = telo.split('<ul class="zoznam-dalsie">', 1)[1].split('</ul>', 1)[0]
+                self.assertNotRegex(zoznam, r'\d až \d', s)
+                self.assertRegex(zoznam, '\\d\u00a0až\u00a0\\d', s)
+        for r in self.w.realizacie:
+            telo = self.stranka(f'realizacie/{r["slug"]}/')['telo']
+            kusy = [telo.split(z, 1)[1].split(k, 1)[0] for z, k in (('<dl class="fakty udaje">', '</dl>'),
+                                                                   ('<div class="detail-text atelier-text">', '</div>'))
+                    if z in telo]
+            self.assertTrue(kusy, r['slug'])
+            for kus in kusy:
+                self.assertNotRegex(re.sub(r'<[^>]+>', '', kus), r'\d až \d', r['slug'])
+            m = re.search(r'<a href="#galeria">(.*?)</a>', telo)
+            if m:
+                self.assertRegex(m.group(1), '^Galéria, \\d+ fot', r['slug'])
+
+    def test_20_vseobecna_vyzva_pre_tri_sluzby(self):
+        """Položka 20: všeobecná výzva v Kontakte (úvod, /realizacie/, /opravnenia/, /ochrana-udajov/) menuje všetky
+        tri služby; stránky služieb majú vlastnú výzvu."""
+        v = self.texty['vyzvy']['zaver']
+        self.assertEqual(v, 'Potrebujete stavebný manažment, stavebný dozor alebo stavbyvedúceho? Ozvite sa.')
+
+        def kontakt(cesta):
+            s = self.stranka(cesta)['html'].replace('\u00a0', ' ')
+            return s.split('<section class="sekcia kontakt" id="kontakt"', 1)[1].split('</section>', 1)[0]
+        for cesta in ('', 'realizacie/', 'opravnenia/', 'ochrana-udajov/'):
+            self.assertIn(f'<p class="uvodny">{v} {self.texty["kontakt"]["posobnost"]}</p>', kontakt(cesta), cesta)
+        for s, t in self.texty['sluzby'].items():
+            k = kontakt(f'{s}/')
+            self.assertIn(t['zaver'], k, s)
+            self.assertNotIn(v, k, s)
+
+    def test_21_mena_firiem_a_pravopis(self):
+        """Položka 21: mená firiem podľa ORSR (HANT BA, a.s.; DARK BLUE STUDIO), pracovisko SFÚ s malým d v názve,
+        texte a popisoch fotiek; obsah sa nemení, pomenovanie Lumière ostáva."""
+        self.assertEqual(self.nast['mena_zapis'], {'HANT BA': 'HANT BA, a.s.'})
+        self.assertEqual(self.obsah['bytove-domy-vtacnik-bratislava']['zhotovitel'], 'HANT BA')
+        vt = self.udaje(self.stranka('realizacie/bytove-domy-vtacnik-bratislava/')['telo'])
+        self.assertTrue(vt['Zhotoviteľ'].startswith('HANT BA, a.s.'), vt['Zhotoviteľ'])
+        sfu = 'digitalizacne-pracovisko-sfu-spitalska-bratislava'
+        self.assertTrue(self.obsah[sfu]['nazov'].startswith('Stavebné úpravy Digitalizačného'))
+        info = self.stranka(f'realizacie/{sfu}/')
+        self.assertTrue(info['h1'].startswith('Stavebné úpravy digitalizačného pracoviska SFÚ'), info['h1'])
+        self.assertIn('Stavebné úpravy digitalizačného pracoviska Slovenského filmového ústavu', info['telo'])
+        r = next(x for x in self.w.realizacie if x['slug'] == sfu)
+        self.assertTrue(r['fotky'])
+        self.assertTrue(all(f['alt'].startswith('Stavebné úpravy digitalizačného pracoviska SFÚ') for f in r['fotky']))
+        for subor in stranky(self.ostry) + [self.ostry / 'llms.txt']:
+            t = subor.read_text(encoding='utf-8')
+            self.assertNotIn('Digitalizačného', t, subor)
+            self.assertNotRegex(t, r'HANT BA(?!, a\.s\.)', subor)
+            # jediná výnimka: alt (a data-alt lightboxu) obrázka tabuľky ASB prepisuje obrázok, na ňom je „DARK BLUE
+            # studio“ (oprava po overení, kontrola zadania nález drobné)
+            bez_altu = re.sub(r'(?:data-)?alt="Tabuľka údajov o stavbe z časopisu ASB[^"]*"', '', t)
+            self.assertNotIn('DARK BLUE studio', bez_altu, subor)
+        lum = self.stranka('realizacie/filmovy-klub-lumiere-spitalska-bratislava/')
+        self.assertIn('Filmového klubu Lumière', lum['h1'])
+        self.assertTrue(self.udaje(lum['telo'])['Projektant'].startswith('DARK BLUE STUDIO'))
+        # alt obrázka tabuľky ASB podľa obrázka, údaje lightboxu (pole Projektant) podľa ORSR
+        self.assertRegex(lum['telo'], r'alt="Tabuľka údajov o stavbe z časopisu ASB[^"]*projektant DARK BLUE studio, architekti')
+        self.assertIn('projektant DARK BLUE STUDIO, Ing. arch.', lum['telo'])
+
+    def test_29_stavbyveduci_odkaz_vsetky_realizacie(self):
+        """Položka 29: /stavbyveduci/ (žiadna rola v obsahu ho nemá) má pod textom odkaz Všetky realizácie ako
+        ostatné služby; každá stránka služby ho má práve raz."""
+        self.assertEqual(self.w.realizacie_sluzby('stavbyveduci'), [])
+        telo = self.stranka('stavbyveduci/')['telo']
+        hlavne = telo.split('<div class="sluzba-hlavne', 1)[1].split('<aside', 1)[0]
+        self.assertRegex(hlavne, r'</ul><p class="viac"><a class="odkaz-sipka" href="\.\./realizacie/">Všetky realizácie <svg')
+        for s in self.texty['sluzby']:
+            self.assertEqual(self.stranka(f'{s}/')['telo'].count('>Všetky realizácie <svg'), 1, s)
+
+    def test_30_pocet_realizacii_so_sluzbou_v_mene_odkazu(self):
+        """Položka 30: odkazy „13 realizácií“ a „23 realizácií“ v Činnosti majú pre čítačku aj službu (span.vh),
+        viditeľný text sa nemení."""
+        cin = self.stranka('')['telo'].split('id="cinnost"', 1)[1].split('</section>', 1)[0]
+        odkazy = re.findall(r'<a class="cinnost-pocet" href="([a-z-]+)/#real-nadpis">(.*?)</a>', cin)
+        self.assertEqual([s for s, _ in odkazy], [s for s in self.w.poradie_sluzieb() if self.w.realizacie_sluzby(s)])
+        for slug, a in odkazy:
+            meno = html.unescape(re.sub(r'<[^>]+>', '', a)).replace('\u00a0', ' ')
+            self.assertEqual(meno, f'{len(self.w.realizacie_sluzby(slug))} {self.w.slovo_realizacie(len(self.w.realizacie_sluzby(slug)))}: '
+                                   f'{build.male(self.texty["sluzby"][slug]["menu"])}')
+            self.assertEqual(re.sub(r'<span class="vh">.*?</span>', '', a).count('<span'), 2)
+
+    def test_41_ico_v_json_ld_firmy(self):
+        """Položka 41: JSON-LD firmy má IČO ako identifier (PropertyValue, https://schema.org/identifier)."""
+        ico = re.sub(r'\s+', '', self.firma['ico'])
+        self.assertEqual(ico, '35947519')
+        for cesta in ('', 'kontakt/', 'realizacie/rd-pezinok/'):
+            f = next(u for u in self.stranka(cesta)['ld'] if str(u.get('@id', '')).endswith('#firma'))
+            self.assertEqual(f['identifier'], {'@type': 'PropertyValue', 'propertyID': 'IČO', 'value': ico}, cesta)
+            self.assertEqual(f['vatID'], self.firma['ic_dph'])
+
+    def test_42_zostava_json_nejde_na_web(self):
+        """Položka 42: workflow Obsah zmaže web/.zostava.json (zoznam súborov pre ďalší beh build.py) po zostavení
+        a pred nahratím artefaktu GitHub Pages."""
+        yml = (KOREN / '.github' / 'workflows' / 'obsah.yml').read_text(encoding='utf-8')
+        self.assertEqual(build.MANIFEST, '.zostava.json')
+        krok = f'run: rm -f web/{build.MANIFEST}'
+        self.assertEqual(yml.count(krok), 1)
+        self.assertLess(yml.index('run: python build.py'), yml.index(krok))
+        self.assertLess(yml.index(krok), yml.index('actions/upload-pages-artifact@'))
+        self.assertTrue((self.ostry / build.MANIFEST).is_file())
+
+
+def node_simulacia(test, kod_appjs, sim):
+    """Spustí kus app.js v node nad falošným DOM (sim dostane kód ako JSON na stdin) a vráti výstup JSON."""
+    import subprocess
+    node = shutil.which('node')
+    if not node:
+        test.skipTest('node nie je k dispozícii')
+    p = subprocess.run([node, '-e', sim], input=json.dumps(kod_appjs), capture_output=True, text=True, encoding='utf-8',
+                       timeout=60)
+    test.assertEqual(p.returncode, 0, p.stderr)
+    return json.loads(p.stdout)
+
+
+def cast_appjs(od, po):
+    js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+    assert od in js and po in js, (od, po)
+    return od + js.split(od, 1)[1].split(po, 1)[0]
+
+
+class TestAuditRozhranie(unittest.TestCase):
+    """Audit naplno živého náhľadu 25. 11. 2026, časť 2 (rozhranie): položky 4, 6, 9, 11, 13, 15, 17, 18, 19, 23, 24,
+    25, 26, 27, 32, 33, 34, 35, 36, 37, 38, 39 a 40 zoznamu audit-naplno/synteza/ZOZNAM.md a dva drobné nálezy kontroly
+    širokého rozloženia (Ďalšie realizácie a osamelé slovo v boxe s dokladom od 1921 px). Záznam a merania v Chrome:
+    ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/AUDIT-OPRAVY.md, časť 2."""
+
+    # šírky textu v Chrome 158 (Geist, merané 25. 11. 2026 cez canvas measureText v prehliadači, rozhranie/funkcie.mjs):
+    # najdlhšie voľby roliet pri písme 14 px a texty tlačidla Menu pri 15 px. Nová voľba s dlhším textom sa musí premerať.
+    VOLBY_PX = {'všetky': 42.3, '2020 až 2025': 93.5, '2012 až 2018': 85.3, '2004 až 2009': 93.7, 'rok neuvedený': 93.8,
+                'Bratislava (22)': 91.3, 'Ivanka pri Dunaji (1)': 122.2, 'Nitrianske Hrnčiarovce (1)': 161.4,
+                'Pezinok (1)': 67.8, 'najnovšie': 61.0, 'najstaršie': 62.8, 'abecedne': 63.0}
+    ZAVRIET_PX = 49.9
+    # hlavička od 1024 px (Chrome, rozhranie/prieskum.mjs): logo najviac 229,4 px (výška 48 px), menu 356,3 px,
+    # Zavolať s číslom 227,9 px, Menu 84 px
+    LOGO_PX, MENU_PX, TEL_PX, MENU_M_PX = 229.4, 356.3, 227.9, 84.0
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry, cls.nahlad, cls.w = s['ostry'], s['nahlad'], s['web']
+        cls.css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        cls.zaklad = css_bez_blokov(cls.css)
+        cls.firma = json.loads((KOREN / 'obsah' / 'firma.json').read_text(encoding='utf-8'))
+
+    def info(self, cesta):
+        return stranka_info(self.ostry / cesta / 'index.html' if cesta else self.ostry / 'index.html')
+
+    def blok(self, hlavicka):
+        return ''.join(css_bloky(self.css, hlavicka))
+
+    def test_4_roletky_v_dvoch_stlpcoch_a_poradie_fokusu(self):
+        """Položka 4: do 767 px roletky v dvoch stĺpcoch, Miesto cez celý riadok ako prvé (v DOM aj na obrazovke, fokus
+        ide podľa obrazovky), pod ním Roky a Zoradiť; pod 320 px pod sebou. Každá voľba sa zmestí pri 320, 360, 390 a
+        411 px (šírky textu z Chrome, okraje roletky 4 px, rámik 1 px, šípka 24 px); v troch stĺpcoch sa orezávala."""
+        telo = self.info('realizacie/')['telo']
+        vyber = telo.split('<div class="filtre-vyber">', 1)[1].split('</div>', 1)[0]
+        self.assertEqual(re.findall(r'<label class="([^"]+)">(\w+)', vyber),
+                         [('vyber vyber-miesto', 'Miesto'), ('vyber', 'Roky'), ('vyber', 'Zoradiť')])
+        mobil = self.blok('@media (max-width:767px)')
+        self.assertIn('.filtre-vyber{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}', mobil)
+        self.assertIn('.vyber-miesto{grid-column:1/-1}', mobil)
+        self.assertIn('.vyber select{width:100%;font-size:14px;padding:0 4px}', mobil)
+        self.assertIn('.filtre-vyber{grid-template-columns:minmax(0,1fr)}', self.blok('@media (max-width:319px)'))
+        # voľby z HTML sú zmerané; žiadna sa neoreže
+        volby = {sel: [html.unescape(x) for x in re.findall(r'<option value="[^"]*">([^<]+)</option>',
+                                                              telo.split(f'<select {sel}>', 1)[1].split('</select>', 1)[0])]
+                 for sel in ('data-mesto', 'data-roky', 'data-zoradit')}
+        # nová voľba (nové mesto alebo desaťročie) nemá šírku z Chrome: test spadne, treba ju premerať (funkcie.mjs)
+        self.assertEqual({t for x in volby.values() for t in x} - set(self.VOLBY_PX), set())
+        dlzky = {sel: [self.VOLBY_PX[t] for t in texty] for sel, texty in volby.items()}
+        for vw in (320, 360, 390, 411):
+            obsah = vw - 32
+            stlpec = (obsah - 8) / 2
+            for sel, sirka in (('data-mesto', obsah), ('data-roky', stlpec), ('data-zoradit', stlpec)):
+                miesto = sirka - 2 * 4 - 2 - 24
+                self.assertLessEqual(max(dlzky[sel]), miesto, (vw, sel))
+        # pred opravou (tri stĺpce) by sa pri 360 px orezalo
+        self.assertGreater(self.VOLBY_PX['rok neuvedený'], (328 - 16) / 3 - 34)
+
+    def test_6_fokus_odkryje_skryty_blok(self):
+        """Položka 6: fokus klávesnice v bloku .vstup, ktorý pozorovateľ ešte neodkryl (spodných 8 % okna), blok odkryje
+        hneď (focusin) a pozorovateľ ho prestane sledovať; fokus mimo .vstup nič nemení. Simulácia časti 0b app.js
+        (Chrome pri 1440 x 900: zastávka Oprávnenia mala nepriehľadnosť 0, po oprave 1). Od položky 48 (časť 3) dáva
+        polohu pri načítaní prvé hlásenie pozorovateľa ioPoloha (boundingClientRect a rootBounds), skript nečíta
+        innerHeight ani getBoundingClientRect (prvky v simulácii ho nemajú, čítania okna sa rátajú)."""
+        kod = cast_appjs('// 0b. Sekcie pod hrdinom', '// 1. Mobilné menu')
+        self.assertIn("d.addEventListener('focusin'", kod)
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+function triedy() { const s = new Set(); return { add: (x) => s.add(x), remove: (x) => s.delete(x), contains: (x) => s.has(x), list: () => [...s] }; }
+const prvky = [100, 850, 900, 1500, 2000].map((top, i) => ({ i, top, classList: triedy() }));
+const pozorovatelia = [];
+class IO { constructor(fn, opt) { this.fn = fn; this.opt = opt || {}; this.sledovane = new Set(); this.zrusene = []; pozorovatelia.push(this); }
+  observe(e) { this.sledovane.add(e.i); } unobserve(e) { this.sledovane.delete(e.i); this.zrusene.push(e.i); } }
+const posluch = {};
+let citania = 0;
+const win = {};
+Object.defineProperty(win, 'innerHeight', { get() { citania++; return 900; } });
+const d = { querySelector: (s) => (s === '.stranka-uvod' ? {} : null), addEventListener: (t, f) => { posluch[t] = f; },
+  documentElement: { get clientHeight() { citania++; return 900; } } };
+const ctx = { d, pohyb: true, maIO: true, window: win, IntersectionObserver: IO, vsetky: () => prvky };
+vm.createContext(ctx);
+vm.runInContext(kod, ctx);
+const vstup = pozorovatelia.find((o) => o.opt.rootMargin);
+const poloha = pozorovatelia.find((o) => !o.opt.rootMargin);
+const v = { pozorovatelov: pozorovatelia.length, poloha_sleduje: [...poloha.sledovane].sort(),
+  vstup_pred_hlasenim: prvky.map((p) => p.classList.contains('vstup')) };
+// prvé hlásenie polohy po rozložení prehliadača (okno 900 px): horný okraj na spodku okna alebo nižšie sa skryje
+poloha.fn(prvky.map((p) => ({ target: p, isIntersecting: p.top < 900, boundingClientRect: { top: p.top }, rootBounds: { top: 0, bottom: 900 } })));
+v.vstup = prvky.map((p) => p.classList.contains('vstup'));
+v.sledovane = [...vstup.sledovane].sort();
+v.poloha_po = [...poloha.sledovane];
+const bez = { i: 9, classList: triedy() };
+poloha.fn([{ target: bez, isIntersecting: false, boundingClientRect: { top: 5000 }, rootBounds: null }]);
+v.bez_rootbounds = bez.classList.contains('vstup');
+vstup.fn([{ target: prvky[3], isIntersecting: true }, { target: prvky[4], isIntersecting: false }]);
+v.videne = prvky.map((p) => p.classList.contains('videne'));
+const odkaz = (p) => ({ closest: (s) => (s === '.vstup:not(.videne)' && p && p.classList.contains('vstup') && !p.classList.contains('videne') ? p : null) });
+posluch.focusin({ target: odkaz(prvky[2]) });
+v.po_fokuse = prvky.map((p) => p.classList.contains('videne'));
+v.zrusene = vstup.zrusene.slice();
+posluch.focusin({ target: odkaz(null) });
+posluch.focusin({ target: odkaz(prvky[2]) });
+v.zrusene_znova = vstup.zrusene.slice();
+posluch.focusin({ target: {} });
+v.citania = citania;
+console.log(JSON.stringify(v));
+"""
+        v = node_simulacia(self, kod, sim)
+        self.assertEqual(v, {'pozorovatelov': 2, 'poloha_sleduje': [0, 1, 2, 3, 4],
+                             'vstup_pred_hlasenim': [False] * 5, 'vstup': [False, False, True, True, True],
+                             'sledovane': [2, 3, 4], 'poloha_po': [], 'bez_rootbounds': False,
+                             'videne': [False, False, False, True, False], 'po_fokuse': [False, False, True, True, False],
+                             'zrusene': [3, 2], 'zrusene_znova': [3, 2], 'citania': 0})
+
+    def test_9_odkaz_so_sipkou_na_osi(self):
+        """Položka 9: odkaz so šípkou bez ľavého vnútorného okraja (text na osi nadpisu, na 404 na hrane tlačidla),
+        obrys fokusu 3 px pred ním; pravý okraj 4 px ostáva. Chrome: text 4 px vpravo od osi pri 390, 1366 a 1440 px,
+        po oprave 0 px na úvode, /stavebny-dozor/ aj 404."""
+        d = deklaracie(self.zaklad, '.odkaz-sipka')
+        self.assertEqual(d.get('padding'), '0 4px 0 0')
+        self.assertNotRegex(self.css, r'\.odkaz-sipka\{[^}]*padding-left')
+        self.assertEqual(deklaracie(self.zaklad, ':focus-visible').get('outline-offset'), '3px')
+        for cesta, kus in (('', 'Stránka služby'), ('stavebny-dozor/', 'Všetky realizácie')):
+            self.assertRegex(self.info(cesta)['telo'], rf'<a class="odkaz-sipka" href="[^"]+">{kus}')
+
+    def test_11_slider_potiahnutim_prsta(self):
+        """Položka 11: vodorovné potiahnutie prstom alebo perom po fotke (aspoň 48 px a viac ako 1,5-násobok zvislého)
+        prepne stavbu ako šípky a slider ostane stáť, kým sa človek nedotkne miesta mimo neho; zvislé potiahnutie, myš
+        a priblížená stránka nič nemenia; .snimky má touch-action pan-y. Simulácia časti 3b app.js nad falošným DOM
+        (Chrome pri 390 x 844 s dotykom: vľavo RD Ahoj na Dvojdom S, vpravo späť, po 9 s bez zmeny, zvislo posun stránky)."""
+        self.assertEqual(deklaracie(self.zaklad, '.snimky').get('touch-action'), 'pan-y pinch-zoom')
+        kod = cast_appjs('// Odložená fotka slidera', '// 4b. Kotva')
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+function triedy() { const s = new Set(); return { add: (...x) => x.forEach((y) => s.add(y)), remove: (...x) => x.forEach((y) => s.delete(y)), contains: (x) => s.has(x) }; }
+function prvok(extra) { const p = { poslucha: {}, classList: triedy(), atr: {}, addEventListener(t, f) { (this.poslucha[t] = this.poslucha[t] || []).push(f); },
+  getAttribute(n) { return n in this.atr ? this.atr[n] : null; }, setAttribute(n, v) { this.atr[n] = String(v); }, hasAttribute(n) { return n in this.atr; },
+  removeAttribute(n) { delete this.atr[n]; } }; return Object.assign(p, extra || {}); }
+const img = () => prvok({ complete: true, naturalWidth: 800, decode: () => Promise.resolve() });
+const snimky = [0, 1, 2].map((i) => { const li = prvok(); const im = img(); li.querySelector = (s) => (s === 'img' ? im : null); if (i === 0) li.classList.add('je'); return li; });
+const popisy = [0, 1, 2].map((i) => { const li = prvok(); if (i === 0) li.classList.add('je'); return li; });
+const tlacidla = ['-1', 'pauza', '1'].map((x) => prvok({ atr: { 'data-slider': x } }));
+tlacidla[1].atr['aria-pressed'] = 'false';
+const ovladanie = prvok({ querySelectorAll: (s) => (s === '[data-slider]' ? tlacidla : []) });
+const plocha = prvok();
+const zoznam = prvok();
+const vnutri = new Set([plocha, ...snimky, ...tlacidla, ovladanie]);
+const slider = prvok({ atr: { 'data-interval': '8000', 'data-prelinanie': '1200' }, style: { setProperty() {} },
+  contains: (x) => vnutri.has(x),
+  querySelector: (s) => ({ '.slider-ovladanie': ovladanie, '.slider-cislo': null, '.slider-popisy': zoznam, '[data-slider="pauza"]': tlacidla[1], '.snimky': plocha })[s] || null,
+  querySelectorAll: (s) => (s === '.snimka' ? snimky : s === '.slider-popis' ? popisy : []) });
+const dok = prvok({ hidden: false, querySelector: (s) => (s === '.slider' ? slider : null), createElement: () => prvok() });
+const casovace = []; let id = 0;
+const win = { setTimeout: (f, ms) => { casovace.push(ms); return ++id; }, clearTimeout() {}, visualViewport: { scale: 1 }, PointerEvent: function () {},
+  addEventListener() {}, requestAnimationFrame() {} };
+const ctx = { d: dok, window: win, pohyb: true, maIO: false, vsetky: (s, k) => Array.prototype.slice.call((k || dok).querySelectorAll(s)), Number, Promise };
+vm.createContext(ctx);
+vm.runInContext(kod, ctx);
+const aktivna = () => snimky.findIndex((x) => x.classList.contains('je'));
+const pusti = (prv, t, e) => (prv.poslucha[t] || []).forEach((f) => f(e));
+const tah = (typ, dx, dy) => { pusti(plocha, 'pointerdown', { isPrimary: true, pointerType: typ, clientX: 300, clientY: 400, pointerId: 7 });
+  pusti(plocha, 'pointerup', { pointerId: 7, clientX: 300 + dx, clientY: 400 + dy }); };
+(async () => {
+  const v = { na_zaciatku: casovace.filter((x) => x === 8000).length };
+  casovace.length = 0;
+  tah('touch', -120, 10);
+  await new Promise((r) => setTimeout(r, 20));
+  v.po_vlavo = aktivna();
+  v.planovane_po_tahu = casovace.filter((x) => x === 8000).length;
+  tah('touch', 120, -5);
+  await new Promise((r) => setTimeout(r, 20));
+  v.po_vpravo = aktivna();
+  tah('touch', -60, 100);
+  tah('mouse', -150, 0);
+  tah('pen', -40, 0);
+  win.visualViewport.scale = 1.6; tah('touch', -150, 0); win.visualViewport.scale = 1;
+  await new Promise((r) => setTimeout(r, 20));
+  v.bez_zmeny = aktivna();
+  tah('pen', -150, 0);
+  await new Promise((r) => setTimeout(r, 20));
+  v.pero = aktivna();
+  casovace.length = 0;
+  (dok.poslucha.pointerdown || []).forEach((f) => f({ target: plocha }));
+  v.dotyk_vnutri = casovace.filter((x) => x === 8000).length;
+  (dok.poslucha.pointerdown || []).forEach((f) => f({ target: {} }));
+  v.dotyk_mimo = casovace.filter((x) => x === 8000).length;
+  v.zive_popisy = zoznam.getAttribute('aria-live');
+  console.log(JSON.stringify(v));
+})();
+"""
+        v = node_simulacia(self, kod, sim)
+        self.assertEqual(v, {'na_zaciatku': 1, 'po_vlavo': 1, 'planovane_po_tahu': 0, 'po_vpravo': 0, 'bez_zmeny': 0,
+                             'pero': 1, 'dotyk_vnutri': 0, 'dotyk_mimo': 1, 'zive_popisy': 'polite'})
+
+    def test_13_detail_udaje_pri_fotke(self):
+        """Položka 13 a oprava po overení: na detaile s titulnou fotkou je tabuľka údajov v dvojstrane za fotkou (hlava
+        má len H1), fotka je pri každej šírke hneď pod H1: do 1279 px fotka, tabuľka a text pod sebou (24 px pod H1, od
+        1024 px 32 px), od 1280 px fotka vľavo cez oba riadky, tabuľka a pod ňou kóta s textom vpravo (do 1920 px od
+        čiary 8. stĺpca). Chrome: pri 1366 x 633 je z fotky v prvej obrazovke najmenej 51 % (SFÚ), priemer 70 % pri 26
+        realizáciách; pri 360 až 412 px celá fotka pri všetkých 26 (predtým pri 390 x 844 priemer 38 %, 11 bez fotky)."""
+        for r in self.w.realizacie:
+            telo = self.info(f'realizacie/{r["slug"]}/')['telo']
+            hlava = telo.split('<div class="hlava-stranky hlava-detail">', 1)[1].split('<div class="obsah mriezka detail', 1)[0]
+            self.assertNotIn('hlava-bok', hlava, r['slug'])
+            self.assertIn('<h1 class="nadpis-stranky" id="nadpis">', hlava, r['slug'])
+            self.assertRegex(telo, r'(?s)<div class="obsah mriezka detail detail-s-udajmi"><figure class="pohlad detail-foto">'
+                                   r'.*?</figure><div class="detail-udaje"><dl class="fakty udaje">.*?</dl></div>'
+                                   r'<div class="detail-text atelier-text">', r['slug'])
+            self.assertEqual(telo.count('<dl class="fakty udaje">'), 1, r['slug'])
+        pc = self.blok('@media (min-width:1024px)')
+        for kus in ('.detail-s-udajmi{margin-top:calc(var(--m-32) - clamp(36px,5vw,72px))}',
+                    '.detail.detail-s-udajmi .detail-text>.kota:first-child{margin-top:0}'):
+            self.assertIn(kus, pc)
+        self.assertNotIn('.detail-s-udajmi .detail-udaje{', pc)
+        uzky = self.blok('@media (min-width:1024px) and (max-width:1279px)')
+        for kus in ('.detail-s-udajmi .detail-foto{grid-column:1/-1;max-width:none}', '.detail-s-udajmi .detail-text{grid-column:1/-1}'):
+            self.assertIn(kus, uzky)
+        siroky = self.blok('@media (min-width:1280px)')
+        for kus in ('.detail-s-udajmi{grid-template-rows:auto 1fr}', '.detail-s-udajmi .detail-udaje{grid-column:8/-1;grid-row:1}',
+                    '.detail-s-udajmi .detail-foto{grid-column:1/8;grid-row:1/span 2;align-self:start}',
+                    '.detail-s-udajmi .detail-text{grid-column:8/-1;grid-row:2}'):
+            self.assertIn(kus, siroky)
+        # od 1921 px voľný stĺpec za fotkou ako pred opravou po overení (široké rozloženie, SIROKE.md)
+        self.assertIn('.detail-s-udajmi .detail-udaje,.detail-s-udajmi .detail-text{grid-column:9/-1}',
+                      self.blok('@media (min-width:1921px)'))
+        # bloky v poradí: počítač, 1024 až 1279, od 1280, od 1921 (každý prepíše predchádzajúci)
+        css = self.css
+        self.assertLess(css.index('@media (min-width:1024px){'), css.index('@media (min-width:1024px) and (max-width:1279px){'))
+        self.assertLess(css.index('@media (min-width:1024px) and (max-width:1279px){'), css.index('@media (min-width:1280px){'))
+        self.assertLess(css.rindex('@media (min-width:1280px){'), css.index('@media (min-width:1921px){'))
+        # do 1023 px: fotka 24 px pod H1 (spodok hlavy clamp(36px,5vw,72px) vyrovnaný), tabuľka a text po 32 px
+        self.assertEqual(deklaracie(self.zaklad, '.hlava-stranky').get('padding'), '0 0 clamp(36px,5vw,72px)')
+        self.assertEqual(deklaracie(self.zaklad, '.detail').get('row-gap'), '32px')
+        self.assertEqual(deklaracie(self.zaklad, '.detail-s-udajmi').get('margin-top'), 'calc(var(--m-24) - clamp(36px,5vw,72px))')
+        self.assertNotIn('.detail-s-udajmi .detail-foto{', self.zaklad)
+
+    def test_15_karta_bez_rokov_len_vlasova_ciara(self):
+        """Položka 15: karta bez rokov má v riadku kóty len vlasovú čiaru farby čiar webu na celú šírku karty, bez šikmých
+        koncov (karty v rade ostávajú v spoločných riadkoch); predtým prázdna kótovacia čiara."""
+        self.assertEqual(deklaracie(self.zaklad, '.kota-prazdna'),
+                         {'margin-inline': '0', 'background-image': 'linear-gradient(var(--beton),var(--beton))'})
+        self.assertIn('.kota-prazdna::before,.kota-prazdna::after{content:none}', self.zaklad)
+        bez = [r for r in self.w.realizacie if not self.w.roky_stitok(r)]
+        self.assertTrue(bez)
+        telo = self.info('realizacie/')['telo']
+        for r in bez:
+            # medzi odkazom fotky a odkazom nadpisu karty: fotka, kóta
+            karta = telo.split(f'realizacie/{r["slug"]}/"', 2)[1]
+            self.assertIn('<span class="kota kota-prazdna" aria-hidden="true"></span>', karta, r['slug'])
+
+    def test_17_36_maly_zvysok_a_fokus_v_okne(self):
+        """Položky 17 a 36: zvyšok najviac polovica dávky (6 pri 12) sa ukáže hneď s dávkou: pri 26 kartách prvé
+        Zobraziť ďalšie ukáže všetkých 14 (predtým 12 a ostalo „(2)“), pri 13 až 18 kartách sú hneď všetky; fokus ide
+        na nadpis prvej novej karty a karta sa posunie do okna (scrollIntoView block nearest). Chrome pri 390 x 844
+        a 1440 x 900: po kliknutí 26 kariet, tlačidlo skryté, karta s fokusom celá v okne nad lištou."""
+        self.assertEqual(build.REALIZACIE_NARAZ, 12)
+        self.assertEqual([self.w.stav_zoznamu(n) for n in (12, 13, 18, 19, 26)],
+                         ['', '', '', 'Zobrazené: 12 z 19', 'Zobrazené: 12 z 26'])
+        n = len(self.w.realizacie)
+        self.assertGreater(n - 12, 6)
+        _, stavy = spravanie_zoznamu(self.ostry, [{'akcia': 'viac'}])
+        self.assertEqual(len(stavy[0]['viditelne']), 12)
+        self.assertEqual(stavy[0]['viac_pocet'], f'({n - 12})')
+        self.assertEqual(len(stavy[1]['viditelne']), n)
+        self.assertTrue(stavy[1]['viac_skryte'])
+        self.assertEqual(stavy[1]['viac_pocet'], '')
+        self.assertEqual(stavy[1]['fokus'], 13)
+        self.assertEqual(stavy[1]['posun'], {'poradie': 13, 'block': 'nearest'})
+        self.assertIsNone(stavy[0]['posun'])
+        js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        self.assertIn('Math.floor(naraz / 2)', js)
+        self.assertIn("prvaNova.scrollIntoView({ block: 'nearest' })", js)
+        # karta nad spodnou lištou: do 767 px scroll-padding-bottom html
+        self.assertIn('html{scroll-padding-bottom:calc(76px + env(safe-area-inset-bottom))}', self.blok('@media (max-width:767px)'))
+
+    def test_18_details_bez_summary_neviditelne(self):
+        """Položka 18: kým parser nedočíta summary, details.menu-m je neviditeľné (inak predvolené „▶ Details“); pravidlo je
+        v spoločnej časti štýlu, teda aj vo vloženom štýle úvodu, a summary je prvé dieťa details."""
+        self.assertIn('details.menu-m:not(:has(>summary)){visibility:hidden}', self.zaklad)
+        for cesta in ('', 'kontakt/'):
+            s = self.info(cesta)['html']
+            self.assertIn('details.menu-m:not(:has(>summary)){visibility:hidden}', s.split('</style>', 1)[0], cesta)
+            self.assertIn('<details class="menu-m"><summary class="tlacidlo tlacidlo-obrys tlacidlo-male">Menu</summary>', s)
+
+    def test_19_27_hlavicka_menu_na_osi_a_cislo(self):
+        """Položky 19 a 27: od 1100 px hlavička v troch stĺpcoch 1fr auto 1fr, menu na osi obsahu (predtým 51 až 70 px
+        vpravo); od 1024 px Zavolať s číslom (do 1023 px len slovo), prístupné meno obsahuje viditeľný text. Zmestí sa
+        pri 1024 až 3440 px: pri 1100 px je medzi menu a tlačidlom aspoň 80 px (Chrome 92,5 px)."""
+        w1100 = self.blok('@media (min-width:1100px)')
+        for kus in ('.hlava .obsah{display:grid;grid-template-columns:1fr auto 1fr}', '.hlava .znak{justify-self:start}',
+                    '.menu-d{grid-column:2}', '.hlava-akcie{grid-column:3;justify-self:end}'):
+            self.assertIn(kus, w1100)
+        self.assertIn('.tel-cislo{display:none}', self.zaklad)
+        self.assertIn('.tel-cislo{display:inline;font-weight:400}', self.blok('@media (min-width:1024px)'))
+        tel = self.firma['telefon']
+        for cesta in ('', 'stavebny-dozor/', 'realizacie/rd-pezinok/'):
+            hlava = self.info(cesta)['html'].split('<header class="hlava">', 1)[1].split('</header>', 1)[0]
+            a = re.search(r'<a class="tlacidlo tlacidlo-male hlavicka-tel" href="tel:[^"]+" aria-label="([^"]+)">(.*?)</a>', hlava)
+            self.assertIsNotNone(a, cesta)
+            self.assertEqual(a.group(1), f'Zavolať {tel}')
+            viditelny = html.unescape(re.sub(r'<[^>]+>', ' ', a.group(2))).replace(' ', ' ')
+            self.assertEqual(' '.join(viditelny.split()), f'Zavolať {tel}')
+            self.assertIn('<span class="tel-cislo cisla">', a.group(2))
+        # od 1100 px: bočné stĺpce majú (obsah - menu - 2 medzery) / 2 a pojmú logo aj tlačidlo s rezervou aspoň 80 px
+        for vw in range(1100 - 17, 3440 - 17 + 1, 7):
+            stlpec = (build.sirka_obsahu_px(vw) - self.MENU_PX - 2 * 12) / 2
+            self.assertGreaterEqual(stlpec - self.TEL_PX, 80, vw)
+            self.assertGreaterEqual(stlpec - self.LOGO_PX, 70, vw)
+        # 1024 až 1099 px: logo, Zavolať s číslom a Menu sa zmestia vedľa seba
+        for vw in range(1024 - 17, 1099 - 17 + 1):
+            self.assertLess(self.LOGO_PX + 12 + self.TEL_PX + 8 + self.MENU_M_PX, build.sirka_obsahu_px(vw), vw)
+
+    def test_23_stitok_nad_hodnotou_do_399(self):
+        """Položka 23: do 399 px je štítok nad hodnotou aj v boxe s dokladom na stránkach služieb a v údajoch detailu
+        (Chrome pri 360 až 399 px: najužšia hodnota 143 až 182 px a 2 až 9 riadkov s jedným slovom, po oprave 286 až
+        325 px a žiadny); do 359 px ostáva pravidlo pre všetky tabuľky, od 400 px vedľa seba ako doteraz."""
+        b399 = self.blok('@media (max-width:399px)')
+        self.assertIn('.sluzba-bok .fakty>div,.fakty.udaje>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}', b399)
+        self.assertIn('.fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}', self.blok('@media (max-width:359px)'))
+        self.assertEqual(deklaracie(self.zaklad, '.fakty>div').get('grid-template-columns'), 'minmax(7.5em,32%) minmax(0,1fr)')
+
+    def test_24_osvedcenia_na_sirku_ramu(self):
+        """Položka 24: na Oprávneniach tabuľka osvedčenia na šírku rámu obrázka (554 px), rám, popis a tabuľka majú jednu
+        ľavú aj pravú hranu (Chrome pri 1366 až 3440 px, predtým tabuľka cez celý stĺpec, pri 1920 px 868 px)."""
+        self.assertEqual(deklaracie(self.zaklad, '.doklady .fakty'), {'max-width': 'var(--doklad-max)'})
+        self.assertEqual(deklaracie(self.zaklad, '.doklad-popis').get('max-width'), 'var(--doklad-max)')
+        self.assertEqual(deklaracie(self.zaklad, '.doklad-odkaz').get('max-width'), 'var(--doklad-max)')
+
+    def test_25_stavebny_manazment_kratky_box(self):
+        """Položka 25: box Stavebného manažmentu (dve osvedčenia) skrátene: nadpis Osvedčenia SKSI, vydavateľ a meno raz
+        a jeden riadok na osvedčenie s odborným zameraním, evidenčným číslom a dátumom (len z firma.json); stránky
+        Stavebný dozor a Stavbyvedúci majú celú tabuľku jedného osvedčenia. Chrome: box pri 1366 px 1127 na 583 px,
+        spodok boxu 28 px pod textom (predtým 571 px); od 1921 px text v dvoch stĺpcoch a spodky zarovno."""
+        telo = self.info('stavebny-manazment/')['telo']
+        box = telo.split('<aside class="kalkulacka sluzba-bok"', 1)[1].split('</aside>', 1)[0]
+        self.assertEqual(box.count('<div class="doklad'), 1)
+        self.assertIn('<div class="doklad doklad-kratky"><h2 class="doklad-h">Osvedčenia SKSI</h2><dl class="fakty">', box)
+        riadky = [(html.unescape(k), html.unescape(re.sub(r'<[^>]+>', '', v)).replace(' ', ' '))
+                  for k, v in re.findall(r'<div><dt>(.*?)</dt><dd>(.*?)</dd></div>', box)]
+        o = self.firma['opravnenia']
+        self.assertEqual(riadky, [
+            ('Vydala', o[0]['organizacia']), ('Meno', o[0]['osoba']),
+            ('Stavbyvedúci', f'{o[0]["odborne_zameranie"]}, evidenčné číslo {o[0]["evidencne_cislo"]}, vydané {o[0]["datum_vydania_text"]}'),
+            ('Stavebný dozor', f'evidenčné číslo {o[1]["evidencne_cislo"]}, vydané {o[1]["datum_vydania_text"]}')])
+        self.assertIn('href="tel:', box)
+        self.assertIn('Oprávnenia a osvedčenia', box)
+        for slug, pocet in (('stavebny-dozor', 6), ('stavbyveduci', 7)):
+            b = self.info(f'{slug}/')['telo'].split('<aside class="kalkulacka sluzba-bok"', 1)[1].split('</aside>', 1)[0]
+            self.assertNotIn('doklad-kratky', b, slug)
+            self.assertEqual(b.count('<dt>'), pocet, slug)
+        # rôzny vydavateľ alebo držiteľ: celé tabuľky ako doteraz
+        stare = self.w.firma['opravnenia']
+        try:
+            self.w.firma['opravnenia'] = [dict(stare[0]), dict(stare[1], osoba='Iná osoba')]
+            self.assertIsNone(self.w.doklady_kratko(['stavbyvedúci', 'stavebný dozor']))
+            self.w.firma['opravnenia'] = [dict(stare[0])]
+            self.assertIsNone(self.w.doklady_kratko(['stavbyvedúci']))
+        finally:
+            self.w.firma['opravnenia'] = stare
+
+    def test_26_spat_v_androide_zavrie_menu(self):
+        """Položka 26: pri otvorení menu CloseWatcher, systémové Späť (požiadavka na zavretie) menu zavrie a vráti fokus
+        na tlačidlo, pri zatvorení menu sa strážca zruší; prehliadač bez CloseWatcher bez chyby ako doteraz. Simulácia
+        časti 1 app.js (Chrome 158: po requestClose menu zavreté, fokus na tlačidle, stránka ostala)."""
+        kod = cast_appjs('// 1. Mobilné menu', '// 2. Spodná lišta')
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const fokus = [];
+function prvok(meno) { return { meno, nodeType: 1, poslucha: {}, addEventListener(t, f) { (this.poslucha[t] = this.poslucha[t] || []).push(f); },
+  getAttribute() { return null; }, focus() { fokus.push(meno); } }; }
+function spusti(sCloseWatcher) {
+  const tl = prvok('summary'); tl.textContent = 'Menu';
+  const menu = prvok('menu'); menu.open = false;
+  menu.querySelector = (s) => (s === 'summary' ? tl : null);
+  menu.querySelectorAll = () => [];
+  menu.contains = (x) => x === menu || x === tl;
+  const dok = prvok('document');
+  dok.querySelectorAll = (s) => (s === 'details.menu-m' ? [menu] : []);
+  const strazcovia = [];
+  const ctx = { d: dok, vsetky: (sel, koren) => Array.prototype.slice.call((koren || dok).querySelectorAll(sel)) };
+  if (sCloseWatcher) ctx.CloseWatcher = class { constructor() { this.zruseny = false; strazcovia.push(this); } destroy() { this.zruseny = true; } };
+  vm.createContext(ctx);
+  vm.runInContext(kod, ctx);
+  const prepni = (o) => { menu.open = o; (menu.poslucha.toggle || []).forEach((f) => f({})); };
+  return { tl, menu, strazcovia, prepni };
+}
+const v = {};
+let s = spusti(true);
+s.prepni(true);
+v.otvorene = { strazcov: s.strazcovia.length, text: s.tl.textContent };
+fokus.length = 0;
+s.strazcovia[0].onclose();
+v.po_spat = { open: s.menu.open, fokus: fokus.slice() };
+s.prepni(false);
+v.po_toggle = { text: s.tl.textContent, zruseny_prvy: s.strazcovia[0].zruseny };
+s.prepni(true);
+s.prepni(false);
+v.tlacidlom = { strazcov: s.strazcovia.length, zruseny_druhy: s.strazcovia[1].zruseny };
+s = spusti(false);
+s.prepni(true); s.prepni(false);
+v.bez_closewatcher = s.tl.textContent;
+console.log(JSON.stringify(v));
+"""
+        v = node_simulacia(self, kod, sim)
+        self.assertEqual(v, {'otvorene': {'strazcov': 1, 'text': 'Zavrieť'}, 'po_spat': {'open': False, 'fokus': ['summary']},
+                             'po_toggle': {'text': 'Menu', 'zruseny_prvy': False},
+                             'tlacidlom': {'strazcov': 2, 'zruseny_druhy': True}, 'bez_closewatcher': 'Menu'})
+
+    def test_32_telefon_na_sirku(self):
+        """Položka 32: telefón na šírku (do 1023 px a najviac 600 px výšky) má hrdinu na výšku okna pod hlavičkou a H1
+        podľa výšky okna, dva riadky v tmavej spodnej časti fotky. Chrome pri 914 x 307: hrdina 64 až 307 px, H1 na
+        231 až 283 px (predtým hrdina 914 px a H1 na 750 px), pri 844 x 390, 740 x 360, 915 x 412 a 640 x 360 tiež."""
+        b = self.blok('@media (max-width:1023px) and (orientation:landscape) and (max-height:600px)')
+        self.assertIn('.snimky,.firma-hlava{aspect-ratio:auto;height:calc(100vh - var(--hore));height:calc(100svh - var(--hore))}', b)
+        self.assertIn('.uvod-h1{font-size:clamp(1.25rem,8svh,2.5rem);max-width:22em}', b)
+        # za blokom 640 až 1023 px (pomer 1 : 1), inak by ho prepísal
+        self.assertGreater(self.css.index('@media (max-width:1023px) and (orientation:landscape)'),
+                           self.css.index('@media (min-width:640px) and (max-width:1023px){'))
+
+    def test_33_ciele_v_pate(self):
+        """Položka 33: v päte logo s odkazom aspoň 44 px široké, „Web: ARLing“ 44,4 px vysoké (riadok 14 px x 1,6
+        a 2 x 11 px, záporný okraj drží riadok textu), siete 48 px ako v Kontakte (Chrome: 44 x 44, 81,9 x 44,4, 48 x 48)."""
+        self.assertEqual(deklaracie(self.zaklad, '.pata-znak'), {'min-width': '44px'})
+        a = deklaracie(self.zaklad, '.pata-arling')
+        self.assertEqual((a.get('display'), a.get('padding-block'), a.get('margin-block')), ('inline-block', '11px', '-11px'))
+        self.assertEqual(deklaracie(self.zaklad, '.pata .male').get('font-size'), '14px')
+        self.assertGreaterEqual(14 * 1.6 + 2 * 11, 44)
+        self.assertEqual(deklaracie(self.zaklad, '.siet-cip').get('width'), '48px')
+        self.assertNotIn('.pata-siete .siet', self.css)
+
+    def test_34_menu_a_zavriet_rovnako_siroke(self):
+        """Položka 34: tlačidlo Menu má 5,6 em (84 px) a okraje 16 px, „Zavrieť“ (49,9 px) sa do 84 px zmestí, takže
+        otvorenie menu neposunie Zavolať (Chrome pri 390, 411, 768 a 1024 px: 1,9 px, po oprave 0); do 389 px okraje
+        12 px."""
+        self.assertEqual(deklaracie(self.zaklad, '.menu-m>summary').get('min-width'), '5.6em')
+        self.assertEqual(deklaracie(self.zaklad, '.menu-m>summary').get('padding-inline'), '16px')
+        self.assertLessEqual(self.ZAVRIET_PX + 2 * 16, 5.6 * 15)
+        self.assertIn('.hlava-akcie .tlacidlo-male{padding:0 12px}', self.blok('@media (max-width:389px)'))
+        self.assertIn('.tlacidlo-male{min-height:44px;padding:0 18px;font-size:15px}', self.zaklad)
+
+    def test_35_pod_320_lista_a_roletky(self):
+        """Položka 35: pod 320 px (priblíženie 150 % pri 411 px dá 274 px) v lište „E-mail“ (text 34,8 px od rámika,
+        predtým 4,2 px), roletky pod sebou, dvojriadkový druh vľavo."""
+        b319 = self.blok('@media (max-width:319px)')
+        for kus in ('.filtre-vyber{grid-template-columns:minmax(0,1fr)}', '.lista-dlhy{display:none}', '.lista-kratky{display:inline}'):
+            self.assertIn(kus, b319)
+        self.assertIn('.lista-kratky{display:none}', self.zaklad)
+        self.assertEqual(deklaracie(self.blok('@media (max-width:767px)'), '.filter').get('text-align'), 'left')
+        s = self.info('')['html']
+        self.assertIn('<span class="lista-dlhy">Napísať e-mail</span><span class="lista-kratky">E-mail</span></a></nav>', s)
+
+    def test_37_lista_pri_obmedzenom_pohybe(self):
+        """Položka 37: pri obmedzenom pohybe lišta vychádza bez prechodu aj s triedou vidno (Chrome: transition none)."""
+        reduce = self.css.split('@media (prefers-reduced-motion:reduce){', 1)[1].split('{transition:none}', 1)[0]
+        self.assertIn('.lista.vidno', reduce.strip().split(','))
+        self.assertIn('.lista', reduce.strip().split(','))
+
+    def test_38_39_rozostupy_textu(self):
+        """Položky 38 a 39 (WCAG 1.4.12): valec kóty je vysoký jeden riadok (1lh, záloha 1.2em) a stĺpec 20 číslic sa
+        posúva po 5 % svojej výšky, takže pri riadkovaní 1,5 ostane v okne cieľová číslica; „stavebno-manažérska“ v H1
+        je inline-block, ktorý sa pri väčších medzerách zalomí za spojovníkom. Chrome s rozostupmi pri 390 a 1440 px:
+        zlých číslic 10 a 8 na 0, vodorovný posun úvodu 47 a 64 px na 0."""
+        self.assertEqual(deklaracie(self.zaklad, '.valec').get('height'), '1lh')
+        self.assertIn('height:1.2em;height:1lh;', self.zaklad)
+        self.assertIn('.stlpec{display:block;white-space:pre;transform:translateY(calc(var(--c) * -5%));', self.zaklad)
+        self.assertIn('.otocene .stlpec{transform:translateY(calc((var(--c) + 10) * -5%))}', self.zaklad)
+        obsah = re.search(r'\.stlpec::before\{content:"([^"]*)"\}', self.zaklad).group(1)
+        self.assertEqual(len(re.findall(r'\d', obsah)), 20)
+        self.assertNotIn('* -1.2em', self.css)
+        self.assertEqual(deklaracie(self.zaklad, '.uvod-h1 .nz'), {'display': 'inline-block', 'max-width': '100%', 'white-space': 'normal'})
+        self.assertIn('<span class="nz">stavebno-manažérska</span>', self.info('')['telo'])
+
+    def test_40_kontakt_bez_content_visibility(self):
+        """Položka 40: Kontakt na úvode bez content-visibility (CDP pri 390 a 1440 px: nadpis Kontakt v strome prístupnosti,
+        nie ignored); komentár app.js už o content-visibility nehovorí."""
+        self.assertNotIn('content-visibility', self.css)
+        self.assertNotIn('contain-intrinsic-size', self.css)
+        js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        self.assertNotIn('content-visibility', js)
+
+    def test_siroke_osamele_slovo_v_boxe(self):
+        """Kontrola širokého rozloženia (drobné): hodnoty v boxe s dokladom bez osamelého slova na poslednom riadku
+        (text-wrap pretty). Chrome po 8 px pri 1024 až 2576 px: /stavebny-dozor/ 195 hodnôt so sirotou na 27,
+        /stavbyveduci/ 122 na 4 (zvyšok len pri 1024 až 1280 px, kde sa dve posledné slová nezmestia na riadok),
+        od 1288 px 0; riadky sa zmenili len v hodnotách, ktoré sirotu mali."""
+        self.assertEqual(deklaracie(self.zaklad, '.sluzba-bok .fakty dd'), {'text-wrap': 'pretty'})
+
+
+class TestAuditRychlost(unittest.TestCase):
+    """Audit naplno živého náhľadu 25. 11. 2026, časť 3 (rýchlosť): položky 43, 44, 45, 46 a 48 zoznamu
+    audit-naplno/synteza/ZOZNAM.md. Merania pred a po v Chrome 158 (prenos, LCP pri Slow 4G a CPU 4x, písma, vynútené
+    prepočty zo stopy, fotky skrytých kariet, správanie, snímky): ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/
+    AUDIT-OPRAVY.md, časť 3."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry, cls.w = s['ostry'], s['web']
+        cls.css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        cls.zaklad = css_bez_blokov(cls.css)
+        cls.sablona_js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        cls.man = json.loads((KOREN / 'fotky-web' / 'manifest.json').read_text(encoding='utf-8'))['fotky']
+
+    def info(self, cesta):
+        return stranka_info(self.ostry / cesta / 'index.html' if cesta else self.ostry / 'index.html')
+
+    def test_43_slider_840(self):
+        """Položka 43: každá z 11 fotiek slidera má v AVIF navyše 840w, súbor je z fotky-web (vyrobil ho
+        nastroje/predlohy_web.py --len pre fotky slidera), preload prvej fotky ho má tiež. Pri 390 a 412 px s hustotou
+        1,75 (Lighthouse mobil) prehliadač vezme pre RD Ahoj 01 840w namiesto 960w (181 219 B na 137 580 B); WebP,
+        karty a galéria bez zmeny, súbor 840 len na úvode."""
+        uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
+        snimky = re.findall(r'<li class="snimka snimka-(\d+)[^"]*" data-slug="([a-z0-9-]+)">(.*?)</li>', uvod, re.S)
+        with redirect_stderr(io.StringIO()):
+            fotky = self.w.slider_fotky()
+        self.assertEqual(len(fotky), len(self.w.nastavenia['uvod_slider']))
+        self.assertEqual(len(snimky), len(fotky))
+        for (r, f, _), (_, slug, obr) in zip(fotky, snimky):
+            avif = re.search(r'(?:<source type="image/avif" srcset|data-avif)="([^"]+)"', obr).group(1)
+            kandidati = {int(x.split(' ')[1][:-1]): x.split(' ')[0] for x in avif.split(', ')}
+            self.assertIn(840, kandidati, slug)
+            # súbor na webe je ten istý ako vo fotky-web (sha256 z manifestu), široký 840 px
+            z = self.man[f['sha']]['subory']['|840|avif']
+            self.assertEqual(z['w'], 840)
+            self.assertEqual(hashlib.sha256((self.ostry / kandidati[840]).read_bytes()).hexdigest(), z['sha256'], slug)
+            webp = re.search(r'<img [^>]*?(?:data-srcset|srcset)="([^"]+)"', obr).group(1)
+            self.assertNotIn(' 840w', webp, slug)
+        pre = re.search(r'<link rel="preload" as="image" type="image/avif" imagesrcset="([^"]+)" imagesizes="([^"]+)"', uvod)
+        self.assertIn('-840.avif 840w', pre.group(1))
+        # výber prehliadača zo sizes vyhodnotených nezávisle od sizes_slidera (vyhodnot_sizes)
+        kand = sorted(int(x.split(' ')[1][:-1]) for x in pre.group(1).split(', '))
+        for vw, vh in ((390, 844), (412, 823)):
+            ziadost = vyhodnot_sizes(pre.group(2), vw, vh) * 1.75
+            self.assertEqual(next(s for s in kand if s >= ziadost), 840, (vw, ziadost))
+            self.assertEqual(next(s for s in kand if s != 840 and s >= ziadost), 960, (vw, ziadost))
+        r0, f0, _ = fotky[0]
+        self.assertEqual(r0['slug'], 'rd-ahoj-bratislava-nove-mesto')
+        self.assertLess(self.man[f0['sha']]['subory']['|840|avif']['bajty'], self.man[f0['sha']]['subory']['|960|avif']['bajty'])
+        for p in self.ostry.rglob('*.html'):
+            if p != self.ostry / 'index.html':
+                self.assertNotIn('-840.', p.read_text(encoding='utf-8'), p)
+        self.assertEqual(build.SIRKY_OREZU, (480, 720, 960))
+
+    def test_43_840_len_zo_suboru_predlohy(self):
+        """840 sa pridá len so súborom vo fotky-web alebo pri pláne predlôh (nikdy zakódované zo zdroja v obsah/, RD Ahoj
+        01 má retuš len v predlohe), len keď najbližšia väčšia šírka je od nej širšia aspoň o SIRKA_BLIZKO a len v AVIF."""
+        if not self.w.avif:
+            self.skipTest('Pillow bez AVIF')
+        f = {'zaklad': (2000, 2657), 'sirky_avif': build.sirky_pre(2000), 'sirky': build.sirky_pre(2000, build.WEBP_MAX),
+             'fw': True, 'sha': 'f' * 64}
+        povodne = self.w.predlohy
+        try:
+            self.w.predlohy = None
+            self.assertEqual(self.w.sirky_slidera(f, 'avif'), [480, 720, 960, 1440, 2000])
+            self.w.predlohy = {}
+            self.assertEqual(self.w.sirky_slidera(f, 'avif'), [480, 720, 840, 960, 1440, 2000])
+            self.assertEqual(self.w.sirky_slidera(f, 'webp'), [480, 720, 960, 1440])
+            for w, ocak in ((900, [480, 720, 900]), (800, [480, 720, 800]), (930, [480, 720, 840, 930])):
+                g = dict(f, zaklad=(w, round(w * 4 / 3)), sirky_avif=build.sirky_pre(w))
+                self.assertEqual(self.w.sirky_slidera(g, 'avif'), ocak, w)
+            g = dict(f, zaklad=(1000, 1333), sirky_avif=build.sirky_pre(1000))
+            self.assertEqual(self.w.sirky_slidera(g, 'avif'), [480, 720, 840, 1000])
+        finally:
+            self.w.predlohy = povodne
+
+    def test_44_mono_podmnozina_cisel(self):
+        """Položka 44: podmnožina Geist Mono pre číslice (sablona/geist-mono-cisla.woff2 z nastroje/pismo_mono_cisla.py)
+        je tretí @font-face rodiny BMB Mono, po latinke Mono s tými istými deskriptormi a s unicode-range z nástroja.
+        Preload má len stránka, ktorá Mono kreslí (na úvode v hlave za prednačítanou fotkou LCP, inde na konci tela:
+        pri HTTP/1.1 preload v hlave zdržal fotku LCP /realizacie/, LCP pri 390 px a Slow 4G 3 676 proti 2 940 ms), a
+        každý znak, ktorý stránky pri načítaní kreslia v Mono, je v podmnožine, takže sa latinka Mono nesťahuje.
+        .nadpis-pocet („8 fotiek“) a skrytý text kóty (.vh) písmom webu. Chrome: úvod, /realizacie/, detaily a dve
+        služby stiahnu 5 588 B namiesto 23 128 B, Kontakt nič."""
+        sub = KOREN / 'sablona' / build.PISMO_MONO_CISLA
+        self.assertTrue(sub.is_file())
+        self.assertLess(sub.stat().st_size, 8000)
+        self.assertIn(build.PISMO_MONO_CISLA, build.PISMA)
+        nastroj = (KOREN / 'nastroje' / 'pismo_mono_cisla.py').read_text(encoding='utf-8')
+        rozsah = re.search(r"^UNICODE_RANGE = '([^']+)'", nastroj, re.M).group(1)
+        tvare = re.findall(r'@font-face\{font-family:"BMB Mono";src:url\(@PRE@fonts/([^)]+)\) format\("woff2"\);([^}]*)\}', self.css)
+        self.assertEqual([t for t, _ in tvare], ['geist-mono-latin-ext.woff2', 'geist-mono-latin.woff2', build.PISMO_MONO_CISLA])
+        deskriptory = lambda s: re.sub(r';?unicode-range:[^;]*', '', s)  # noqa: E731
+        self.assertEqual(deskriptory(tvare[2][1]), deskriptory(tvare[1][1]))
+        self.assertIn('font-weight:100 900', tvare[2][1])
+        self.assertEqual(re.search(r'unicode-range:([^;}]+)', tvare[2][1]).group(1), rozsah)
+        kody = set()
+        for kus in rozsah.split(','):
+            od, _, do = kus[2:].partition('-')
+            kody.update(range(int(od, 16), int(do or od, 16) + 1))
+        self.assertTrue({ord(c) for c in '0123456789 ()/.,:'} <= kody)
+        self.assertEqual(deklaracie(self.zaklad, '.nadpis-pocet').get('font-family'), 'var(--pismo)')
+        self.assertEqual(deklaracie(self.zaklad, '.vh').get('font-family'), 'var(--pismo)')
+        # MONO_* v build.py zodpovedá selektorom styl.css s var(--mono)
+        selektory = {sel.strip() for m in re.finditer(r'([^{}]+)\{([^{}]*var\(--mono\)[^{}]*)\}', self.css)
+                     for sel in m.group(1).split(',')}
+        self.assertEqual(selektory, {'.' + t for t in build.MONO_TRIEDY} | {f'.{a} {b}' for a, b in build.MONO_POTOMOK})
+        for t in build.MONO_SANS:
+            self.assertEqual(deklaracie(self.zaklad, '.' + t).get('font-family'), 'var(--pismo)', t)
+        self.assertRegex(self.zaklad, r'\.stlpec::before\{content:"0\\A 1\\A 2')
+        # preload práve na stránkach s Mono; znaky Mono pri načítaní len z podmnožiny
+        s_mono, bez_mono, znaky_spolu = [], [], set()
+        odkaz = f'href="[^"]*fonts/{re.escape(build.PISMO_MONO_CISLA)}" as="font" type="font/woff2" crossorigin>'
+        for p in sorted(self.ostry.rglob('*.html')):
+            t = p.read_text(encoding='utf-8')
+            znaky = build.znaky_mono(t.split('<body', 1)[1]) if '<body' in t else set()
+            znaky_spolu |= znaky
+            self.assertEqual(len(re.findall('<link rel="preload" ' + odkaz, t)), 1 if znaky else 0, p)
+            if znaky:
+                hlava = t.split('</head>', 1)[0]
+                if '<link rel="preload" as="image"' in hlava:
+                    self.assertRegex(hlava, re.compile('<link rel="preload" as="image"[^>]*>.*<link rel="preload" ' + odkaz, re.S))
+                else:
+                    self.assertRegex(t, '<link rel="preload" ' + odkaz + '</body>')
+                    self.assertNotRegex(hlava, '<link rel="preload" ' + odkaz)
+            (s_mono if znaky else bez_mono).append(p.relative_to(self.ostry).as_posix())
+        self.assertEqual({ord(c) for c in znaky_spolu} - kody, set(), sorted(znaky_spolu))
+        for c in ('index.html', 'realizacie/index.html', 'stavebny-dozor/index.html', 'stavebny-manazment/index.html',
+                  'realizacie/filmovy-klub-lumiere-spitalska-bratislava/index.html', 'realizacie/rd-ahoj-bratislava-nove-mesto/index.html'):
+            self.assertIn(c, s_mono)
+        for c in ('kontakt/index.html', 'ochrana-udajov/index.html', 'opravnenia/index.html', 'stavbyveduci/index.html', '404.html'):
+            self.assertIn(c, bez_mono)
+        # detekcia: valce kóty (CSS content), statická kóta, počet filtra; písmo webu vo vnútri Mono sa nepočíta
+        self.assertEqual(build.znaky_mono('<span class="kota"><span class="kota-text otoc"><span class="vh">2013 až 2014</span>'
+                                          '<span class="valce" aria-hidden="true"><span class="valec"><span class="stlpec c2 i0">'
+                                          '</span></span> <span class="kota-slovo">až</span></span></span></span>'), set('0123456789'))
+        self.assertEqual(build.znaky_mono('<button class="filter">Všetky<span>26</span></button>'), {'2', '6'})
+        self.assertEqual(build.znaky_mono('<h2>Galéria <span class="nadpis-pocet cisla">8 fotiek</span></h2>'), set())
+        self.assertEqual(build.znaky_mono('<span class="kota kota-prazdna" aria-hidden="true"></span><p>2025</p>'), set())
+
+    def test_44_podmnozina_zhodna_s_latinkou(self):
+        """Podmnožina má presne znaky z unicode-range, celú os váhy 100 až 900 (kóta Činnosti má váhu 300), tie isté
+        zvislé metriky a šírky znakov ako latinka Mono (riadky a kóty sa nepohnú) a nástroj ju vyrobí bajtovo rovnakú."""
+        try:
+            from fontTools.ttLib import TTFont
+            import brotli  # noqa: F401
+        except ImportError:
+            self.skipTest('fontTools alebo brotli nie je')
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('pismo_mono_cisla', KOREN / 'nastroje' / 'pismo_mono_cisla.py')
+        nastroj = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(nastroj)
+        sub = KOREN / 'sablona' / build.PISMO_MONO_CISLA
+        f, g = TTFont(str(sub)), TTFont(str(KOREN / 'sablona' / 'geist-mono-latin.woff2'))
+        self.assertEqual(set(f.getBestCmap()), nastroj.kody())
+        self.assertEqual([(a.axisTag, a.minValue, a.maxValue) for a in f['fvar'].axes], [('wght', 100.0, 900.0)])
+        for tab, polia in (('hhea', ('ascent', 'descent', 'lineGap')), ('head', ('unitsPerEm',)),
+                           ('OS/2', ('sTypoAscender', 'sTypoDescender', 'sTypoLineGap', 'usWinAscent', 'usWinDescent'))):
+            for p in polia:
+                self.assertEqual(getattr(f[tab], p), getattr(g[tab], p), (tab, p))
+        gc = g.getBestCmap()
+        for k, meno in f.getBestCmap().items():
+            self.assertEqual(f['hmtx'][meno][0], g['hmtx'][gc[k]][0], hex(k))
+        buf = io.BytesIO()
+        nastroj.podmnozina().save(buf)
+        self.assertEqual(buf.getvalue(), sub.read_bytes())
+
+    def test_45_app_js_zhusteny(self):
+        """Položka 45: web dostáva app.js zhustený pri zostave (build.zhusti_js, bez novej závislosti): bez úvodného
+        komentára, celých riadkov s // a odsadenia; riadky kódu tie isté a v tom istom poradí. Zhustený súbor má
+        25 145 B namiesto 40 003 B (gzip úrovne 6 7 348 namiesto 13 009 B), prejde node --check a v Chrome sa správa rovnako
+        (hlavička, menu, slider, lišta, objavenie, filter, Zobraziť ďalšie, lightbox); časť 5 skúša test správania
+        zoznamu priamo na zhustenom súbore."""
+        web = (self.ostry / 'app.js').read_text(encoding='utf-8')
+        self.assertEqual(web, build.zhusti_js(self.sablona_js))
+        self.assertLess(len(web.encode('utf-8')), 0.7 * len(self.sablona_js.encode('utf-8')))
+        # predpoklady v šablóne: žiadny šablónový reťazec, pokračovanie riadka, iný blokový komentár ani komentár za kódom
+        self.assertNotIn('`', self.sablona_js)
+        self.assertIsNone(re.search(r'\\\n', self.sablona_js))
+        kod = re.sub(r'\A\s*/\*.*?\*/', '', self.sablona_js, flags=re.S)
+        self.assertNotIn('/*', kod)
+        for r in kod.split('\n'):
+            if not r.strip().startswith('//'):
+                self.assertNotIn('//', r, r)
+        # výstup: riadky kódu šablóny bez odsadenia v tom istom poradí, vynechané len prázdne riadky a komentáre
+        ostavaju = [r.strip() for r in kod.split('\n') if r.strip() and not r.strip().startswith('//')]
+        self.assertEqual(web.rstrip('\n').split('\n'), ostavaju)
+        self.assertTrue(web.startswith('(function () {\n'))
+        # verzia v adrese je odtlačok zhusteného súboru
+        uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
+        self.assertIn(f'app.js?v={hashlib.sha256(web.encode("utf-8")).hexdigest()[:10]}"', uvod)
+        # šablónový reťazec alebo pokračovanie riadka: súbor ide bez zhustenia a s varovaním
+        for zly in ('var a = `x\n  // y`;\n', "var a = 'x\\\n  // y';\n"):
+            pred = len(build.VAROVANIA)
+            with redirect_stderr(io.StringIO()):
+                self.assertEqual(build.zhusti_js(zly), zly)
+            self.assertEqual(len(build.VAROVANIA), pred + 1)
+            del build.VAROVANIA[pred:]
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('node nie je k dispozícii')
+        import subprocess
+        p = subprocess.run([node, '--check', str(self.ostry / 'app.js')], capture_output=True, text=True, timeout=60)
+        self.assertEqual(p.returncode, 0, p.stderr)
+
+    def test_46_karty_za_prvou_davkou_mimo_rozlozenia(self):
+        """Položka 46: na /realizacie/ majú karty za prvou dávkou (13 až 26) data-neskor a styl.css ich pri triede js
+        necháva mimo rozloženia, kým app.js atribút nezmaže (hneď na začiatku časti 5; hidden nastaví obnov v tej istej
+        úlohe); bez JS ich nič neskryje. Chrome pri 1440 x 900 a Slow 4G: fotky kariet 13 až 20 pred spustením app.js
+        8 (356 910 B), po oprave 0; bez JS a pri app.js 404 viditeľných 26."""
+        r = Rozbor()
+        r.feed(self.info('realizacie/')['telo'])
+        li = [a for t, a in r.prvky if t == 'li' and 'dlazdica' in a.get('class', '').split()]
+        n = len(li)
+        prvych = self.w.prvych_zoznamu(n)
+        self.assertEqual(prvych, build.REALIZACIE_NARAZ)
+        self.assertEqual([int(a['data-poradie']) for a in li if 'data-neskor' in a], list(range(prvych + 1, n + 1)))
+        self.assertTrue(all('hidden' not in a for a in li))
+        self.assertEqual([self.w.prvych_zoznamu(x) for x in (5, 12, 13, 18, 19, 26)], [5, 12, 13, 18, 12, 12])
+        self.assertEqual([self.w.stav_zoznamu(x) for x in (12, 18, 19)], ['', '', 'Zobrazené: 12 z 19'])
+        # pravidlo v spoločnej časti štýlu za .dlazdica[hidden] (rovnaká váha ako .karty>.projekt, neskoršie vyhrá)
+        self.assertIn('.js [data-neskor]{display:none}', self.zaklad)
+        self.assertLess(self.zaklad.index('.dlazdica[hidden]'), self.zaklad.index('.js [data-neskor]{display:none}'))
+        self.assertIn("if(window.BMB==null)d.classList.remove('js')", build.SKRIPT_JS)
+        # app.js: zmazanie hneď na začiatku časti 5, pred čímkoľvek, čo môže zlyhať, a pred obnov(false)
+        cast5 = self.sablona_js.split("var filtre = d.querySelector('[data-filtre]')", 1)[1].split(
+            "var dlg = d.getElementById('lightbox')", 1)[0]
+        i = cast5.index("removeAttribute('data-neskor')")
+        self.assertLess(i, cast5.index('new URLSearchParams'))
+        self.assertLess(i, cast5.index('obnov(false);'))
+        # správanie nad zhusteným app.js webu: po spustení žiadna karta s data-neskor, viditeľných prvých 12
+        _, stavy = spravanie_zoznamu(self.ostry, [{'akcia': 'viac'}])
+        self.assertEqual([s['neskor'] for s in stavy], [[], []])
+        self.assertEqual(len(stavy[0]['viditelne']), prvych)
+        self.assertEqual(len(stavy[1]['viditelne']), n)
+        # sabotáž: app.js bez zmazania atribútu test správania zoznamu zachytí
+        tmp = Path(tempfile.mkdtemp(prefix='bmb-test-neskor-'))
+        try:
+            dobry = (self.ostry / 'app.js').read_text(encoding='utf-8')
+            zly = dobry.replace("dlazdice.forEach(function (li) { li.removeAttribute('data-neskor'); });", '')
+            self.assertNotEqual(zly, dobry)
+            (tmp / 'app.js').write_text(zly, encoding='utf-8')
+            chyby = chyby_zoznamu(self.ostry, app_js=tmp / 'app.js')
+            self.assertTrue(any('data-neskor' in c for c in chyby), chyby[:3])
+            self.assertEqual(chyby_zoznamu(self.ostry), [])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_48_bez_vynuteneho_prepoctu_pri_spusteni(self):
+        """Položka 48: app.js pri spustení nečíta rozloženie. Čiaru pod hlavičkou prepína pozorovateľ značky 4 px na
+        vrchu stránky (prvé hlásenie dá stav aj po príchode na kotvu), bez IntersectionObserver prvé čítanie až
+        v requestAnimationFrame; časť 0b berie polohu z prvého hlásenia pozorovateľa (test_6). Chrome so stopou pri
+        CPU 4x: vynútené prepočty z app.js pri spustení 270 až 313 ms (úvod), 61 až 235 ms (/realizacie/) a 84 až
+        265 ms (detail Lumière), po oprave 0."""
+        # kód bez komentárov (zhustený app.js webu): žiadne čítanie polohy ani výšky okna
+        web = (self.ostry / 'app.js').read_text(encoding='utf-8')
+        for citanie in ('getBoundingClientRect', 'innerHeight', 'clientHeight', 'offsetTop', 'getComputedStyle'):
+            self.assertNotIn(citanie, web)
+        self.assertEqual(web.count('pageYOffset'), 1)
+        # blok pod oknom dostane vstup až po prvom hlásení (už vykreslený): skrytie bez prechodu, prechod len pri objavení
+        # (Chrome pri 390 x 844 bez tohto pravidla: bloky pod oknom 0,8 s po načítaní na nepriehľadnosti 0,57, nie 0)
+        pohyb = self.css.split('@media (prefers-reduced-motion:no-preference){', 1)[1].split('\n}\n', 1)[0]
+        self.assertLess(pohyb.index('.js .vstup{transition:opacity 700ms'), pohyb.index('.js .vstup:not(.videne){transition:none}'))
+        kod = cast_appjs('// 3. Pripnutá hlavička', '// Odložená fotka slidera')
+        self.assertNotIn('obnov();', kod)
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+function triedy() { const s = new Set(); return { add: (x) => s.add(x), remove: (x) => s.delete(x), contains: (x) => s.has(x),
+  toggle: (x, b) => { if (b) s.add(x); else s.delete(x); return b; } }; }
+function beh(maIO) {
+  const hlava = { classList: triedy() };
+  const vlozene = [];
+  const pozorovatelia = [];
+  class IO { constructor(fn) { this.fn = fn; this.sledovane = []; pozorovatelia.push(this); } observe(e) { this.sledovane.push(e); } }
+  const body = { firstChild: { meno: 'prvy' }, insertBefore(e, pred) { vlozene.push({ e, pred }); } };
+  const d = { body, querySelector: (s) => (s === '.hlava' ? hlava : null),
+    createElement: (t) => ({ tag: t, atr: {}, style: {}, setAttribute(n, v) { this.atr[n] = String(v); } }) };
+  let citania = 0; let posun = 0;
+  const raf = [];
+  const win = { addEventListener() {}, requestAnimationFrame: (f) => raf.push(f) };
+  Object.defineProperty(win, 'pageYOffset', { get() { citania++; return posun; } });
+  vm.runInContext(kod, vm.createContext({ d, window: win, maIO, IntersectionObserver: IO }));
+  const v = { citania_pri_spusteni: citania, pozorovatelov: pozorovatelia.length, vlozene: vlozene.length, raf: raf.length };
+  if (maIO) {
+    const z = vlozene[0];
+    v.znacka = { prva: z.pred === body.firstChild, tag: z.e.tag, aria: z.e.atr['aria-hidden'], styl: z.e.style,
+      sleduje: pozorovatelia[0].sledovane[0] === z.e };
+    pozorovatelia[0].fn([{ isIntersecting: true }]);
+    v.hore = hlava.classList.contains('posunute');
+    pozorovatelia[0].fn([{ isIntersecting: true }, { isIntersecting: false }]);
+    v.posunute = hlava.classList.contains('posunute');
+    pozorovatelia[0].fn([{ isIntersecting: true }]);
+    v.spat = hlava.classList.contains('posunute');
+  } else {
+    posun = 10;
+    raf.forEach((f) => f());
+    v.po_raf = hlava.classList.contains('posunute');
+  }
+  v.citania = citania;
+  return v;
+}
+console.log(JSON.stringify({ io: beh(true), bez_io: beh(false) }));
+"""
+        v = node_simulacia(self, kod, sim)
+        self.assertEqual(v['io'], {'citania_pri_spusteni': 0, 'pozorovatelov': 1, 'vlozene': 1, 'raf': 0,
+                                   'znacka': {'prva': True, 'tag': 'div', 'aria': 'true', 'sleduje': True,
+                                              'styl': {'position': 'absolute', 'top': '0', 'left': '0', 'width': '1px',
+                                                       'height': '4px', 'pointerEvents': 'none', 'visibility': 'hidden'}},
+                                   'hore': False, 'posunute': True, 'spat': False, 'citania': 0})
+        self.assertEqual(v['bez_io'], {'citania_pri_spusteni': 0, 'pozorovatelov': 0, 'vlozene': 0, 'raf': 1, 'po_raf': True,
+                                       'citania': 1})
+
+
+_FTP = {}
+
+
+def ftp_zostava():
+    """Ostrá zostava skutočného obsahu pre FTP na WebHouse (premenná BMB_HOSTING=apache) do prázdneho dočasného
+    priečinka, raz za beh; zoznam zostavy je vedľa výstupu. Kódovanie rýchlou náhradou."""
+    if not _FTP:
+        tmp = Path(tempfile.mkdtemp(prefix='bmb-test-ftp-'))
+        atexit.register(shutil.rmtree, tmp, True)
+        vystup = tmp / 'web-ftp'
+        _FTP['o'] = postav(vystup, rychle=True, prostredie={'BMB_HOSTING': 'apache'})
+        _FTP.update(tmp=tmp, vystup=vystup)
+    return _FTP
+
+
+def nastroj(meno):
+    """Modul z nastroje/ (htaccess_simulacia, kontrola_spustenia)."""
+    import importlib
+    if str(KOREN / 'nastroje') not in sys.path:
+        sys.path.insert(0, str(KOREN / 'nastroje'))
+    return importlib.import_module(meno)
+
+
+def bez(text, kus, nahrada=''):
+    """Sabotáž .htaccess: kus musí v texte byť (inak by test sabotáže nič neskúšal)."""
+    assert kus in text, kus
+    return text.replace(kus, nahrada, 1)
+
+
+class TestHostingApache(unittest.TestCase):
+    """Audit naplno živého náhľadu 25. 11. 2026, časť 4 (spustenie cez FTP na WebHouse): položka 1 zoznamu
+    audit-naplno/synteza/ZOZNAM.md (prepínač hostingu, .htaccess, 32 presmerovaní 301, bez CNAME, .nojekyll,
+    .zostava.json a index.php/, ochrana údajov s WebHouse) a položka 49 (README o BMB_OSTRY). Skutočný Apache na PC nie
+    je: pravidlá overuje simulácia nastroje/htaccess_simulacia.py (sama overená na pravidlách z dokumentácie Apache)
+    a kontrola po nahratí nastroje/kontrola_spustenia.py proti serveru simulácie. Záznam: ops/weby-na-mieru/klienti/
+    bmbuilding/kolo-1/brana-3/AUDIT-OPRAVY.md, časť 4; postup: kolo-1/SPUSTENIE-FTP.md."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        f = ftp_zostava()
+        cls.ostry, cls.realizacie, cls.w = s['ostry'], s['realizacie'], s['web']
+        cls.ftp, cls.tmp = f['vystup'], f['tmp']
+        cls.kod, cls.out, cls.err = f['o']
+        cls.ht = (cls.ftp / '.htaccess').read_text(encoding='utf-8')
+        cls.texty = json.loads((KOREN / 'sablona' / 'texty.json').read_text(encoding='utf-8'))
+        cls.presm = json.loads((KOREN / 'sablona' / 'presmerovania.json').read_text(encoding='utf-8'))['presmerovania']
+        cls.sim = nastroj('htaccess_simulacia')
+
+    def ocakavane_ciele(self):
+        """Cieľ každej starej adresy nezávisle od build.py: #sluzby je od zmeny 3A #cinnost, nezverejnená realizácia
+        (zámerne skrytá, ZMENY-KOLO-1.md 5.6) ide na zoznam."""
+        v = []
+        for z in self.presm:
+            ciel = {'/#sluzby': '/#cinnost'}.get(z['ciel'], z['ciel'])
+            m = re.match(r'^/realizacie/([a-z0-9-]+)/$', ciel)
+            if m and m.group(1) not in self.realizacie:
+                ciel = '/realizacie/'
+            v.append((z['stara'], ciel))
+        return v
+
+    def test_1_ftp_zostava_bez_suborov_pages(self):
+        """Ostrá zostava pre FTP: kód 0, presne súbory ostrého webu pre GitHub Pages bez CNAME, .nojekyll,
+        .zostava.json a 32 stránok v index.php/ (priečinok by sa na hostingu zrazil so súborom index.php Joomly),
+        navyše .htaccess; inak sa líši len /ochrana-udajov/ (hosting). Zoznam zostavy je vedľa výstupu, canonical,
+        sitemap, robots a llms.txt sú na https://bmbuilding.sk, nikde noindex, 404 s cestami od koreňa."""
+        self.assertEqual(self.kod, 0, self.err)
+        self.assertIn('(ostrý, hosting apache)', self.out)
+        for meno in ('CNAME', '.nojekyll', build.MANIFEST, 'index.php'):
+            self.assertFalse((self.ftp / meno).exists(), meno)
+        manifest = self.tmp / ('web-ftp' + build.MANIFEST)
+        self.assertTrue(manifest.is_file())
+        zoznam = json.loads(manifest.read_text(encoding='utf-8'))['subory']
+        self.assertIn('.htaccess', zoznam)
+        self.assertEqual(set(zoznam), set(odtlacky(self.ftp)))
+        o, f = odtlacky(self.ostry), odtlacky(self.ftp)
+        len_pages = set(o) - set(f)
+        self.assertEqual({x for x in len_pages if not x.startswith('index.php/')}, {'CNAME', '.nojekyll', build.MANIFEST})
+        self.assertEqual(len([x for x in len_pages if x.startswith('index.php/')]), len(self.presm))
+        self.assertEqual(set(f) - set(o), {'.htaccess'})
+        self.assertEqual({k for k in set(o) & set(f) if o[k] != f[k]}, {'ochrana-udajov/index.html'})
+        for p in stranky(self.ftp):
+            s = p.read_text(encoding='utf-8')
+            self.assertNotIn('noindex', s, p)
+            if p.name == 'index.html':
+                cesta = p.parent.relative_to(self.ftp).as_posix()
+                self.assertIn(f'<link rel="canonical" href="https://bmbuilding.sk/{"" if cesta == "." else cesta + "/"}">', s, p)
+        locs = re.findall(r'<loc>([^<]+)</loc>', (self.ftp / 'sitemap.xml').read_text(encoding='utf-8'))
+        self.assertGreaterEqual(len(locs), 8 + len(self.realizacie))
+        self.assertTrue(all(u.startswith('https://bmbuilding.sk/') for u in locs))
+        for u in locs:
+            self.assertTrue((self.ftp / u[len('https://bmbuilding.sk/'):] / 'index.html').is_file(), u)
+        robots = (self.ftp / 'robots.txt').read_text(encoding='utf-8')
+        self.assertIn('Sitemap: https://bmbuilding.sk/sitemap.xml', robots)
+        self.assertNotIn('Disallow: /', robots)
+        llms = (self.ftp / 'llms.txt').read_text(encoding='utf-8')
+        self.assertTrue(all(u.startswith('https://bmbuilding.sk/') for u in re.findall(r'\]\((\S+?)\)', llms)))
+        s404 = (self.ftp / '404.html').read_text(encoding='utf-8')
+        self.assertIn('href="/realizacie/"', s404)
+        self.assertIn('src="/app.js?v=', s404)
+        self.assertEqual(interne_odkazy(self.ftp, '/'), [])
+
+    def test_1_htaccess_pravidla(self):
+        """.htaccess: DirectoryIndex index.html pred index.php, ErrorDocument 404, RewriteEngine mimo IfModule, pravidlá
+        len pre doménu a www, výnimka /.well-known/, každá z 32 starých adries práve jedným pravidlom 301 s QSD (a NE pri
+        kotve) na cieľ, ktorý vo výstupe je, potom ostatné index.php na úvod, priečinok bez lomky, www, https, 404 pre
+        každé meno v koreni mimo zostavy (zoznam presne podľa výstupu), priečinok bez index.html, PHP; hlavičky,
+        cache podľa CACHE_APACHE a gzip v mod_filter. HSTS zámerne nie."""
+        r = self.ht.splitlines()
+        self.assertIn('DirectoryIndex index.html index.php', r)
+        self.assertIn('ErrorDocument 404 /404.html', r)
+        hlbka, mimo = 0, []
+        for x in r:
+            hlbka += x.strip().startswith('<IfModule') - (x.strip() == '</IfModule>')
+            if x.startswith(('RewriteEngine', 'RewriteRule', 'RewriteCond')):
+                mimo.append(hlbka)
+        self.assertEqual(set(mimo), {0})
+        stare = re.findall(r'^RewriteRule \^(index\\\.php[^ ]*?)/\?\$ (\S+) \[([A-Z=0-9,]+)\]$', self.ht, re.M)
+        ocak = [('/' + s.strip('/'), 'https://bmbuilding.sk' + c, 'R=301,L,QSD' + (',NE' if '#' in c else ''))
+                for s, c in self.ocakavane_ciele()]
+        self.assertEqual([('/' + s.replace('\\.', '.'), c, p) for s, c, p in stare], ocak)
+        self.assertEqual(len(stare), len(self.presm))
+        self.assertEqual(len({s for s, _, _ in stare}), len(self.presm))
+        for _, ciel, _ in ocak:
+            cesta = ciel[len('https://bmbuilding.sk/'):].split('#')[0]
+            self.assertTrue((self.ftp / cesta / 'index.html').is_file(), ciel)
+        poradie = ['RewriteCond %{HTTP_HOST} !^(?:www\\.)?bmbuilding\\.sk\\.?(?::[0-9]+)?$ [NC]', 'RewriteRule ^ - [L]',
+                   'RewriteRule ^\\.well-known/ - [L]', 'RewriteRule ^index\\.php/?$ https://bmbuilding.sk/ [R=301,L,QSD]',
+                   'RewriteRule ^index\\.php/ https://bmbuilding.sk/ [R=301,L,QSD]',
+                   'RewriteRule ^(.+[^/])$ https://bmbuilding.sk/$1/ [R=301,L]', 'RewriteCond %{HTTP_HOST} ^www\\. [NC]',
+                   'RewriteCond %{HTTPS} !=on', 'RewriteRule ^([^/]+) - [R=404,L]', 'RewriteRule ^. - [R=404,L]',
+                   'RewriteRule \\.ph(?:p[0-9]?|tml|ar)(?:/|$) - [R=404,L]']
+        indexy = [r.index(x) for x in poradie]
+        self.assertEqual(indexy, sorted(indexy))
+        self.assertGreater(r.index(poradie[4]), max(r.index(f'RewriteRule ^{s}/?$ {c} [{p}]') for s, c, p in stare))
+        mena = re.search(r'^RewriteCond \$1 !\^\(\?:(.*)\)\$$', self.ht, re.M).group(1).split('|')
+        self.assertEqual({m.replace('\\.', '.') for m in mena}, {p.name for p in self.ftp.iterdir()} - {'.htaccess'})
+        for h in ('X-Content-Type-Options "nosniff"', 'Referrer-Policy "strict-origin-when-cross-origin"',
+                  'X-Frame-Options "SAMEORIGIN"', 'Content-Security-Policy "frame-ancestors \'self\'"'):
+            self.assertIn(f'  Header always set {h}', r)
+        self.assertNotIn('Strict-Transport-Security', self.ht)
+        for typ, cas in build.CACHE_APACHE:
+            self.assertIn(f'  ExpiresByType {typ} "{cas}"', r)
+        self.assertIn('<IfModule mod_deflate.c>\n  <IfModule mod_filter.c>\n    AddOutputFilterByType DEFLATE text/html', self.ht)
+        for typ in ('image/avif .avif', 'image/webp .webp', 'font/woff2 .woff2', 'application/manifest+json .webmanifest'):
+            self.assertIn(f'  AddType {typ}', r)
+        self.assertFalse(any(c in self.ht for c in '\u2013\u2014'))
+        self.assertNotIn('\r', self.ht)
+
+    def test_1_simulacia_htaccess(self):
+        """Simulácia Apache nad výstupom (nastroje/htaccess_simulacia.py over): každá stará adresa v 5 variantoch
+        (bez lomky, s lomkou, s query, z http://www, z http s query) jedným skokom 301 na https://bmbuilding.sk a cieľ
+        je stránka (kotva #cinnost je na úvode), iné index.php na úvod, https a holá doména jedným skokom (query
+        bežnej stránky ostane), každý súbor zostavy 200 so svojím súborom, zvyšky Joomly, súbory zostavy pre Pages,
+        priečinky bez index.html a PHP 404 s vlastnou stránkou, /.well-known/ bez presmerovania, iná doména bez
+        pravidiel, typy, cache a hlavičky. Sabotáž každého pravidla simulácia zachytí."""
+        v = self.sim.over(self.ftp)
+        zle = [x for x in v if not x['ok']]
+        self.assertEqual(zle, [], zle[:3])
+        self.assertEqual(sum(1 for x in v if x['popis'] == 'stará adresa'), 5 * len(self.presm))
+        self.assertGreater(len(v), len(odtlacky(self.ftp)) + 5 * len(self.presm))
+        for meno in self.sim.JOOMLA:
+            if meno != 'index.php':
+                self.assertTrue(any(x['url'] == f'https://bmbuilding.sk/{meno}' and x['ok'] for x in v), meno)
+        https = 'RewriteCond %{HTTPS} !=on\nRewriteRule ^ https://bmbuilding.sk%{REQUEST_URI} [R=301,L]\n'
+        straz = 'RewriteCond %{HTTP_HOST} !^(?:www\\.)?bmbuilding\\.sk\\.?(?::[0-9]+)?$ [NC]\nRewriteRule ^ - [L]\n'
+        sabotaze = {
+            'kotva bez NE': lambda t: bez(t, '#cinnost [R=301,L,QSD,NE]', '#cinnost [R=301,L,QSD]'),
+            'bez QSD': lambda t: t.replace(',QSD', ''),
+            'https pred starými adresami': lambda t: bez(bez(t, https), 'RewriteRule ^\\.well-known/ - [L]\n',
+                                                         'RewriteRule ^\\.well-known/ - [L]\n' + https),
+            'bez 404 pre mená mimo zostavy': lambda t: re.sub(r'RewriteCond \$1 [^\n]*\nRewriteRule \^\(\[\^/\]\+\) - \[R=404,L\]\n', '', t),
+            'výpis priečinka': lambda t: bez(t, 'RewriteCond %{REQUEST_FILENAME} -d\nRewriteCond %{REQUEST_FILENAME}/index.html !-f\n'
+                                                'RewriteRule ^. - [R=404,L]\n'),
+            'index.php pred index.html': lambda t: bez(t, 'DirectoryIndex index.html index.php', 'DirectoryIndex index.php index.html'),
+            'bez ochrany inej domény': lambda t: bez(t, straz),
+            'bez výnimky .well-known': lambda t: bez(t, 'RewriteRule ^\\.well-known/ - [L]\n'),
+            'bez typu AVIF': lambda t: bez(t, '  AddType image/avif .avif\n'),
+            'zlý cieľ starej adresy': lambda t: bez(t, 'https://bmbuilding.sk/realizacie/rd-pezinok/ [', 'https://bmbuilding.sk/realizacie/ ['),
+            'bez nosniff': lambda t: bez(t, '  Header always set X-Content-Type-Options "nosniff"\n'),
+            # celé pravidlo 3 aj s podmienkou na mená zostavy (oprava po overení), inak by podmienky ostali pri pravidle 4
+            'bez priečinka s lomkou': lambda t: re.sub(r'RewriteCond \$1 \^\(\?:[^\n]*\)\(\?:/\|\$\)\n'
+                                                       r'RewriteCond %\{REQUEST_FILENAME\} -d\n'
+                                                       r'RewriteCond %\{REQUEST_FILENAME\}/index\.html -f\n'
+                                                       r'RewriteRule \^\(\.\+\[\^/\]\)\$ https://bmbuilding\.sk/\$1/ \[R=301,L\]\n', '', t),
+        }
+        for meno, sab in sabotaze.items():
+            text = sab(self.ht)
+            self.assertNotEqual(text, self.ht, meno)
+            self.assertTrue([x for x in self.sim.over(self.ftp, text=text) if not x['ok']], meno)
+
+    def test_1_simulator_podla_apache(self):
+        """Simulácia sama robí to, čo opisuje dokumentácia Apache 2.4: PATH_INFO za súborom index.php sa pripojí
+        k ceste pravidla (mod_rewrite v priečinku), bez QSD sa query pripojí a s QSD zahodí, # bez NE sa zakóduje na %23
+        (flags.html, NE), reťaz [OR], R=404 s ErrorDocument, DirectorySlash a DirectoryIndex, statický súbor
+        s PATH_INFO 404, .ht* 403; neznámu direktívu, príznak alebo vnútorný prepis odmietne."""
+        sim = self.sim
+        fs = sim.Subory(navyse=['index.php', 'kontakt/index.html', '404.html', 'a.html'])
+        ht = sim.Htaccess('\n'.join([
+            'ErrorDocument 404 /404.html', 'DirectoryIndex index.html', 'RewriteEngine On',
+            'RewriteRule ^index\\.php/kontakt$ https://x.sk/kontakt/ [R=301,L]',
+            'RewriteRule ^kotva$ https://x.sk/#c [R=301,L]', 'RewriteRule ^kotva-ne$ https://x.sk/#c [R=301,L,NE]',
+            'RewriteRule ^bez-q$ https://x.sk/a [R=301,L,QSD]', 'RewriteRule ^s-q$ https://x.sk/a [R=301,L]',
+            'RewriteCond %{HTTP_HOST} ^a\\. [OR]', 'RewriteCond %{HTTP_HOST} ^b\\.', 'RewriteCond %{HTTPS} =on',
+            'RewriteRule ^alebo$ https://x.sk/ok [R=301,L]', 'RewriteRule ^skry$ - [R=404,L]', '<IfModule mod_headers.c>',
+            '  Header always set X-A "b \'c\'"', '</IfModule>']))
+        p = lambda url: ht.poziadavka(url, fs)  # noqa: E731
+        self.assertEqual(p('https://x.sk/index.php/kontakt')['location'], 'https://x.sk/kontakt/')
+        self.assertEqual(p('https://x.sk/kotva')['location'], 'https://x.sk/%23c')
+        self.assertEqual(p('https://x.sk/kotva-ne')['location'], 'https://x.sk/#c')
+        self.assertEqual(p('https://x.sk/bez-q?x=1')['location'], 'https://x.sk/a')
+        self.assertEqual(p('https://x.sk/s-q?x=1&y=2')['location'], 'https://x.sk/a?x=1&y=2')
+        self.assertEqual([p(f'{s}://{h}/alebo')['stav'] for s, h in (('https', 'a.x.sk'), ('https', 'b.x.sk'),
+                                                                       ('https', 'c.x.sk'), ('http', 'a.x.sk'))], [301, 301, 404, 404])
+        v = p('https://x.sk/skry')
+        self.assertEqual((v['stav'], v['subor']), (404, '404.html'))
+        self.assertEqual(p('https://x.sk/kontakt')['location'], 'https://x.sk/kontakt/')
+        self.assertEqual(p('https://x.sk/kontakt/')['subor'], 'kontakt/index.html')
+        self.assertEqual((p('https://x.sk/')['stav'], p('https://x.sk/').get('vypis')), (403, True))
+        self.assertTrue(p('https://x.sk/index.php/ine')['php'])
+        self.assertEqual(p('https://x.sk/a.html/x')['stav'], 404)
+        self.assertEqual(p('https://x.sk/.htaccess')['stav'], 403)
+        self.assertIn(('X-A', "b 'c'"), p('https://x.sk/a.html')['hlavicky'])
+        self.assertEqual(sim.Htaccess('<IfModule mod_headers.c>\nHeader always set X-A b\n</IfModule>',
+                                      chyba_moduly={'mod_headers.c'}).hlavicky, [])
+        for zly in ('Options -Indexes', 'RewriteRule ^a$ https://x.sk/ [R=301,QSA]', 'RewriteBase /', 'Redirect 301 / https://x.sk/'):
+            with self.assertRaises(ValueError, msg=zly):
+                sim.Htaccess(zly)
+        with self.assertRaises(ValueError):
+            sim.Htaccess('RewriteEngine On\nRewriteRule ^a$ /b [L]').poziadavka('https://x.sk/a', fs)
+
+    def test_1_kontrola_po_nahrati_proti_simulacii(self):
+        """nastroje/kontrola_spustenia.py (kontrola bmbuilding.sk po nahratí) proti serveru simulácie: 0 chýb pri
+        správnom .htaccess, chyba pri pokazenom (https alebo QSD). Spojenia idú len na 127.0.0.1, bmbuilding.sk sa
+        nevolá."""
+        import socket
+        kontrola = nastroj('kontrola_spustenia')
+        povodne = socket.create_connection
+
+        def len_lokalne(adresa, *a, **k):
+            self.assertEqual(adresa[0], '127.0.0.1', adresa)
+            return povodne(adresa, *a, **k)
+
+        def beh(text=None):
+            srv = self.sim.spusti_server(self.ftp, text)
+            out = io.StringIO()
+            try:
+                with mock.patch.object(socket, 'create_connection', len_lokalne), redirect_stdout(out):
+                    kod = kontrola.main(['--web', str(self.ftp), '--lokalne', str(srv.server_address[1])])
+            finally:
+                srv.shutdown()
+                srv.server_close()
+            return kod, out.getvalue()
+
+        kod, out = beh()
+        self.assertEqual(kod, 0, [r for r in out.splitlines() if not r.startswith('OK')][:5])
+        suhrn = json.loads(out.strip().splitlines()[-1])
+        self.assertEqual((suhrn['chyb'], suhrn['pozor']), (0, 0))
+        self.assertGreater(suhrn['kontrol'], 2 * len(self.presm) + 8 + len(self.realizacie))
+        self.assertIn(f'OK    staré adresy v .htaccess: {len(self.presm)}', out)
+        for sab in (lambda t: bez(t, 'RewriteCond %{HTTPS} !=on\n', 'RewriteCond %{HTTPS} =nikdy\n'),
+                    lambda t: t.replace(',QSD', '')):
+            kod, out = beh(sab(self.ht))
+            self.assertEqual(kod, 1)
+            self.assertIn('CHYBA ', out)
+        self.assertEqual(kontrola.main(['--web', str(self.ostry), '--lokalne', '1']), 2)
+
+    def test_1_ochrana_udajov_webhouse(self):
+        """Čl. 13 GDPR podľa hostingu: pri FTP na WebHouse časť Hosting uvádza WebHouse, s. r. o. (meno, sídlo a IČO z jeho
+        informácií o ochrane osobných údajov), čo zaznamenáva, účel a právny základ čl. 6 ods. 1 písm. f), príjemcu
+        a sprostredkovateľa (DPA čl. 1 a 45), uchovávanie (bod 7) a miesto spracúvania s prenosom (DPA čl. 29 a 30),
+        zdroje na helpdesk.webhouse.sk, bez GitHubu a USA; pri GitHub Pages ostáva text ako doteraz. Bez overených
+        údajov o WebHouse zostava pre FTP zlyhá."""
+        w = self.texty['ochrana']['webhouse']
+        self.assertEqual((w['meno'], w['adresa'], w['ico']), ('WebHouse, s. r. o.', 'Paulínska 20, 917 01 Trnava', '36 743 852'))
+        self.assertTrue(w['dpa_url'].startswith('https://helpdesk.webhouse.sk/742599-'))
+        self.assertTrue(w['ochrana_url'].startswith('https://helpdesk.webhouse.sk/333948-'))
+        stranka = (self.ftp / 'ochrana-udajov' / 'index.html').read_text(encoding='utf-8')
+        hosting = stranka.split('<h2 class="nadpis-maly">Hosting</h2>', 1)[1].split('<h2', 1)[0]
+        text = html.unescape(re.sub(r'<[^>]+>', ' ', hosting)).replace('\u00a0', ' ')
+        for kus in ('beží na webhostingu spoločnosti WebHouse, s. r. o., Paulínska 20, 917 01 Trnava, IČO 36 743 852',
+                    'IP adresu návštevníka', 'čl. 6 ods. 1 písm. f) nariadenia (EÚ) 2016/679',
+                    'Príjemcom týchto údajov je WebHouse, s. r. o., ako poskytovateľ webhostingu',
+                    'ako sprostredkovateľ podľa čl. 28 nariadenia', 'samostatný prevádzkovateľ',
+                    'počas obdobia primeraného ich účelu', 'v Európskom hospodárskom priestore',
+                    'podmienok kapitoly V nariadenia'):
+            self.assertIn(kus, text)
+        for nie in ('GitHub', 'USA'):
+            self.assertNotIn(nie, stranka)
+        zdroje = stranka.split('<p class="poznamka">', 1)[1].split('</p>', 1)[0]
+        self.assertIn(f'<a href="{w["dpa_url"]}">', zdroje)
+        self.assertIn(f'<a href="{w["ochrana_url"]}">', zdroje)
+        self.assertIn('<a href="https://dataprotection.gov.sk/">', zdroje)
+        pages = (self.ostry / 'ochrana-udajov' / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('beží na službe GitHub Pages spoločnosti GitHub, Inc.', pages)
+        self.assertNotIn('WebHouse', pages)
+        # bez údajov o WebHouse (alebo s adresou mimo webhouse.sk) zostava pre FTP zlyhá, nič sa nevymýšľa
+        povodne = self.w.hosting
+        try:
+            self.w.hosting = 'apache'
+            for zle in ({}, dict(w, ico=''), dict(w, dpa_url='https://example.com/dpa'), dict(w, ochrana_url='http://helpdesk.webhouse.sk/x')):
+                with self.assertRaises(build.ChybaZostavy):
+                    self.w.ochrana_hosting(dict(self.texty['ochrana'], webhouse=zle))
+        finally:
+            self.w.hosting = povodne
+
+    def test_1_prepinac_hostingu_a_poistky(self):
+        """Prepínač --hosting má prednosť pred premennou BMB_HOSTING; neznámy hosting, apache s náhľadom (aj v GitHub
+        Actions bez BMB_OSTRY=ano), výstup v repozitári, zostava pre GitHub Pages alebo cudzí súbor v priečinku pre FTP
+        skončia kódom 2 ešte pred zostavou, nič sa nezapíše. Opakovaná FTP zostava do toho istého priečinka nič
+        nezmení a cudzí súbor v ňom zastaví ďalší beh."""
+        tmp = Path(tempfile.mkdtemp(prefix='bmb-test-hosting-'))
+        try:
+            for argv, prostredie, hosting, hlaska in (
+                    ({'nahlad': True}, None, 'apache', 'len pre ostrý web'),
+                    ({}, {'BMB_HOSTING': 'ftp'}, None, 'nepoznám'),
+                    ({}, {'BMB_HOSTING': 'apache', 'GITHUB_ACTIONS': 'true'}, None, 'len pre ostrý web')):
+                kod, _, err = postav(tmp / 'x', prostredie=prostredie, hosting=hosting, **argv)
+                self.assertEqual(kod, 2, err)
+                self.assertIn(hlaska, err)
+                self.assertFalse((tmp / 'x').exists())
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                build.main(['--hosting', 'nginx', '--vystup', str(tmp / 'x')])
+            v_repo = KOREN / 'test-ftp-nesmie-vzniknut'
+            kod, _, err = postav(v_repo, hosting='apache')
+            self.assertEqual(kod, 2)
+            self.assertIn('mimo repozitára', err)
+            self.assertFalse(v_repo.exists())
+            pages = tmp / 'pages'
+            pages.mkdir()
+            (pages / build.MANIFEST).write_text('{"verzia": 1, "subory": {}}', encoding='utf-8')
+            kod, _, err = postav(pages, prostredie={'BMB_HOSTING': 'apache'})
+            self.assertEqual(kod, 2)
+            self.assertIn('GitHub Pages', err)
+            cudzi = tmp / 'cudzi'
+            cudzi.mkdir()
+            (cudzi / 'stary-web.html').write_text('x', encoding='utf-8')
+            kod, _, err = postav(cudzi, hosting='apache')
+            self.assertEqual(kod, 2)
+            self.assertIn('stary-web.html', err)
+            self.assertEqual(build.manifest_ftp((tmp / 'novy').resolve()), ((tmp / ('novy' + build.MANIFEST)).resolve(), ''))
+            for chyba in ({'hosting': 'nginx'}, {'hosting': 'apache', 'nahlad': True}):
+                with self.assertRaises(build.ChybaZostavy):
+                    build.Web(KOREN / 'obsah', chyba.get('nahlad', False), hosting=chyba['hosting'])
+            # opakovaná zostava do kópie FTP výstupu so zoznamom vedľa: nič nové, rovnaké bajty; cudzí súbor ju zastaví
+            kopia = tmp / 'web-ftp'
+            shutil.copytree(self.ftp, kopia)
+            shutil.copyfile(self.tmp / ('web-ftp' + build.MANIFEST), tmp / ('web-ftp' + build.MANIFEST))
+            kod, out, err = postav(kopia, rychle=True, hosting='apache', prostredie={'BMB_HOSTING': 'pages'})
+            self.assertEqual(kod, 0, err)
+            self.assertIn('(ostrý, hosting apache)', out)
+            self.assertIn('nových 0', out)
+            self.assertEqual(odtlacky(kopia), odtlacky(self.ftp))
+            (kopia / 'obrazky' / 'pridane-rucne.jpg').write_bytes(b'x')
+            kod, _, err = postav(kopia, hosting='apache')
+            self.assertEqual(kod, 2)
+            self.assertIn('obrazky/pridane-rucne.jpg', err)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_49_readme_a_obsah_yml_bmb_ostry(self):
+        """Položka 49: README netvrdí, že krok Zostaviť web nemá env BMB_OSTRY (obsah.yml ho má); pri GitHub Pages stačí
+        premenná repozitára, pri FTP ju nenastavovať. README opisuje --hosting apache, simuláciu a kontrolu po nahratí."""
+        readme = (KOREN / 'README.md').read_text(encoding='utf-8')
+        self.assertNotIn('treba v kroku „Zostaviť web“ workflowu pridať', readme)
+        self.assertIn('Krok „Zostaviť web“ v `obsah.yml` už má `env: BMB_OSTRY: ${{ vars.BMB_OSTRY }}`', readme)
+        self.assertIn('pri ceste FTP na WebHouse ju nenastavovať', readme)
+        for kus in ('--hosting apache', 'BMB_HOSTING=apache', 'nastroje/htaccess_simulacia.py', 'nastroje/kontrola_spustenia.py',
+                    'SPUSTENIE-FTP.md', 'TestHostingApache'):
+            self.assertIn(kus, readme)
+        yml = (KOREN / '.github' / 'workflows' / 'obsah.yml').read_text(encoding='utf-8')
+        krok = yml.split('- name: Zostaviť web', 1)[1].split('- name:', 1)[0]
+        self.assertIn('env:\n          BMB_OSTRY: ${{ vars.BMB_OSTRY }}\n        run: python build.py\n', krok)
+        self.assertNotIn('BMB_HOSTING', yml)
+
+
+class TestOpravaPoOvereni(unittest.TestCase):
+    """Oprava po overení opráv auditu naplno (25. 11. 2026, kontroly dizajnu, prehliadača, zadania a spustenia): box
+    s dokladom na stránkach služieb, titulná fotka detailu hneď pod H1 pri každej šírke, rytmus a karty stránok služieb,
+    text-wrap, fokus po Zrušiť filter, údaje hrdinu pri 1100 až 1119 px s posuvníkom, alt tabuľky ASB, a pri ceste FTP
+    commit v zozname zostavy, pravidlo 3 .htaccess len pre mená zostavy, podpožiadavka DirectoryIndex v simulácii,
+    server simulácie a skúška .htaccess. Merania v Chrome: ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/
+    AUDIT-OPRAVY.md, časť Oprava po overení."""
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry, cls.w = s['ostry'], s['web']
+        cls.css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        cls.zaklad = css_bez_blokov(cls.css)
+        cls.firma = json.loads((KOREN / 'obsah' / 'firma.json').read_text(encoding='utf-8'))
+
+    def info(self, cesta):
+        return stranka_info(self.ostry / cesta / 'index.html' if cesta else self.ostry / 'index.html')
+
+    def blok(self, hlavicka):
+        return ''.join(css_bloky(self.css, hlavicka))
+
+    def test_box_ciarka_v_celku_a_cislo_bez_zalomenia(self):
+        """Nález vážne (dizajn): v boxe Stavebného manažmentu bol span.nz okolo celého „evidenčné číslo …“ a čiarka mimo
+        neho; pri 1024 až 1064 px stála čiarka sama na riadku, pri 1104 až 1248 px ňou riadok začínal a pri 1024 až
+        1096 px išlo číslo cez pravý rámik boxu (o 3 až 28 px), pri 400 px vodorovný posun stránky 7 px. Teraz je
+        nezalomiteľné len „číslo 00912*10*,“ aj s čiarkou a dátum (pevné medzery zo sadzby). Chrome po 8 až 16 px pri
+        320 až 1920 px: pretečení 51 na 0, riadkov s čiarkou 67 na 0."""
+        telo = self.info('stavebny-manazment/')['telo']
+        box = telo.split('<aside class="kalkulacka sluzba-bok"', 1)[1].split('</aside>', 1)[0]
+        dd = re.findall(r'<div><dt>([^<]+)</dt><dd>(.*?)</dd></div>', box)
+        o = self.firma['opravnenia']
+        riadky = {k: v for k, v in dd}
+        # dátum má pevné medzery zo sadzby (T), v testoch bez spätnej lomky vo výraze f-reťazca (Python pred 3.12)
+        datumy = [x['datum_vydania_text'].replace(' ', '\u00a0') for x in o[:2]]
+        self.assertEqual(riadky['Stavbyvedúci'],
+                         f'{o[0]["odborne_zameranie"]}, evidenčné <span class="nz">číslo {o[0]["evidencne_cislo"]},</span> '
+                         f'vydané {datumy[0]}')
+        self.assertEqual(riadky['Stavebný dozor'],
+                         f'evidenčné <span class="nz">číslo {o[1]["evidencne_cislo"]},</span> vydané {datumy[1]}')
+        for k, v in dd:
+            self.assertNotIn('</span>,', v, k)
+            self.assertNotRegex(v, r'^\s*,', k)
+            self.assertNotIn('<span class="nz">evidenčné', v, k)
+            for nz in re.findall(r'<span class="nz">(.*?)</span>', v):
+                self.assertRegex(nz, r'^číslo \S+,?$', k)
+        # bez čiarky za posledným kusom, žiadne dve čiarky
+        self.assertFalse(any(re.sub(r'<[^>]+>', '', v).rstrip().endswith(',') or ',,' in v for _, v in dd))
+
+    def test_box_stitok_nad_hodnotou_do_1279(self):
+        """Nález vážne (dizajn): vedľa štítka mala hodnota v boxe s dokladom pri 1024 až 1279 px (box 5 z 12 stĺpcov)
+        147 až 199 px a lámala sa po slove („Slovenská / komora / stavebných / inžinierov (SKSI)“), pri 400 až 1023 px
+        166 až 236 px. Do 1279 px je štítok nad hodnotou ako do 399 px (položka 23), od 1280 px vedľa seba. Chrome po 8
+        až 16 px: riadkov s jedným slovom vo viacriadkovej hodnote pri 400 až 1279 px 186 na 0, najužšia hodnota
+        313 px (predtým 162 px)."""
+        self.assertIn('.sluzba-bok .fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}',
+                      self.blok('@media (max-width:1279px)'))
+        for hlavicka in ('@media (min-width:1280px)', '@media (min-width:1921px)'):
+            self.assertNotIn('.sluzba-bok .fakty>div{', self.blok(hlavicka), hlavicka)
+        self.assertEqual(deklaracie(self.zaklad, '.fakty>div').get('grid-template-columns'), 'minmax(7.5em,32%) minmax(0,1fr)')
+        # položka 23 ostáva (údaje detailu do 399 px)
+        self.assertIn('.sluzba-bok .fakty>div,.fakty.udaje>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}',
+                      self.blok('@media (max-width:399px)'))
+
+    def test_detail_fotka_pod_h1_a_sizes(self):
+        """Nálezy vážne (dizajn): titulná fotka detailu je hneď pod H1 pri každej šírke; pri 1024 až 1279 px cez celú
+        šírku a sizes to vie (prehliadač nevyberie súbor pre 7 stĺpcov): sizes pri 1024 až 1279 px nikdy menší ako
+        šírka obsahu, od 1280 px 7 stĺpcov ako SIZES_DETAIL. Chrome nad 26 detailmi: prázdne miesto pod fotkou pri 1024
+        až 1279 px 0 (predtým až 595 px), pri 1366 px najviac 173 (predtým 264), riadkov s jedným slovom v hodnotách
+        pri 1024 px 74 na 2; pri 360 až 412 px celá fotka v prvej obrazovke pri všetkých 26 (predtým pri 390 x 844
+        priemer 38 % a 11 detailov bez fotky)."""
+        n = 0
+        for r in self.w.realizacie:
+            telo = self.info(f'realizacie/{r["slug"]}/')['telo']
+            if 'detail-s-udajmi' not in telo:
+                continue
+            n += 1
+            dvoj = telo.split('<div class="obsah mriezka detail detail-s-udajmi">', 1)[1]
+            self.assertLess(dvoj.index('<figure class="pohlad detail-foto">'), dvoj.index('<div class="detail-udaje">'), r['slug'])
+            self.assertLess(dvoj.index('<div class="detail-udaje">'), dvoj.index('<div class="detail-text'), r['slug'])
+        self.assertEqual(n, len([r for r in self.w.realizacie if r.get('karta')]))
+        casti = build._casti_sizes(build.SIZES_DETAIL_UDAJE)
+        self.assertEqual(casti[0], build._casti_sizes(build.SIZES_DETAIL)[0])
+        for vw in range(1024, 1280):
+            obsah = build.sirka_obsahu_px(vw)
+            self.assertGreaterEqual(vyhodnot_sizes(build.SIZES_DETAIL_UDAJE, vw, 800), obsah, vw)
+            self.assertLessEqual(vyhodnot_sizes(build.SIZES_DETAIL_UDAJE, vw, 800), obsah + 40, vw)
+        for vw in (1280, 1366, 1440, 1920, 2560, 400, 800):
+            self.assertEqual(vyhodnot_sizes(build.SIZES_DETAIL_UDAJE, vw, 800), vyhodnot_sizes(build.SIZES_DETAIL, vw, 800), vw)
+
+    def test_rytmus_a_karty_sluzieb_do_1023(self):
+        """Nálezy drobné (dizajn): do 1023 px bolo medzi boxom alebo odkazom Všetky realizácie a ďalším nadpisom 176 až
+        197 px, teraz 96 px ako na úvode (Chrome pri 390 a 768 px: /stavebny-dozor/ 176 na 96 px); karty v jednom
+        stĺpci (do 479 px) bez rezervy druhého riadka názvu (RD Ahoj 44 na 22 px ako na /realizacie/)."""
+        mobil = self.blok('@media (max-width:1023px)')
+        self.assertIn('.sluzba-obal{padding-bottom:var(--m-48)}', mobil)
+        self.assertIn('.sluzba-obal~.sekcia-karty,.sluzba-obal~.otazky-sekcia{padding-block:var(--m-48)}', mobil)
+        self.assertIn('.karty>.projekt h3{min-height:0}', self.blok('@media (max-width:479px)'))
+        self.assertEqual(deklaracie(self.zaklad, '.projekt h3').get('min-height'), 'calc(2 * 1.15em)')
+
+    def test_text_wrap_bez_osameleho_slova(self):
+        """Nálezy drobné (dizajn, prehliadač, zadanie): úvodný odsek stránok, riadok Zdroj pod otázkami zo zákona
+        a pri Obchodnom registri text-wrap:pretty („známe.“, „Bulkovi.“, „h)“, „písm. b)“, „SR“ samé na riadku),
+        hodnoty v tabuľke údajov detailu text-wrap:balance (pri 1440 px 32 hodnôt s jedným slovom na poslednom riadku,
+        Chrome po oprave 2 pri každej šírke 1024 až 1920 px)."""
+        self.assertEqual(deklaracie(self.zaklad, '.uvodny').get('text-wrap'), 'pretty')
+        self.assertEqual(deklaracie(self.zaklad, '.otazka .zdroj').get('text-wrap'), 'pretty')
+        self.assertEqual(deklaracie(self.zaklad, '.register .cena small').get('text-wrap'), 'pretty')
+        self.assertEqual(deklaracie(self.zaklad, '.udaje dd').get('text-wrap'), 'balance')
+        # vložený štýl úvodu má pravidlá úvodného odseku aj zdroja (otázky zo zákona sú aj na úvode)
+        uvod = self.info('')['html'].split('</style>', 1)[0]
+        self.assertIn('.otazka .zdroj{font-size:14px;color:var(--tlmeny);padding-bottom:20px;text-wrap:pretty}', uvod)
+
+    def test_zrusit_filter_fokus_na_vsetky(self):
+        """Nález drobné (prehliadač, WCAG 2.4.3): po Zrušiť filter (tlačidlo v prázdnom výsledku, ktorý sa skryje) padol
+        fokus na body a ďalší Tab išiel až na Kontakt; teraz ide na tlačidlo Všetky. Falošný DOM (zoznam_spravanie.cjs)
+        nad zhusteným app.js webu: po zrušení fokus na data-druh="" a výber zrušený; sabotáž bez presunu fokusu
+        chyby_zoznamu zachytí."""
+        d = data_zoznamu(self.ostry)
+        druh = next(x for x in d['druhy'] if x)
+        _, stavy = spravanie_zoznamu(self.ostry, [{'akcia': 'druh', 'hodnota': druh}, {'akcia': 'zrusit'}])
+        self.assertIsNone(stavy[1]['fokus_druh'])
+        self.assertEqual(stavy[2]['fokus_druh'], '')
+        self.assertEqual(chyby_zoznamu(self.ostry), [])
+        js = (self.ostry / 'app.js').read_text(encoding='utf-8')
+        kus = "var vsetkyDruhy = filtre.querySelector('[data-druh=\"\"]');\nif (vsetkyDruhy) vsetkyDruhy.focus();\n"
+        self.assertIn(kus, js)
+        with tempfile.TemporaryDirectory() as t:
+            zly = Path(t) / 'app.js'
+            zly.write_text(js.replace(kus, ''), encoding='utf-8')
+            self.assertTrue(any('fokus na tlačidle filtra' in c for c in chyby_zoznamu(self.ostry, app_js=zly)))
+
+    def test_hrdina_udaje_bez_odsadenia_do_1119(self):
+        """Nález drobné (prehliadač): okno 1100 až 1114 px s klasickým posuvníkom 17 px má obsah ako 1083 až 1097 px
+        bez neho, hodnota údajov hrdinu s odsadením 34 px mala tri riadky a pri výške 556 až 568 px boli tlačidlá
+        Zavolať a Napísať e-mail 4 až 7 px pod oknom. Hodnota bez odsadenia platí do 1119 px (o posuvník nad 1099 px),
+        ostatné pravidlá úzkeho počítača ostávajú do 1099 px."""
+        self.assertIn('.udaj dd{margin-left:0}', self.blok('@media (min-width:1024px) and (max-width:1119px)'))
+        self.assertNotIn('.udaj dd{margin-left:0}', self.blok('@media (min-width:1024px) and (max-width:1099px)'))
+        self.assertLess(self.css.index('@media (min-width:1024px){'), self.css.index('@media (min-width:1024px) and (max-width:1119px){'))
+        self.assertIn('.udaj dd{margin-left:0}', self.info('')['html'].split('</style>', 1)[0])
+
+    def test_ftp_commit_v_zozname_zostavy(self):
+        """Nález vážne (spustenie): postup FTP stavia z disku, ktorý nemusí byť verzia schváleného náhľadu. build.py pri
+        hostingu apache zapíše commit (len čítanie .git, git sa nespúšťa) do zoznamu zostavy vedľa výstupu a vypíše
+        ho; zoznam zostavy pre GitHub Pages ho nemá. commit_repozitara: referencia, packed-refs, odpojený HEAD,
+        neplatný HEAD a repozitár bez .git."""
+        f = ftp_zostava()
+        kod, out, err = f['o']
+        self.assertEqual(kod, 0, err)
+        zoznam = json.loads((f['tmp'] / ('web-ftp' + build.MANIFEST)).read_text(encoding='utf-8'))
+        commit = build.commit_repozitara()
+        self.assertEqual(zoznam['commit'], commit or 'neznámy')
+        self.assertIn(f'commit: {commit}' if commit else 'commit: neznámy', out)
+        self.assertNotIn('commit', json.loads((self.ostry / build.MANIFEST).read_text(encoding='utf-8')))
+        sha1, sha2 = 'a' * 40, '0123456789abcdef' * 2 + '01234567'
+        with tempfile.TemporaryDirectory() as t:
+            k = Path(t)
+            self.assertEqual(build.commit_repozitara(k), '')
+            g = k / '.git'
+            (g / 'refs' / 'heads').mkdir(parents=True)
+            (g / 'HEAD').write_text('ref: refs/heads/main\n', encoding='utf-8')
+            self.assertEqual(build.commit_repozitara(k), '')
+            (g / 'packed-refs').write_text(f'# pack-refs with: peeled\n{sha2} refs/heads/main\n', encoding='utf-8')
+            self.assertEqual(build.commit_repozitara(k), sha2)
+            (g / 'refs' / 'heads' / 'main').write_text(sha1 + '\n', encoding='utf-8')
+            self.assertEqual(build.commit_repozitara(k), sha1)
+            (g / 'HEAD').write_text(sha2 + '\n', encoding='utf-8')
+            self.assertEqual(build.commit_repozitara(k), sha2)
+            for zly in ('ref: refs/../../x\n', 'nieco\n', 'ref: refs/heads/ina\n'):
+                (g / 'HEAD').write_text(zly, encoding='utf-8')
+                self.assertEqual(build.commit_repozitara(k), '', zly)
+
+    def test_ftp_pravidlo3_len_mena_zostavy(self):
+        """Nález drobné (spustenie): priečinok Joomly s prázdnym index.html bez lomky (/images, /cache) dostal 301 na
+        adresu s lomkou a až potom 404 (prezrádza Joomlu, skok navyše). Pravidlo 3 má podmienku na mená v koreni
+        zostavy, tie isté ako pravidlo 5; simulácia: /images a /cache hneď 404, stránka bez lomky ďalej 301."""
+        f = ftp_zostava()
+        ht = (f['vystup'] / '.htaccess').read_text(encoding='utf-8')
+        sim = nastroj('htaccess_simulacia')
+        r = ht.splitlines()
+        i = r.index('RewriteRule ^(.+[^/])$ https://bmbuilding.sk/$1/ [R=301,L]')
+        self.assertEqual(r[i - 2:i], ['RewriteCond %{REQUEST_FILENAME} -d', 'RewriteCond %{REQUEST_FILENAME}/index.html -f'])
+        m3 = re.fullmatch(r'RewriteCond \$1 \^\(\?:(.*)\)\(\?:/\|\$\)', r[i - 3])
+        m5 = re.search(r'^RewriteCond \$1 !\^\(\?:(.*)\)\$$', ht, re.M)
+        self.assertTrue(m3 and m5, r[i - 3])
+        self.assertEqual(m3.group(1), m5.group(1))
+        fs = sim.Subory(f['vystup'], list(sim.JOOMLA))
+        h = sim.Htaccess(ht)
+        for cesta in ('images', 'cache'):
+            v = h.poziadavka(f'https://bmbuilding.sk/{cesta}', fs)
+            self.assertEqual((v['stav'], v.get('location')), (404, None), cesta)
+        v = h.poziadavka('https://bmbuilding.sk/kontakt', fs)
+        self.assertEqual((v['stav'], v['location']), (301, 'https://bmbuilding.sk/kontakt/'))
+        # sabotáž: bez podmienky na mená zostavy simulácia aj kontrola po nahratí /images zachytia
+        zle = ht.replace(r[i - 3] + '\n', '')
+        self.assertEqual(sim.Htaccess(zle).poziadavka('https://bmbuilding.sk/images', fs)['stav'], 301)
+        self.assertTrue(any(not x['ok'] and x['url'].endswith('/images') for x in sim.over(f['vystup'], zle)))
+        kontrola = nastroj('kontrola_spustenia')
+        self.assertIn('/images', kontrola.NEVEREJNE)
+        self.assertIn('/cache', kontrola.NEVEREJNE)
+
+    def test_simulacia_podpoziadavka_bez_pravidiel_r(self):
+        """Nález drobné (spustenie): Apache 2.4 v podpožiadavke DirectoryIndex vynechá každé pravidlo s príznakom R, aj
+        R=404 (mod_rewrite.c apply_rewrite_list: r->main a RULEFLAG_FORCEREDIRECT). Bez index.html v koreni by teda
+        na https://bmbuilding.sk/ bežal index.php Joomly; simulácia to teraz ukáže (predtým 301), s index.html úvod.
+        Postup preto nahráva index.html pred .htaccess."""
+        sim = nastroj('htaccess_simulacia')
+        h = sim.Htaccess('DirectoryIndex index.html index.php\nRewriteEngine On\nRewriteRule \\.php$ - [R=404,L]\n')
+        fs = sim.Subory(navyse=['index.php'])
+        self.assertTrue(h.poziadavka('https://x.sk/', fs)['php'])
+        self.assertEqual(h.poziadavka('https://x.sk/index.php', fs)['stav'], 404)
+        fs.pridaj('index.html')
+        v = h.poziadavka('https://x.sk/', fs)
+        self.assertEqual((v['stav'], v['subor'], v['php']), (200, 'index.html', False))
+        f = ftp_zostava()
+        ht = (f['vystup'] / '.htaccess').read_text(encoding='utf-8')
+        fs = sim.Subory(f['vystup'], list(sim.JOOMLA))
+        self.assertEqual(sim.Htaccess(ht).poziadavka('https://bmbuilding.sk/', fs)['subor'], 'index.html')
+        fs.subory.discard('index.html')
+        v = sim.Htaccess(ht).poziadavka('https://bmbuilding.sk/', fs)
+        self.assertTrue(v['php'], v)
+        postup = (KOREN.parents[1] / 'ops' / 'weby-na-mieru' / 'klienti' / 'bmbuilding' / 'kolo-1' / 'SPUSTENIE-FTP.md')
+        if postup.is_file():
+            t = postup.read_text(encoding='utf-8')
+            self.assertLess(t.index('1. `index.html`,'), t.index('3. nakoniec `.htaccess`'))
+
+    def test_simulacia_server_z_prikazoveho_riadka(self):
+        """Nález drobné (spustenie): kontrola na sucho s --lokalne PORT potrebovala server simulácie, ktorý sa z príkazového
+        riadka spustiť nedal. htaccess_simulacia.py --server vypíše port a príkaz kontroly a odpovedá len na 127.0.0.1."""
+        import http.client
+        import subprocess
+        f = ftp_zostava()
+        proc = subprocess.Popen([sys.executable, '-B', '-X', 'utf8', str(KOREN / 'nastroje' / 'htaccess_simulacia.py'),
+                                 '--web', str(f['vystup']), '--server'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                text=True, encoding='utf-8')
+        try:
+            riadok = json.loads(proc.stdout.readline())
+            self.assertIn('--lokalne', riadok['prikaz'])
+            c = http.client.HTTPConnection('127.0.0.1', riadok['port'], timeout=20)
+            c.request('GET', '/', headers={'Host': 'bmbuilding.sk', 'X-Simulacia-Schema': 'https'})
+            o = c.getresponse()
+            self.assertEqual(o.status, 200)
+            self.assertIn(b'<html', o.read())
+            c.request('GET', '/images', headers={'Host': 'bmbuilding.sk', 'X-Simulacia-Schema': 'https'})
+            o = c.getresponse()
+            o.read()
+            self.assertEqual(o.status, 404)
+            c.close()
+        finally:
+            proc.terminate()
+            proc.wait(timeout=20)
+            proc.stdout.close()
+            proc.stderr.close()
+
+    def test_skuska_htaccess(self):
+        """Nález drobné (spustenie): či WebHouse v .htaccess dovolí DirectoryIndex a ExpiresByType (AllowOverride
+        Indexes) a ostatné direktívy (FileInfo), sa inak ukáže až pri prepnutí chybou 500. nastroje/htaccess_skuska.py
+        vyrobí priečinok skuska-htaccess: .htaccess s tými istými direktívami okrem pravidiel prepisu, DirectoryIndex
+        skuska.html a skuska.html; simulácia ho prijme a v koreni skúšky ukáže skuska.html. Nástroj odmietne iné meno
+        priečinka, výstup v repozitári alebo cudzie súbory."""
+        f = ftp_zostava()
+        skuska = nastroj('htaccess_skuska')
+        sim = nastroj('htaccess_simulacia')
+        ht = (f['vystup'] / '.htaccess').read_text(encoding='utf-8')
+        with tempfile.TemporaryDirectory() as t, redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            v = Path(t) / 'skuska-htaccess'
+            self.assertEqual(skuska.main(['--web', str(f['vystup']), '--vystup', str(v)]), 0)
+            self.assertEqual(sorted(p.name for p in v.iterdir()), ['.htaccess', 'skuska.html'])
+            text = (v / '.htaccess').read_text(encoding='utf-8')
+            self.assertIn('DirectoryIndex skuska.html', text)
+            self.assertNotIn('RewriteCond', text)
+            self.assertEqual(re.findall(r'^RewriteRule .*$', text, re.M), ['RewriteRule ^nikdy-nepouzite-pravidlo-skusky$ - [R=404,L]'])
+            direktivy = lambda x: {r.split()[0] for r in x.splitlines() if r.strip() and not r.strip().startswith('#')}  # noqa: E731
+            self.assertEqual(direktivy(ht) - {'RewriteCond'}, direktivy(text))
+            for riadok in ht.splitlines():
+                if riadok.strip() and not riadok.lstrip().startswith(('#', 'RewriteCond', 'RewriteRule', 'DirectoryIndex')):
+                    self.assertIn(riadok, text.splitlines(), riadok)
+            fs = sim.Subory(v, ['404.html'])
+            o = sim.Htaccess(text).poziadavka('https://bmbuilding.sk/', fs)
+            self.assertEqual((o['stav'], o['subor']), (200, 'skuska.html'))
+            self.assertIn(('Content-Type', 'text/html; charset=UTF-8'), o['hlavicky'])
+            self.assertIn('v poriadku', (v / 'skuska.html').read_text(encoding='utf-8'))
+            # druhý beh do toho istého priečinka prejde, iné meno, cudzí súbor a výstup v repozitári nie
+            self.assertEqual(skuska.main(['--web', str(f['vystup']), '--vystup', str(v)]), 0)
+            self.assertEqual(skuska.main(['--web', str(f['vystup']), '--vystup', str(Path(t) / 'ine-meno')]), 2)
+            (v / 'cudzi.txt').write_text('x', encoding='utf-8')
+            self.assertEqual(skuska.main(['--web', str(f['vystup']), '--vystup', str(v)]), 2)
+            self.assertEqual(skuska.main(['--web', str(f['vystup']), '--vystup', str(KOREN / 'skuska-htaccess')]), 2)
+            self.assertFalse((KOREN / 'skuska-htaccess').exists())
+
+    def test_dokumenty_po_overeni(self):
+        """Nálezy (zadanie, spustenie): README r. 7 netvrdí „popisok Roky“ ani „prázdnu kótu“ (opravy položiek 2 a 15),
+        README opisuje commit v zozname zostavy, server simulácie a skúšku .htaccess; postup SPUSTENIE-FTP.md (len keď je
+        repozitár ARLing vedľa, v GitHub Actions nie je) má bránu commitu, zálohu mimo priečinkov AI, skúšku .htaccess,
+        poradie prepnutia, návrat s robots.txt, sitemap.xml a llms.txt a správu Viliamovi pre cestu FTP."""
+        readme = (KOREN / 'README.md').read_text(encoding='utf-8')
+        self.assertNotIn('karta bez rokov má prázdnu kótu', readme)
+        self.assertNotIn('(popisok Roky, bez slova príspevok', readme)
+        for kus in ('popisok Rok pri jednom roku a Roky pri rozsahu', 'len vlasovú čiaru', 'commit_repozitara',
+                    'htaccess_simulacia.py --web DIR --server', 'nastroje/htaccess_skuska.py', 'SPUSTENIE-FTP.md časť 1.1'):
+            self.assertIn(kus, readme)
+        postup = KOREN.parents[1] / 'ops' / 'weby-na-mieru' / 'klienti' / 'bmbuilding' / 'kolo-1' / 'SPUSTENIE-FTP.md'
+        if not postup.is_file():
+            self.skipTest('postup FTP je v repozitári ARLing, nie v products/bmbuilding')
+        t = postup.read_text(encoding='utf-8')
+        for kus in ('git status --porcelain', 'git rev-parse HEAD origin/main', '**Commit schváleného náhľadu:**',
+                    'D:/zalohy-klientov/bmbuilding/RRRR-MM-DD-CCCCCCC', 'nastroje/htaccess_skuska.py', 'súkromnom okne',
+                    'Zmaž aj nové `sitemap.xml` a `llms.txt`', '## Správa Viliamovi',
+                    '## Rozhodnutie Andreja pred spustením (blokátor)', 'http://ftp.bmbuilding.sk/administrator/',
+                    'google1a2b3c4d5e6f.html', '`{"kontrol": 150, "chyb": 0, "pozor": 0, ...}`'):
+            self.assertIn(kus, t)
+        self.assertNotIn('zaloha-stareho-webu', t)
+        self.assertFalse(any(z in t for z in ('\u2013', '\u2014')))
+
+    def test_ftp_ochrana_zdroj_body_1_a_7(self):
+        """Nález drobné (spustenie): meno, adresa a IČO WebHouse sú z bodu 1 jeho stránky Ochrana osobných údajov, zdroj
+        pod textom uvádzal len bod 7."""
+        f = ftp_zostava()
+        t = (f['vystup'] / 'ochrana-udajov' / 'index.html').read_text(encoding='utf-8').replace('\u00a0', ' ')
+        self.assertIn('WebHouse, Ochrana osobných údajov, body 1 a 7', t)
+        self.assertNotIn('Ochrana osobných údajov, bod 7<', t)
 
 
 def copy_realizacie(r):

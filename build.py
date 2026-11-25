@@ -5,10 +5,15 @@
 pravidlá fotiek, presmerovania, písmo) a zapíše hotový web do web/. Python 3 so štandardnou knižnicou a Pillow, bez siete,
 deterministicky (rovnaký vstup = rovnaké bajty, žiadny čas behu vo výstupe).
 
-  python build.py               ostrý beh: index, sitemap.xml, robots.txt so Sitemap, CNAME, .nojekyll
-  python build.py --nahlad      náhľad: noindex na každej stránke, robots.txt Disallow: /, bez sitemap
+  python build.py               ostrý beh: index, sitemap.xml, robots.txt so Sitemap a robotmi AI, llms.txt, CNAME, .nojekyll
+  python build.py --nahlad      náhľad: noindex na každej stránke, robots.txt Disallow: /, bez sitemap a llms.txt,
+                                og:image z adresy náhľadu (nastavenia.json adresa_nahladu)
   python build.py --vystup DIR  iný výstupný priečinok (predvolený web/ vedľa build.py)
   python build.py --obsah DIR   iný priečinok obsahu (predvolený obsah/ vedľa build.py)
+  python build.py --hosting apache --vystup DIR
+                                ostrý web na nahratie cez FTP na webhosting WebHouse (Apache): .htaccess s presmerovaniami
+                                301 a pravidlami, bez CNAME, .nojekyll a priečinka index.php/; výstup mimo repozitára,
+                                zoznam zostavy vedľa neho (DIR.zostava.json); prepínač aj premenná BMB_HOSTING=apache
 
 V GitHub Actions (GITHUB_ACTIONS=true) ide ostrý beh len s premennou prostredia BMB_OSTRY=ano, inak náhľad:
 náhľad na github.io nesmie ísť do indexu, kým doména bmbuilding.sk nie je prepnutá (brána pokus 1, správnosť 1).
@@ -58,6 +63,27 @@ FORMATY = ('avif', 'webp')
 MIME = {'avif': 'image/avif', 'webp': 'image/webp'}
 OG_W, OG_H = 1200, 630
 MANIFEST = '.zostava.json'
+# hosting ostrého webu (audit naplno 25. 11. 2026, položka 1): pages = GitHub Pages (CNAME, .nojekyll, staré adresy
+# Joomly ako stránky s meta refresh v index.php/), apache = webhosting WebHouse cez FTP (.htaccess, staré adresy ako 301,
+# bez CNAME, .nojekyll a priečinka index.php/, ktorý by sa na hostingu zrazil so súborom index.php Joomly; zoznam
+# zostavy vedľa výstupu, aby sa nenahral na FTP). Prepínač --hosting alebo premenná BMB_HOSTING, predvolený pages.
+HOSTINGY = ('pages', 'apache')
+HTACCESS = '.htaccess'
+# cache na Apache (mod_expires podľa typu bez parametrov): HTML vždy overiť (nová verzia hneď po nahratí), app.js
+# má v adrese ?v=<odtlačok>, takže rok; písma a fotky nemajú odtlačok v mene (zmena fotky pod tým istým menom), preto
+# mesiac; robots.txt, sitemap.xml a llms.txt hodina. GitHub Pages hlavičky nastaviť nedovolí (max-age 600).
+CACHE_APACHE = (('text/html', 'access plus 0 seconds'), ('text/plain', 'access plus 1 hour'),
+                ('application/xml', 'access plus 1 hour'), ('text/xml', 'access plus 1 hour'),
+                ('application/manifest+json', 'access plus 1 week'), ('application/javascript', 'access plus 1 year'),
+                ('text/javascript', 'access plus 1 year'), ('text/css', 'access plus 1 month'),
+                ('font/woff2', 'access plus 1 month'), ('image/avif', 'access plus 1 month'),
+                ('image/webp', 'access plus 1 month'), ('image/jpeg', 'access plus 1 month'),
+                ('image/png', 'access plus 1 month'), ('image/svg+xml', 'access plus 1 month'),
+                ('image/x-icon', 'access plus 1 month'), ('image/vnd.microsoft.icon', 'access plus 1 month'))
+# gzip na Apache (mod_deflate cez mod_filter): textové typy, AVIF, WebP, JPEG, PNG a woff2 sú už skomprimované
+GZIP_APACHE = ('text/html', 'text/plain', 'text/css', 'text/xml', 'application/xml', 'application/javascript',
+               'text/javascript', 'application/json', 'application/manifest+json', 'image/svg+xml', 'image/x-icon',
+               'image/vnd.microsoft.icon')
 SLUG_RE = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
 DATUM_RE = re.compile(r'^(\d{4})-(\d{2})-(\d{2})$')
 POMLCKY = '\u2012\u2013\u2014\u2015\u2212'
@@ -124,11 +150,24 @@ IKONY_CINNOSTI = {
 # značka pohľadu A pri titulnej fotke detailu realizácie (ukážka U:730)
 SVG_POHLAD_ZNAK = ('<svg class="pohlad-znak" width="34" height="22" viewBox="-11 -11 34 22" aria-hidden="true">'
                    '<path d="M5.5-6.5L17 0L5.5 6.5Z"/><circle r="9.5"/><text y="4">A</text></svg>')
-# písma s preloadom (Geist latinka a latinka s diakritikou); Geist Mono bez preloadu: na mobile je až pod prvou
-# obrazovkou a na počítači vo výkrese, ktorý sa kreslí 1,4 s (PLAN-1-1.md časť 8 bod 3)
+# písma s preloadom na každej stránke (Geist latinka a latinka s diakritikou)
 PRELOAD_PISMA = ('geist-latin.woff2', 'geist-latin-ext.woff2')
+# Geist Mono kreslí na prvých obrazovkách len číslice kót a počtov (valce kóty, roky, čísla fotiek, počty filtra).
+# Audit naplno 25. 11. 2026, položka 44: latinka Mono (23 128 B) sa pre ne sťahovala až z vloženého štýlu, v kritickej
+# reťazi dokument, štýl, písmo. Podmnožina číslic (nastroje/pismo_mono_cisla.py, 5 588 B, tretí @font-face rodiny
+# BMB Mono v styl.css s unicode-range) má preload len na stránkach, ktoré Mono naozaj kreslia (znaky_mono; inak by
+# Chrome hlásil nepoužitý preload, napríklad Kontakt), na úvode v hlave za fotkou LCP, inde na konci tela
+# (Web.stranka). Latinku Mono stiahne prehliadač až pri písmene v Mono (počítadlo lightboxu „Fotka 3 z 12“).
+PISMO_MONO_CISLA = 'geist-mono-cisla.woff2'
 PISMA = ('geist-latin.woff2', 'geist-latin-ext.woff2', 'geist-mono-latin.woff2', 'geist-mono-latin-ext.woff2',
-         'OFL-Geist.txt')
+         PISMO_MONO_CISLA, 'OFL-Geist.txt')
+# text, ktorý kreslí písmo BMB Mono (styl.css var(--mono)): triedy prvkov, dvojice (trieda predka, značka), triedy
+# s písmom webu vo vnútri Mono a stĺpec valca kóty, ktorý kreslí číslice 0 až 9 cez ::before (CSS content).
+# test_build.py ich porovná so selektormi v styl.css
+MONO_TRIEDY = ('kota', 'lightbox-pocet', 'viac-pocet', 'projekt-ilustr', 'galeria-c')
+MONO_POTOMOK = (('dekady', 'span'), ('m-rok', 'b'), ('filter', 'span'))
+MONO_SANS = ('kota-slovo', 'vh')
+MONO_STLPEC = 'stlpec'
 # favicon (variant A, ops/weby-na-mieru/klienti/bmbuilding/favicon/VYBER.md): hotové súbory zo sablona/favicon/ do koreňa
 # webu; favicon.svg je sablona/logo-favicon.svg. Cesty v site.webmanifest sú relatívne k manifestu (náhľad aj ostrý web).
 FAVICON_SUBORY = ('favicon.ico', 'favicon-32.png', 'favicon-48.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png',
@@ -161,6 +200,11 @@ MAX_FOTIEK_NOVINKY = 10
 # zoznam realizácií: JS ukáže prvých REALIZACIE_NARAZ kariet výberu a tlačidlo Zobraziť ďalšie (nastavenia
 # realizacie_naraz); bez JS sú v HTML a viditeľné všetky karty (SEO, odkaz na každú realizáciu)
 REALIZACIE_NARAZ = 12
+
+# roboti AI a vyhľadávačov, ktorých ostrý robots.txt menuje výslovne (firemný checklist zverejnenia ops/runbook.md;
+# audit naplno 25. 11. 2026, položka 7): jedna skupina s viacerými riadkami User-agent podľa RFC 9309 časť 2.1
+# (https://www.rfc-editor.org/rfc/rfc9309.html), pred skupinou pre všetkých
+AI_ROBOTI = ('GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'Bingbot')
 
 CISLA = ' class="cisla"'
 # oddeľovač „·“ s pevnou medzerou pred sebou: pri zalomení ostane na konci riadka, nezačne nový
@@ -254,10 +298,16 @@ def sadzba(s):
     s = re.sub(r'(?<=\d) (?=(x|m|m²|km|€|%|ks|EUR)\b)', '\u00a0', s)
     # „6 x 4-izbové“: násobok sa nezalomí ani za x (snímka 390 px v kole 1 mala „6 x“ na konci riadka)
     s = re.sub(r'(?<=\d\u00a0x) (?=\d)', '\u00a0', s)
+    # rozsah \u201e2021 a\u017e 2022\u201c sa nezalom\u00ed (audit naplno 25. 11. 2026, polo\u017eka 16: pri 390 px \u201e2021 / a\u017e 2022\u201c a
+    # \u201e2013 a\u017e / 2014\u201c v zozname na /stavebny-dozor/)
+    s = re.sub(r'(?<=\d) a\u017e (?=\d)', '\u00a0a\u017e\u00a0', s)
     # „3-izbové“: spojovník za číslicou sa nezalomí (snímka detailu Vtáčnik v2 mala „6 x 3-“ na konci riadka);
     # Geist nem\u00e1 nezalomite\u013en\u00fd spojovn\u00edk U+2011, preto cel\u00e9 slovo v span.nz s white-space:nowrap
     s = re.sub(r'(?<![\w-])(\d+-\w+)', r'<span class="nz">\1</span>', s)
     s = re.sub(r'\b(č\.|ev\.|Ing\.|arch\.|§|ods\.|písm\.) ', '\\1\u00a0', s)
+    # výpočet písmen „a), c), e), h)“ sa nezalomí (kontrola zadania 26. 11. 2026: pri 388 až 395 px ostalo „e), h)“
+    # samo na poslednom riadku zdroja pod otázkami zo zákona)
+    s = re.sub(r'(?<=\b[a-z]\)), (?=[a-z]\))', ',\u00a0', s)
     s = re.sub(r'(§) ', '\\1\u00a0', s)
     return s
 
@@ -283,11 +333,13 @@ def sha(s):
 
 
 def tvar(n, jedno, dve_styri, pat):
+    """Počet so slovom v správnom tvare; medzi číslom a slovom pevná medzera (audit naplno 25. 11. 2026, položka 16:
+    popis fotky Lumière „Galéria, 8 / fotiek“ sa zalomil medzi číslom a slovom)."""
     if n == 1:
-        return f'{n} {jedno}'
+        return f'{n} {jedno}'
     if 2 <= n <= 4:
-        return f'{n} {dve_styri}'
-    return f'{n} {pat}'
+        return f'{n} {dve_styri}'
+    return f'{n} {pat}'
 
 
 def platny_datum(s):
@@ -1243,6 +1295,11 @@ SIZES_KARTA = ('(min-width: 1921px) min(25vw - 58px, 582px), (min-width: 1024px)
 # fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px (do 1920 px najviac 1000 px, styl.css
 # max-width), od 1921 px celých 7 stĺpcov bez stropu: 7 x C / 12 - 10 = 58.34vw - 103px, pri 2560 px 1390 px
 SIZES_DETAIL = '(min-width: 1921px) min(58.34vw - 103px, 1390px), (min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
+# detail realizácie s údajmi pri fotke (trieda detail-s-udajmi): pri 1024 až 1279 px fotka cez celú šírku obsahu pod H1
+# (obsah = okno mínus 2 x okraj 3,9vw, pri 1024 px 944,1 px, pri 1279 px 1179,2 px; sizes o 0,9 až 21,8 px viac, s posuvníkom o 17 px viac;
+# oprava po overení, kontrola dizajnu nález vážne), od 1280 px 7 z 12 stĺpcov ako SIZES_DETAIL
+SIZES_DETAIL_UDAJE = ('(min-width: 1921px) min(58.34vw - 103px, 1390px), (min-width: 1280px) min(56vw, 1000px), '
+                      '(min-width: 1024px) calc(100vw - 78px), calc(100vw - 32px)')
 # slider úvodu (3A.2): pole od 1024 px má 7 z 12 stĺpcov s presahom k ľavému okraju okna a výšku okna pod hlavičkou
 # (krasa-8: 100vh mínus hlavička 84 px, pri výške okna do 820 px 64 px; najmenej 480 px, najviac 75vw), od 640 px rám
 # 1 : 1 a mobil 4 : 5 na celú šírku okna. Šírka poľa je vw / 2 + obsah / 12 - 5 / 12 medzery mriežky, zmerané v Chrome
@@ -1366,11 +1423,19 @@ def sirka_slidera_px(w, h, orez, vw, vh):
 # predlohy: pole na tablete a mobile je 1 : 1 a 4 : 5, takže fotka 16 : 9 je pri hustote 2 až 3 široká 2600 až 2900 px
 # obrazovky (768 x 1024: 2731 px, 390 x 844: 2600 px, 1440 x 900 pri hustote 2: 2901 px, 2560 x 1440: 2411 px)
 SLIDER_MAX_SIRKA = 4000
+# fotka slidera má v AVIF navyše šírku 840 (audit naplno 25. 11. 2026, položka 43): telefón 390 až 412 px s hustotou
+# 1,75 (Lighthouse mobil) kreslí prvú fotku (RD Ahoj 01, rám 4 : 5, 113,4vw) na 774 až 817 px obrazovky a medzi 720
+# a 960 nebolo nič, bral 960w (181 219 B). Tablet 640 až 840 px s hustotou 1 rovnako. Len slider (LCP úvodu), karty
+# a galéria ostávajú
+SLIDER_SIRKA_NAVYSE = 840
 # druh stavby na karte zoznamu v jednotnom čísle: prvá zhoda v názve, potom v texte realizácie. Rekonštrukcia
-# a stavebné úpravy nie sú druh stavby (ZMENY-KOLO-1.md 5.1, „bez rekonštrukcie“), karta ukáže druh budovy
+# a stavebné úpravy nie sú druh stavby (ZMENY-KOLO-1.md 5.1, „bez rekonštrukcie“), karta ukáže druh budovy.
+# Ten istý druh má detail pod popiskom Druh stavby (audit naplno 25. 11. 2026, položka 2). Apartmánový dom pred
+# Bytovým domom: Ventúrska („Apartmánový dom na Ventúrskej ulici“) bola bez druhu, Betliarska („18 bytov a 35
+# apartmánov“) ostáva Bytový dom
 DRUHY_KARTY = (('Polyfunkčný objekt', r'polyfunkčn'), ('Rezidencia', r'rezidenci'), ('Bytové domy', r'bytové domy'),
-               ('Bytový dom', r'bytov'), ('Dvojdom', r'dvojdom'), ('Vila', r'\bvil[ay]\b'),
-               ('Rodinný dom', r'(^|\s)RD\b|rodinn'))
+               ('Apartmánový dom', r'apartmánový dom'), ('Bytový dom', r'bytov'), ('Dvojdom', r'dvojdom'),
+               ('Vila', r'\bvil[ay]\b'), ('Rodinný dom', r'(^|\s)RD\b|rodinn'))
 # pohľad A cez 7 z 12 stĺpcov (rovnako ako SIZES_DETAIL; teraz bez použitia, úvod má slider)
 SIZES_HRDINA = ('(min-width:1921px) min(58.34vw - 103px, 1390px), (min-width:1024px) min(56vw, 1000px), '
                 '(min-width:768px) 92vw, calc(100vw - 32px)')
@@ -1484,6 +1549,72 @@ def nacitaj_pravidla():
             'typy': typy, 'pary': pary, 'ilustracne': ilustracne, 'ilustracna_predvolena': predvolena}
 
 
+def zhusti_js(text):
+    """app.js pre web bez komentárov a odsadenia (audit naplno 25. 11. 2026, položka 45: Lighthouse unminified-javascript,
+    súbor sa kopíroval bez úpravy). Zmaže úvodný blokový komentár, celé riadky s komentárom //, odsadenie a prázdne
+    riadky; riadky kódu ostanú v tom istom poradí, každý na svojom riadku (nič sa nespája, takže sa nemení ani
+    automatické vkladanie bodkočiarky). Bez novej závislosti, deterministicky. Bezpečné, lebo app.js nemá šablónové
+    reťazce ani pokračovanie reťazca cez koniec riadka (test_build.py to stráži); keby ich mal, súbor ide bez zmeny
+    a s varovaním. Komentár za kódom na tom istom riadku ostane (app.js taký nemá)."""
+    t = text.replace('\r\n', '\n').lstrip('﻿')
+    if '`' in t or re.search(r'\\\n', t):
+        varuj('app.js má šablónový reťazec alebo pokračovanie riadka, ide na web bez zhustenia')
+        return text
+    t = re.sub(r'\A\s*/\*.*?\*/', '', t, flags=re.S)
+    riadky = (r.strip() for r in t.split('\n'))
+    return '\n'.join(r for r in riadky if r and not r.startswith('//')) + '\n'
+
+
+class _TextMono(HTMLParser):
+    """Znaky, ktoré stránka kreslí písmom BMB Mono podľa MONO_TRIEDY, MONO_POTOMOK a MONO_SANS (bez script a style);
+    stĺpec valca kóty (MONO_STLPEC) kreslí číslice 0 až 9 cez CSS content. Medzery sa nerátajú."""
+    PRAZDNE = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.zasobnik, self.znaky, self._skryte = [], set(), 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style', 'template'):
+            self._skryte += 1
+        if tag in self.PRAZDNE:
+            return
+        triedy = set((dict(attrs).get('class') or '').split())
+        mono = self.zasobnik[-1][2] if self.zasobnik else False
+        if triedy & set(MONO_TRIEDY) or any(tag == z and any(t in x[1] for x in self.zasobnik) for t, z in MONO_POTOMOK):
+            mono = True
+        if triedy & set(MONO_SANS):
+            mono = False
+        if mono and MONO_STLPEC in triedy and not self._skryte:
+            self.znaky.update('0123456789')
+        self.zasobnik.append((tag, triedy, mono))
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in self.PRAZDNE:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style', 'template') and self._skryte:
+            self._skryte -= 1
+        for i in range(len(self.zasobnik) - 1, -1, -1):
+            if self.zasobnik[i][0] == tag:
+                del self.zasobnik[i:]
+                break
+
+    def handle_data(self, data):
+        if not self._skryte and self.zasobnik and self.zasobnik[-1][2]:
+            self.znaky.update(c for c in data if not c.isspace())
+
+
+def znaky_mono(html_text):
+    """Množina znakov (bez medzier), ktoré HTML stránky kreslí písmom BMB Mono (_TextMono)."""
+    p = _TextMono()
+    p.feed(html_text)
+    p.close()
+    return p.znaky
+
+
 class _TextStranky(HTMLParser):
     """Viditeľný text stránky (mimo script a style) a texty alt, aria-label a title na kontrolu znakov písma."""
 
@@ -1508,11 +1639,17 @@ class _TextStranky(HTMLParser):
 
 
 class Web:
-    def __init__(self, obsah, nahlad, fotky_web=None, predlohy=None):
+    def __init__(self, obsah, nahlad, fotky_web=None, predlohy=None, hosting='pages'):
         """fotky_web: priečinok hotových webových verzií (predvolený FOTKY_WEB). predlohy: {sha256 zdroja: (w, h)}
-        namiesto manifestu, len pre nastroje/predlohy_web.py (plán súborov z predlôh, ktoré ešte nie sú zakódované)."""
+        namiesto manifestu, len pre nastroje/predlohy_web.py (plán súborov z predlôh, ktoré ešte nie sú zakódované).
+        hosting: 'pages' (GitHub Pages) alebo 'apache' (WebHouse cez FTP, len ostrý web), HOSTINGY."""
+        if hosting not in HOSTINGY:
+            raise ChybaZostavy(f'hosting {hosting!r} nepoznám, povolené: {", ".join(HOSTINGY)}')
+        if hosting == 'apache' and nahlad:
+            raise ChybaZostavy('hosting apache je len pre ostrý web na doméne, nie pre náhľad')
         self.obsah = obsah
         self.nahlad = nahlad
+        self.hosting = hosting
         self.nastavenia = json.loads((SABLONA / 'nastavenia.json').read_text(encoding='utf-8'))
         kv = self.nastavenia.get('kvalita_fotiek')
         kv = kv if isinstance(kv, dict) else {}
@@ -1545,7 +1682,9 @@ class Web:
         self.css_sablona = zhusti(css)
         # úvod bez úseku PODSTRÁNKY (značky @podstranky-zaciatok a @podstranky-koniec v styl.css): menej HTML na mobile
         self.css_uvod = zhusti(re.sub(r'/\* @podstranky-zaciatok \*/.*?/\* @podstranky-koniec \*/', '', css, flags=re.S))
-        self.js = (SABLONA / 'app.js').read_bytes() if (SABLONA / 'app.js').is_file() else b''
+        # app.js zhustený (zhusti_js, audit naplno položka 45); verzia v adrese ?v= je z odtlačku zhusteného súboru
+        js = (SABLONA / 'app.js').read_text(encoding='utf-8') if (SABLONA / 'app.js').is_file() else ''
+        self.js = zhusti_js(js).encode('utf-8') if js else b''
         self.js_verzia = hashlib.sha256(self.js).hexdigest()[:10]
         self.logo_svg = (SABLONA / 'logo.svg').read_text(encoding='utf-8')
         # logo hlavičky v podobe starého webu (štvorec, BM Building, spoločnosť s ručením obmedzeným), text na krivkách
@@ -1559,6 +1698,10 @@ class Web:
         self.znaky_pisma = set(znaky.read_text(encoding='utf-8').rstrip('\n')) if znaky.is_file() else None
         self.pravidla = nacitaj_pravidla()
         self.domena = self.nastavenia.get('domena', 'https://bmbuilding.sk').rstrip('/')
+        # adresa náhľadu (audit naplno 25. 11. 2026, položka 12): v náhľade idú og:image a twitter:image z nej, aby
+        # odkaz na náhľad poslaný cez WhatsApp mal obrázok (na bmbuilding.sk do spustenia beží starý web a súbory
+        # zostavy tam nie sú); canonical, og:url, JSON-LD a sitemap ostávajú na doméne. Len https, inak doména
+        self.adresa_nahladu = bezpecna_url(self.nastavenia.get('adresa_nahladu')).rstrip('/')
         # Instagram len s istou adresou (dizajn-olovnica/INSTAGRAM.md); adresa je v šablóne, nie v obsahu
         self.instagram = bezpecna_url(self.nastavenia.get('instagram'), ['instagram.com'])
         # LinkedIn konateľa (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): len https na linkedin.com, inak sa ikona nezobrazí
@@ -1592,6 +1735,8 @@ class Web:
             r['termin'] = jeden_riadok(d.get('termin'))
             r['etapy'] = [jeden_riadok(e) for e in (d.get('etapy') or []) if jeden_riadok(e)]
             r['rola_osoba'] = jeden_riadok(d.get('rola_osoba'))
+        # jednotný zápis roly, mien firiem a pravopis názvu pri zostave (audit naplno, položky 14 a 21)
+        self.zapis_realizacii()
         for r in self.realizacie:
             self.priprav_fotky(r, r['nazov'])
         for n in self.novinky:
@@ -1640,6 +1785,71 @@ class Web:
             if m:
                 varuj(f'realizácia {r["slug"]}: text má mesiac alebo deň ({m.group(0)!r}), na webe majú byť len roky '
                       '(sablona/nastavenia.json text_len_roky)')
+
+    def mapa_zapisu(self, kluc, uprava=jeden_riadok):
+        """Mapa {pôvodný text: nový text} zo sablona/nastavenia.json (rola_zapis, mena_zapis); kľúče s podčiarkovníkom
+        sú poznámky. Obe strany prejdú úpravou ako obsah (bez pomlčiek em a en a výkričníkov), zlá položka je
+        varovanie, nie pád zostavy."""
+        m = self.nastavenia.get(kluc)
+        if m is None:
+            return {}
+        if not isinstance(m, dict):
+            varuj(f'nastavenia {kluc} nie je objekt, vynechané')
+            return {}
+        out = {}
+        for k, v in m.items():
+            if k.startswith('_'):
+                continue
+            stara, nova = uprava(k), (uprava(v) if isinstance(v, str) else '')
+            if stara and nova:
+                out[stara] = nova
+            else:
+                varuj(f'nastavenia {kluc}: {k!r} -> {v!r} nie je dvojica textov, vynechané')
+        return out
+
+    def zapis_realizacii(self):
+        """Jednotný zápis v realizáciách pri zostave (audit naplno 25. 11. 2026, ZOZNAM.md položky 14 a 21). Obsah sa
+        nemení (sťahovač ho prepisuje), nahradí sa ako text_len_roky, takže detail, karty, zoznamy, lightbox, OG,
+        description, JSON-LD aj llms.txt majú ten istý zápis. sablona/nastavenia.json:
+        rola_zapis: celé pole rola -> zápis tej istej roly (roly sú Máriove, mení sa len zápis, nie rola);
+        mena_zapis: celá hodnota poľa projektant, investor, zhotovitel alebo autor a meno strany zo starého webu
+        (stary-web.json) -> meno podľa ORSR;
+        text_zapis: slug -> [[pôvodný kus, nový kus], ...] v názve, vlastnom titulku, texte a popisoch (alt) fotiek.
+        Kus, ktorý v zverejnenej realizácii nie je, je varovanie (obsah sa zmenil); skrytá alebo chýbajúca realizácia
+        sa preskočí bez varovania."""
+        roly = self.mapa_zapisu('rola_zapis', uprava=lambda s: zaciatok_velky(jeden_riadok(s)))
+        mena = self.mapa_zapisu('mena_zapis')
+        for r in self.realizacie:
+            r['rola'] = roly.get(r['rola'], r['rola'])
+            for pole in ('projektant', 'investor', 'zhotovitel', 'autor'):
+                r[pole] = mena.get(r.get(pole) or '', r.get(pole) or '')
+            for zoz in (r.get('strany') or {}).values():
+                for x in zoz:
+                    x['meno'] = mena.get(x.get('meno') or '', x.get('meno') or '')
+        mapa = self.nastavenia.get('text_zapis')
+        if mapa is not None and not isinstance(mapa, dict):
+            varuj('nastavenia text_zapis nie je objekt, vynechané')
+        podla_slugu = {r['slug']: r for r in self.realizacie}
+        for slug, dvojice in (mapa if isinstance(mapa, dict) else {}).items():
+            r = podla_slugu.get(slug)
+            if r is None:
+                continue
+            for d in dvojice if isinstance(dvojice, list) else [None]:
+                if not (isinstance(d, list) and len(d) == 2 and all(isinstance(x, str) and x.strip() for x in d)):
+                    varuj(f'nastavenia text_zapis: {slug} {d!r} nie je dvojica [pôvodný kus, nový kus], vynechané')
+                    continue
+                stara, nova = (jeden_riadok(x) for x in d)
+                nasiel = False
+                for pole in ('nazov', 'titulok', 'text'):
+                    if stara in r[pole]:
+                        r[pole] = r[pole].replace(stara, nova)
+                        nasiel = True
+                for f in r['fotky']:
+                    if stara in f['alt']:
+                        f['alt'] = f['alt'].replace(stara, nova)
+                        nasiel = True
+                if not nasiel:
+                    varuj(f'nastavenia text_zapis: {stara!r} v realizácii {slug} nie je, text ostáva')
 
     # --- v médiách (ZMENY-KOLO-1.md 5.7, 24. 11. 2026 večer): časopis ASB pri Lumière, Archinfo pri Devínskych lúkach
     def media_fotka(self, d, meno):
@@ -1920,6 +2130,11 @@ class Web:
     def abs_url(self, cesta):
         return self.domena + '/' + cesta
 
+    def og_abs_url(self, cesta):
+        """Absolútna adresa obrázka Open Graph (og:image, twitter:image): v náhľade z adresy náhľadu (nastavenia.json
+        adresa_nahladu, položka 12), v ostrom behu a bez adresy náhľadu z domény."""
+        return (self.adresa_nahladu if self.nahlad and self.adresa_nahladu else self.domena) + '/' + cesta
+
     @staticmethod
     def pre(cesta):
         return '../' * cesta.count('/')
@@ -2020,17 +2235,25 @@ class Web:
         return ', '.join(f'{esc(pre + self.variant(r, f, s, fmt, orez))} {s}w' for s in sirky)
 
     def sirky_slidera(self, f, fmt):
-        """Šírky súborov fotky slidera: šírky celej fotky a v AVIF navyše plná šírka predlohy, keď je širšia než
-        SIRKY[-1] x SIRKA_BLIZKO (predloha 16 : 9 má 2844 px, pole slidera je takmer štvorcové, krasa-8). Súbor
-        v plnej šírke len z predlohy: hotový vo fotky-web (záznam so súborom) alebo pri pláne predlôh
-        (nastroje/predlohy_web.py, ktorý ho vyrobí); nikdy zväčšený Lanczosom zo zdroja v obsah/."""
+        """Šírky súborov fotky slidera: šírky celej fotky a v AVIF navyše SLIDER_SIRKA_NAVYSE (840) medzi 720 a 960
+        a plná šírka predlohy, keď je širšia než SIRKY[-1] x SIRKA_BLIZKO (predloha 16 : 9 má 2844 px, pole slidera
+        je takmer štvorcové, krasa-8). Oba súbory navyše len z predlohy: hotové vo fotky-web (záznam so súborom) alebo
+        pri pláne predlôh (nastroje/predlohy_web.py, ktorý ich vyrobí); nikdy zakódované zo zdroja v obsah/ (RD Ahoj 01
+        má retuš len v predlohe). 840 len keď najbližšia väčšia šírka je od nej širšia aspoň o SIRKA_BLIZKO."""
         sirky = self.sirky_variantu(f, fmt)
-        w = f['zaklad'][0]
-        if fmt != 'avif' or not sirky or w <= sirky[-1] or w <= SIRKY[-1] * SIRKA_BLIZKO or w > SLIDER_MAX_SIRKA:
+        if fmt != 'avif' or not sirky:
             return sirky
-        if self.predlohy is not None or (f.get('fw') and self.fotky_web.subor(f['sha'], '', w, 'avif') is not None):
-            return sirky + [w]
-        return sirky
+        w = f['zaklad'][0]
+
+        def z_predlohy(s):
+            return self.predlohy is not None or bool(f.get('fw') and self.fotky_web.subor(f['sha'], '', s, 'avif') is not None)
+        n = SLIDER_SIRKA_NAVYSE
+        vacsie = [s for s in sirky if s > n]
+        if n not in sirky and vacsie and n * SIRKA_BLIZKO <= vacsie[0] and z_predlohy(n):
+            sirky = sorted(sirky + [n])
+        if w <= sirky[-1] or w <= SIRKY[-1] * SIRKA_BLIZKO or w > SLIDER_MAX_SIRKA:
+            return sirky
+        return sirky + [w] if z_predlohy(w) else sirky
 
     def orez_srcset(self, pre, r, f, kod, fmt='webp'):
         sirky = self.sirky_variantu(f, fmt, kod)
@@ -2350,8 +2573,12 @@ class Web:
         f = self.firma
         tel = ''
         if f['tel_href']:
+            # na počítači (od 1024 px) aj s číslom: tel: vo Windows otvorí len výber aplikácie a číslo nebolo pred
+            # Kontaktom vidno (audit naplno 25. 11. 2026, položka 27); prístupné meno aria-label obsahuje viditeľný
+            # text pri každej šírke (WCAG 2.5.3)
+            cislo = f'<span class="tel-cislo cisla">{T(f["tel"])}</span>' if f['tel'] else ''
             tel = (f'<a class="tlacidlo tlacidlo-male hlavicka-tel" href="tel:{esc(f["tel_href"])}" '
-                   f'aria-label="Zavolať {esc(f["tel"])}">Zavolať</a>')
+                   f'aria-label="Zavolať {esc(f["tel"])}">Zavolať{cislo}</a>')
         if self.logo_hlavicka:
             vb = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', self.logo_hlavicka)
             w, h = (round(float(vb.group(1))), round(float(vb.group(2)))) if vb else (478, 100)
@@ -2397,7 +2624,10 @@ class Web:
         if f['tel_href']:
             a.append(f'<a class="tlacidlo" href="tel:{esc(f["tel_href"])}">Zavolať</a>')
         if f['email']:
-            a.append(f'<a class="tlacidlo tlacidlo-obrys" href="mailto:{esc(f["email"])}">Napísať e-mail</a>')
+            # pod 320 px „E-mail“ (styl.css lista-kratky, audit naplno 25. 11. 2026, položka 35): skrytý span (display
+            # none) nie je ani v prístupnom mene, meno je vždy viditeľný text
+            a.append(f'<a class="tlacidlo tlacidlo-obrys" href="mailto:{esc(f["email"])}"><span class="lista-dlhy">Napísať e-mail</span>'
+                     '<span class="lista-kratky">E-mail</span></a>')
         return f'<nav class="lista" aria-label="Rýchly kontakt">{"".join(a)}</nav>\n' if a else ''
 
     def omrvinky(self, pre, kroky):
@@ -2435,6 +2665,11 @@ class Web:
             uzol['sameAs'] = [f['facebook']]
         if f['ic_dph']:
             uzol['vatID'] = f['ic_dph']
+        # IČO ako identifikátor organizácie (audit naplno 25. 11. 2026, položka 41; https://schema.org/identifier,
+        # PropertyValue s propertyID), číslice bez medzier ako vo výpise ORSR
+        ico = re.sub(r'\s+', '', f['ico'] or '')
+        if ico:
+            uzol['identifier'] = {'@type': 'PropertyValue', 'propertyID': 'IČO', 'value': ico}
         if platny_datum(f['den_zapisu']):
             uzol['foundingDate'] = f['den_zapisu']
         if f['konatel']:
@@ -2494,6 +2729,22 @@ class Web:
         if self.logo_hlavicka:
             h.append(f'<link rel="preload" href="{esc(pre)}logo-hlavicka.svg" as="image" type="image/svg+xml" '
                      'fetchpriority="high">')
+        # podmnožina číslic Geist Mono s preloadom len na stránke, ktorá Mono kreslí (audit naplno 25. 11. 2026, položka
+        # 44; inde by Chrome hlásil nepoužitý preload, napríklad Kontakt). V hlave len za prednačítanou fotkou LCP
+        # (úvod), inak na konci tela za fotkami, ktoré parser nájde skôr: pri HTTP/1.1 (6 spojení na hostiteľa) preload
+        # v hlave obsadil spojenie, kým parser našiel fotku LCP v tele, a LCP /realizacie/ pri 390 px, Slow 4G a CPU 4x
+        # bolo 3 676 ms proti 2 940 ms s preloadom na konci tela; pri HTTP/2 (GitHub Pages) je poloha pre LCP jedno
+        # (3 920 a 3 956 ms). Prednačítané písmo nie je v reťazi kritických požiadaviek (Lighthouse network dependency
+        # tree), ani keď je preload v tele (rel=preload smie byť v body, HTML: body-ok)
+        body = (self.menu(pre, aktivne) + f'<main id="obsah">\n{telo}\n</main>\n' + self.pata(pre, pata_firma)
+                + self.lista())
+        preload_mono = ''
+        if znaky_mono(body):
+            preload_mono = (f'<link rel="preload" href="{esc(pre)}fonts/{PISMO_MONO_CISLA}" as="font" type="font/woff2" '
+                            'crossorigin>')
+            if preload_obr:
+                h.append(preload_mono)
+                preload_mono = ''
         h += ['<meta property="og:locale" content="sk_SK">', f'<meta property="og:type" content="{og_typ}">',
               '<meta property="og:site_name" content="BM Building">',
               f'<meta property="og:title" content="{esc(title)}">']
@@ -2501,13 +2752,13 @@ class Web:
             h.append(f'<meta property="og:description" content="{esc(description)}">')
         if not zaklad:
             h.append(f'<meta property="og:url" content="{esc(canon)}">')
-        h += [f'<meta property="og:image" content="{esc(self.abs_url(og_obr))}">',
+        h += [f'<meta property="og:image" content="{esc(self.og_abs_url(og_obr))}">',
               f'<meta property="og:image:width" content="{OG_W}">', f'<meta property="og:image:height" content="{OG_H}">',
               '<meta name="twitter:card" content="summary_large_image">',
               f'<meta name="twitter:title" content="{esc(title)}">']
         if description:
             h.append(f'<meta name="twitter:description" content="{esc(description)}">')
-        h.append(f'<meta name="twitter:image" content="{esc(self.abs_url(og_obr))}">')
+        h.append(f'<meta name="twitter:image" content="{esc(self.og_abs_url(og_obr))}">')
         h.append(f'<style>{css}</style>')
         h.append(f'<noscript><style>{NOSCRIPT_CSS}</style></noscript>')
         h.append(f'<script>{SKRIPT_JS}</script>')
@@ -2516,9 +2767,8 @@ class Web:
         if ld:
             h.append(f'<script type="application/ld+json">{ld}</script>')
         h += ['</head>', f'<body{f" class={chr(34)}{trieda}{chr(34)}" if trieda else ""}>',
-              '<a class="preskocit" href="#obsah">Preskočiť na obsah</a>', CIARY_HTML,
-              self.menu(pre, aktivne) + f'<main id="obsah">\n{telo}\n</main>\n' + self.pata(pre, pata_firma)
-              + self.lista() + '</body>', '</html>', '']
+              '<a class="preskocit" href="#obsah">Preskočiť na obsah</a>', CIARY_HTML, body + preload_mono + '</body>',
+              '</html>', '']
         subor = (cesta + 'index.html') if cesta is not None else '404.html'
         self.subory[subor] = '\n'.join(h).encode('utf-8')
         if do_mapy and cesta is not None:
@@ -2555,11 +2805,11 @@ class Web:
         idú z predlohy, keď ju fotka má (fotky-web, zväčšené Upscaylom), takže nová predloha kartu sama zaostrí."""
         return self.img(pre, r, f, SIZES_KARTA, lcp=lcp, alt=alt, orez='45')
 
-    def dlazdica(self, pre, r, nadpis='h3', data=False, poradie=0, lcp=False):
+    def dlazdica(self, pre, r, nadpis='h3', data=False, poradie=0, lcp=False, neskor=False):
         """Svetlá karta realizácie v mriežke (karta pásu ukážky na svetlom podklade, PLAN-1-1.md časť 5): fotka 4 : 5
         (výrez zo stredu fotky karty: obal, inak prvá ostrá skutočná, vizualizácia len pri obal_vizualizacia so
         štítkom), kóta s rokmi stavby alebo rokom príspevku, nadpis s odkazom, druh a miesto, rola. data: atribúty
-        pre filter a zoradenie v app.js (pevné kľúče a čísla)."""
+        pre filter a zoradenie v app.js (pevné kľúče a čísla); neskor (karta za prvou dávkou zoznamu): data-neskor."""
         url = esc(self.rel(pre, f'realizacie/{r["slug"]}/'))
         f = self.foto_karty(r)
         nm = self.nazov_s_miestom(r)
@@ -2579,7 +2829,8 @@ class Web:
         atributy = ''
         if data:
             atributy = (f' data-druh="{" ".join(r["kategorie"])}" data-rok="{self.rok_filtra(r)}" '
-                        f'data-mesto="{esc(kluc_mesta(self.mesto(r)))}" data-poradie="{int(poradie)}"')
+                        f'data-mesto="{esc(kluc_mesta(self.mesto(r)))}" data-poradie="{int(poradie)}"'
+                        + (' data-neskor' if neskor else ''))
         return (f'<li class="dlazdica projekt projekt-svetly{"" if f else " bez-fotky"}"{atributy}><figure>'
                 f'<a class="projekt-foto" href="{url}" tabindex="-1" aria-hidden="true">{foto}{stitok}</a>'
                 f'<figcaption>{kota}<{nadpis} class="dlazdica-nazov"><a href="{url}">{T(r["nazov"])}</a></{nadpis}>'
@@ -2681,6 +2932,39 @@ class Web:
             out.append(f'<div class="{trieda}"><{nadpis} class="doklad-h">{T(hlavicka)}</{nadpis}>{figura}'
                        f'<dl class="fakty">{dl}</dl>{overit}</div>')
         return out
+
+    def doklady_kratko(self, cinnosti=None, nadpis='h2'):
+        """Box stránky služby s viacerými osvedčeniami (Stavebný manažment: stavbyvedúci aj stavebný dozor) skrátene:
+        vydavateľ a meno raz, potom jeden riadok na osvedčenie (činnosť, odborné zameranie, evidenčné číslo a dátum
+        vydania), celé tabuľky so skenmi sú na stránke Oprávnenia (odkaz v boxe). Audit naplno 25. 11. 2026, položka 25:
+        dve celé tabuľky (13 riadkov) dali boxu pri 1366 px 1 127 px, text služby mal 553 px a vedľa boxu ostalo pod
+        textom 505 až 599 px prázdneho stĺpca. Len polia obsah/firma.json, žiadne ručne písané číslo. None, keď je
+        osvedčenie len jedno alebo majú rôzneho vydavateľa či držiteľa (vtedy celé tabuľky ako doteraz)."""
+        vybrane = [o for o in self.firma['opravnenia'] if not (cinnosti and o['cinnost'] not in cinnosti)]
+        if len(vybrane) < 2:
+            return None
+        org = {o['organizacia'] for o in vybrane}
+        osoby = {o['osoba'] for o in vybrane}
+        if len(org) != 1 or len(osoby) != 1:
+            return None
+        org, osoba = org.pop(), osoby.pop()
+        riadky = [(k, T(v)) for k, v in (('Vydala', org), ('Meno', osoba)) if v]
+        for o in vybrane:
+            # nezalomí sa len „číslo 00912*10*,“ (span.nz aj s čiarkou za ním) a dátum (pevné medzery zo sadzby); čiarka
+            # je vždy v tom istom celku ako slovo pred ňou. Oprava po overení (kontrola dizajnu, nález vážne): span.nz
+            # okolo celého „evidenčné číslo …“ a čiarka mimo neho dali v boxe pri 1024 až 1064 px riadok len s čiarkou,
+            # pri 1104 až 1248 px riadok začínajúci čiarkou a pri 1024 až 1096 px číslo cez pravý rámik (o 3 až 28 px)
+            kusy = [(pred, hodnota, nz) for pred, hodnota, nz in (('', o['zameranie'], False),
+                                                                  ('evidenčné ', o['cislo'] and f'číslo {o["cislo"]}', True),
+                                                                  ('vydané ', o['datum'], False)) if hodnota]
+            casti = []
+            for i, (pred, hodnota, nz) in enumerate(kusy):
+                hodnota += ',' if i < len(kusy) - 1 else ''
+                casti.append(T(pred) + (f'<span class="nz">{T(hodnota)}</span>' if nz else T(hodnota)))
+            riadky.append((zaciatok_velky(o['cinnost']) or 'Osvedčenie', ' '.join(casti)))
+        dl = ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in riadky if v)
+        nazov = 'Osvedčenia SKSI' if 'SKSI' in org else 'Osvedčenia'
+        return f'<div class="doklad doklad-kratky"><{nadpis} class="doklad-h">{T(nazov)}</{nadpis}><dl class="fakty">{dl}</dl></div>'
 
     @staticmethod
     def popis_dokladu(o):
@@ -3022,8 +3306,12 @@ class Web:
             n = len(self.realizacie_sluzby(slug))
             if n:
                 popis = jeden_riadok(h.get('pocet_popis'))
+                # služba v prístupnom mene odkazu, pre čítačku „13 realizácií: stavebný manažment“ (audit naplno
+                # 25. 11. 2026, položka 30; WCAG 2.4.9 Link Purpose (Link Only), viditeľný text sa nemení)
+                sluzba = male(jeden_riadok(self.texty['sluzby'][slug].get('menu')))
                 riadky.append(f'<li class="cinnost-fakt"><a class="cinnost-pocet" href="{esc(self.rel(pre, slug + "/#real-nadpis"))}">'
-                              f'<span class="cinnost-pocet-c cisla">{n}</span> <span>{self.slovo_realizacie(n)}</span></a>'
+                              f'<span class="cinnost-pocet-c cisla">{n}</span> <span>{self.slovo_realizacie(n)}</span>'
+                              + (f'<span class="vh">: {T(sluzba)}</span>' if sluzba else '') + '</a>'
                               + (f'<small>{T(popis)}</small>' if popis else '') + '</li>')
         osv = jeden_riadok(h.get('osvedcenie'))
         o = next((x for x in self.firma['opravnenia'] if osv and x['cinnost'] == osv and 'SKSI' in x['organizacia']
@@ -3037,16 +3325,23 @@ class Web:
                     f'{T(tc.get("odkaz_sluzba", "Stránka služby"))}<span class="vh">: {nadpis}</span> {SVG_SIPKA}</a></p>')
         return out
 
+    def veta_osvedceni(self):
+        """Veta o osvedčeniach SKSI s činnosťou a dátumom vydania z obsah/firma.json (pod kartami Činnosti a v llms.txt),
+        bez osvedčení prázdna."""
+        osv = [o for o in self.firma['opravnenia'] if 'SKSI' in o['organizacia'] and o['cinnost'] and o['datum']]
+        if not osv:
+            return ''
+        return (f'{self.texty["cinnost"].get("sksi_veta", "Osvedčenia Slovenskej komory stavebných inžinierov")}: '
+                + '; '.join(f'{o["cinnost"]}, vydané {o["datum"]}' for o in osv) + '.')
+
     def cinnost_pata(self, pre):
         """Pod kartami Činnosti (ZMENY-KOLO-1.md 3A.7, ako náhľad pred 1. kolom): veta o osvedčeniach SKSI s dátumami
         vydania z obsah/firma.json a odkazom Oprávnenia, potom riadok listu „Čo hovorí stavebný zákon“ s rozbaľovacími
         otázkami z texty.json cinnost.otazky (zdroj Slov-Lex pri každej, prvá otvorená, „Kto je pri kolaudácii?“ nie)."""
         tc = self.texty['cinnost']
         out = ''
-        osv = [o for o in self.firma['opravnenia'] if 'SKSI' in o['organizacia'] and o['cinnost'] and o['datum']]
-        if osv:
-            veta = f'{tc.get("sksi_veta", "Osvedčenia Slovenskej komory stavebných inžinierov")}: ' + '; '.join(
-                f'{o["cinnost"]}, vydané {o["datum"]}' for o in osv) + '.'
+        veta = self.veta_osvedceni()
+        if veta:
             out += (f'<p class="cinnost-sksi">{T(veta)} <a href="{esc(self.rel(pre, "opravnenia/"))}">Oprávnenia</a></p>')
         otazky = self.otazky_html(self.zoznam_textov(tc.get('otazky'), 'cinnost.otazky'), h='h4', prva_otvorena=True)
         if otazky:
@@ -3318,8 +3613,10 @@ class Web:
                 ikona = IKONY_CINNOSTI.get(k, '')
                 text = ((f'<span class="cinnost-ikona sluzba-ikona" aria-hidden="true">{ikona}</span>' if ikona else '')
                         + self.doslovny_text(kluc_d, cast, stlpce=False, uvodna=True, riadky=True))
-            # doklady v boku sú h2: bok je v DOM pred prvým h2 stránky, h3 by bol skok úrovne po h1
-            doklady = self.doklady(pre, t['opravnenie'], nadpis='h2')
+            # doklady v boku sú h2: bok je v DOM pred prvým h2 stránky, h3 by bol skok úrovne po h1; viac osvedčení
+            # (Stavebný manažment) skrátene v jednej tabuľke (doklady_kratko, audit naplno 25. 11. 2026, položka 25)
+            kratko = self.doklady_kratko(t['opravnenie'], nadpis='h2')
+            doklady = [kratko] if kratko else self.doklady(pre, t['opravnenie'], nadpis='h2')
             bok = ''
             if doklady or self.firma['tel_href']:
                 bok = '<aside class="kalkulacka sluzba-bok" aria-label="Oprávnenie a kontakt">' + ''.join(doklady)
@@ -3345,6 +3642,11 @@ class Web:
                         f'<ul class="karty">{"".join(self.dlazdica(pre, r) for r in s_obalom)}</ul>'
                         + (self.zoznam_dalsich(pre, zvysok) if zvysok else '')
                         + f'<p class="viac"><a class="odkaz-sipka" href="../realizacie/">Všetky realizácie {SVG_SIPKA}</a></p></div></section>')
+            elif text:
+                # služba bez realizácie s jej rolou (Stavbyvedúci: žiadna rola v obsahu ho nemá) má pod textom ten istý
+                # odkaz Všetky realizácie ako ostatné služby (audit naplno 25. 11. 2026, položka 29)
+                text += (f'<p class="viac"><a class="odkaz-sipka" href="{esc(self.rel(pre, "realizacie/"))}">'
+                         f'Všetky realizácie {SVG_SIPKA}</a></p>')
             kroky = [('', 'Úvod'), (cesta, t['menu'])]
             # hlava-sluzba: menší H1 na počítači, aby doslovný text Činnosti začínal vyššie (overenie-1, nález drobné)
             hlava = self.hlava_stranky(pre, kroky, t['h1'], trieda='hlava-sluzba')
@@ -3391,7 +3693,9 @@ class Web:
         if len(mesta) > 1:
             moznosti = ['<option value="">všetky</option>'] + [
                 f'<option value="{esc(k)}">{T(m)} ({n})</option>' for k, (m, n) in sorted(mesta.items(), key=lambda x: (-x[1][1], x[1][0]))]
-            vyber += f'<label class="vyber">Miesto <select data-mesto>{"".join(moznosti)}</select></label>'
+            # Miesto prvé: na mobile cez celý riadok nad Roky a Zoradiť (najdlhšie hodnoty), poradie v DOM je poradie na
+            # obrazovke aj poradie fokusu; zoradenie ostáva posledné aj na počítači (audit naplno 25. 11. 2026, položka 4)
+            vyber = f'<label class="vyber vyber-miesto">Miesto <select data-mesto>{"".join(moznosti)}</select></label>' + vyber
         # podľa názvu: app.js triedi text nadpisu karty slovenským poradím (Intl.Collator sk)
         # krátke popisky (oprava 1 linky bmb-fb-uplnost): pri 390 px má select v trojstĺpcovom riadku asi 110 px,
         # „od najnovších“ sa orezalo na „od najnovšíc“
@@ -3410,11 +3714,19 @@ class Web:
             n = REALIZACIE_NARAZ
         return max(0, n)
 
+    def prvych_zoznamu(self, pocet):
+        """Koľko kariet zoznamu realizácií ukáže app.js po spustení bez filtra v adrese (hranica v časti 5): prvých
+        naraz(), no zvyšok najviac polovica dávky sa ukáže naraz s ňou (audit naplno 25. 11. 2026, položka 17:
+        „Zobraziť ďalšie (14)“ ukázalo 12 a nechalo „(2)“), takže pri 13 až 18 kartách a dávke 12 sú hneď všetky;
+        bez dávky (0) všetky."""
+        naraz = self.naraz()
+        return naraz if naraz and pocet - naraz > naraz // 2 else pocet
+
     def stav_zoznamu(self, pocet):
         """Text riadka stavu zoznamu realizácií pred prvým filtrom, rovnaký ako v app.js (obnov bez výberu):
-        „Zobrazené: N z M“, keď app.js ukáže len prvých naraz() kariet, inak prázdny."""
-        naraz = self.naraz()
-        return f'Zobrazené: {naraz} z {pocet}' if naraz and naraz < pocet else ''
+        „Zobrazené: N z M“, keď app.js ukáže len prvých naraz() kariet (prvych_zoznamu), inak prázdny."""
+        m = self.prvych_zoznamu(pocet)
+        return f'Zobrazené: {m} z {pocet}' if m < pocet else ''
 
     def stranka_realizacii(self):
         t = self.texty['realizacie']
@@ -3453,7 +3765,11 @@ class Web:
                                        navyse=navigacia + (self.filtre(zoznam, roky_vyber=len(stranky) == 1) if zoznam else '')
                                        + (self.mierka(pre_c) if zoznam and len(stranky) == 1 else ''))
             if zoznam:
-                dlazdice = ''.join(self.dlazdica(pre_c, r, 'h2', data=True, poradie=i, lcp=(i == 1))
+                # karty za prvou dávkou majú data-neskor: do spustenia app.js sú mimo rozloženia a ich lenivé fotky sa
+                # nesťahujú (audit naplno 25. 11. 2026, položka 46, pri 1440 px a Slow 4G 8 fotiek, 357 kB, ktoré app.js
+                # hneď skryl); bez JS ich nič neskryje (styl.css .js [data-neskor])
+                prvych = self.prvych_zoznamu(len(zoznam))
+                dlazdice = ''.join(self.dlazdica(pre_c, r, 'h2', data=True, poradie=i, lcp=(i == 1), neskor=i > prvych)
                                     for i, r in enumerate(zoznam, 1))
                 # postupné načítanie (zadanie bmb-fb-uplnost bod 4): všetky karty sú v HTML (bez JS viditeľné, odkaz
                 # na každú realizáciu pre vyhľadávače), app.js ukáže prvých data-naraz z výberu a tlačidlo Zobraziť
@@ -3616,12 +3932,23 @@ class Web:
                        f'<span class="vh"> {slovo}:</span>{SVG_SIPKA}</span><b>{T(p[nazov_kluc])}</b></a>')
         return f'<nav class="susedia" aria-label="Ďalšie: {slovo}">{"".join(out)}</nav>' if out else ''
 
+    @staticmethod
+    def popisok_rokov(roky):
+        """Popisok rokov stavby: Rok pri jednom roku (UFO 2025, RD Kalvária 2009), inak Roky („2021 až 2022“). Audit
+        naplno 25. 11. 2026, položka 2: detail aj description písali „Roky 2025“ pri jednom roku."""
+        return 'Rok' if re.fullmatch(r'(19|20)\d{2}', (roky or '').strip()) else 'Roky'
+
     def udaje_realizacie(self, r):
-        """Údaje realizácie v hlave stránky (dl.fakty ukážky): miesto, druh, rola BM Building s osobou zo starého webu,
-        projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), Roky a etapy; bez rokov
-        stavby rok pod popiskom Rok. Termín výstavby s mesiacmi nie je (ZMENY-KOLO-1.md 5.2, len roky). Weby strán
-        ako text, nie odkaz (cudzie domény sa mohli od starého webu zmeniť)."""
-        druh = ', '.join(self.kat_nazov(k) for k in r['kategorie'] if k != 'ine')
+        """Údaje realizácie v hlave stránky (dl.fakty ukážky): miesto, druh stavby, rola BM Building s osobou zo starého
+        webu, projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), roky stavby pod
+        popiskom Rok alebo Roky (popisok_rokov) a etapy. Bez rokov stavby riadok rokov nie je, rok príspevku na web
+        nejde (roky_karty, overenie-1). Termín výstavby s mesiacmi nie je (ZMENY-KOLO-1.md 5.2, len roky). Weby strán
+        ako text, nie odkaz (cudzie domény sa mohli od starého webu zmeniť).
+        Druh stavby je ten istý ako na karte, v jednotnom čísle (druh_karty, audit naplno 25. 11. 2026, položka 2:
+        detail písal názov filtra „Rodinné domy“ pri jednom dome). Keď ho názov ani text neurčí (Okánikova, Dom pod
+        lesom), detail ukáže kategóriu filtra pod popiskom Kategória; Iné sa neukazuje."""
+        druh = self.druh_karty(r)
+        kategoria = '' if druh else ', '.join(self.kat_nazov(k) for k in r['kategorie'] if k != 'ine')
         strany = r.get('strany') or {}
 
         def strana(kluc, meno):
@@ -3639,37 +3966,74 @@ class Web:
                 riadky.append(f'<span class="fakty-pod">{predpona}{BODKA.join(kusy)}</span>')
             return T(meno) + ''.join(riadky)
         rola = T(r['rola']) + (f'<span class="fakty-pod">{T(r["rola_osoba"])}</span>' if r['rola'] and r.get('rola_osoba') else '')
-        pole = [('Miesto', T(r['miesto'])), ('Druh stavby', T(druh)), ('Rola BM Building', rola),
+        pole = [('Miesto', T(r['miesto'])), ('Druh stavby', T(druh)), ('Kategória', T(kategoria)),
+                ('Rola BM Building', rola),
                 ('Projektant', strana('projektant', r['projektant'])), ('Autor', T(r.get('autor') or '')),
                 ('Investor', strana('investor', r['investor'])),
-                ('Zhotoviteľ', strana('zhotovitel', r['zhotovitel'])), ('Roky', T(r['roky']))]
+                ('Zhotoviteľ', strana('zhotovitel', r['zhotovitel'])), (self.popisok_rokov(r['roky']), T(r['roky']))]
         if r.get('etapy'):
             pole.append(('Etapy', ''.join(f'<span class="fakty-riadok">{T(e)}</span>' for e in r['etapy'])))
         # bez rokov stavby nie je ani riadok Rok: rok príspevku na web nejde (roky_karty, overenie-1)
         html_ =''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in pole if v)
         return f'<dl class="fakty udaje">{html_}</dl>' if html_ else ''
 
-    def detail_dvojstrana(self, pre, r, nazov, text, roky=''):
+    def detail_dvojstrana(self, pre, r, nazov, text, roky='', udaje=''):
         """Dvojstrana detailu ako úvod ukážky: vľavo fotka (pohľad A, odkrytie sprava), vpravo kóta s rokmi a text
-        (prvý odsek väčší, ďalšie tlmené). Fotka je fotka karty (nikdy vizualizácia, ak existuje skutočná)."""
+        (prvý odsek väčší, ďalšie tlmené). Fotka je fotka karty (nikdy vizualizácia, ak existuje skutočná).
+        udaje (tabuľka údajov realizácie, len s fotkou): div.detail-udaje za fotkou, trieda detail-s-udajmi. Fotka je
+        pri každej šírke hneď pod H1: do 1279 px fotka, údaje a text pod sebou, od 1280 px fotka vľavo a údaje s textom
+        vpravo (audit naplno 25. 11. 2026, položka 13; oprava po overení, kontrola dizajnu dva nálezy vážne: s údajmi
+        pred fotkou bola titulná fotka pri 360 a 390 px pri 11 až 16 z 26 detailov celá pod prvou obrazovkou a pri 1024
+        až 1279 px mala hodnota vedľa fotky 147 až 223 px, pod fotkou ostávalo až 595 px prázdna)."""
         f = r.get('karta')
         foto = ''
         if f:
             n = len(r['galeria'])
             stitok = '<span class="stitok-viz">Vizualizácia</span>' if f.get('viz') else ''
-            obr = self.img(pre, r, f, sizes_pre_cover(SIZES_DETAIL, f['w'], f['h']), lcp=True, alt=self.alt_bez_cisla(f) or nazov)
+            sizes = SIZES_DETAIL_UDAJE if udaje else SIZES_DETAIL
+            obr = self.img(pre, r, f, sizes_pre_cover(sizes, f['w'], f['h']), lcp=True, alt=self.alt_bez_cisla(f) or nazov)
             popis = self.popis_fotky(r, f) if not f.get('viz') else (
                 'Vizualizácia' + (f', autor: {f["autor"]}' if f.get('autor') else ''))
             casti = [T(popis or nazov)]
             if n > 1:
-                casti.append(f'<a href="#galeria">{T("Galéria, " + tvar(n, "fotka", "fotky", "fotiek"))}</a>')
+                # „Galéria, 8 fotiek“ sa nezalomí za čiarkou (kontrola zadania 26. 11. 2026: pri 360 až 412 px ostalo
+                # „Galéria,“ na konci riadka a „8 fotiek“ samo na ďalšom)
+                casti.append(f'<a href="#galeria">{T("Galéria,\u00a0" + tvar(n, "fotka", "fotky", "fotiek"))}</a>')
             foto = (f'<figure class="pohlad detail-foto"><div class="pohlad-ramec">{obr}{stitok}</div>'
                     f'<figcaption>{SVG_POHLAD_ZNAK}<span><strong>Pohľad A:</strong> {BODKA.join(casti)}</span></figcaption></figure>')
         if not text and not foto:
             return ''
         kota = self.kota(roky, 'kota-detail') if roky else ''
-        return (f'<div class="obsah mriezka detail{"" if foto else " detail-bez-fotky"}">{foto}'
+        pri = f'<div class="detail-udaje">{udaje}</div>' if udaje and foto else ''
+        return (f'<div class="obsah mriezka detail{"" if foto else " detail-bez-fotky"}{" detail-s-udajmi" if pri else ""}">{foto}{pri}'
                 f'<div class="detail-text atelier-text">{kota}{text}</div></div>')
+
+    def vety_realizacie(self, r):
+        """Vety údajov realizácie bez názvu: rola, projektant alebo autor a roky stavby (pri jednom roku popisok Rok,
+        popisok_rokov, položka 2). Pre description stránky a popis odkazu v llms.txt."""
+        vety = []
+        if r['rola']:
+            vety.append(s_bodkou(f'Rola BM Building: {male(r["rola"])}'))
+        if r['projektant']:
+            vety.append(s_bodkou(f'Projektant: {r["projektant"]}'))
+        if r.get('autor'):
+            vety.append(s_bodkou(f'Autor: {r["autor"]}'))
+        if r['roky']:
+            vety.append(s_bodkou(f'{self.popisok_rokov(r["roky"])}: {r["roky"]}'))
+        return vety
+
+    def popis_realizacie(self, r):
+        """meta description stránky realizácie: názov s miestom a vety údajov (vety_realizacie), vety celé do 155
+        znakov."""
+        vety = [s_bodkou(self.nazov_s_miestom(r))] + self.vety_realizacie(r)
+        desc = ''
+        for v in vety:
+            skus = (desc + ' ' + v).strip()
+            if len(skus) <= 155:
+                desc = skus
+            elif not desc:
+                desc = s_bodkou(skrat(v, 154))
+        return desc
 
     def stranky_realizacie(self):
         poradie = self.realizacie
@@ -3678,22 +4042,7 @@ class Web:
             pre = self.pre(cesta)
             nm = self.nazov_s_miestom(r)
             title = self.titulok_realizacie(r)
-            vety = [s_bodkou(nm)]
-            if r['rola']:
-                vety.append(s_bodkou(f'Rola BM Building: {male(r["rola"])}'))
-            if r['projektant']:
-                vety.append(s_bodkou(f'Projektant: {r["projektant"]}'))
-            if r.get('autor'):
-                vety.append(s_bodkou(f'Autor: {r["autor"]}'))
-            if r['roky']:
-                vety.append(s_bodkou(f'Roky: {r["roky"]}'))
-            desc = ''
-            for v in vety:
-                skus = (desc + ' ' + v).strip()
-                if len(skus) <= 155:
-                    desc = skus
-                elif not desc:
-                    desc = s_bodkou(skrat(v, 154))
+            desc = self.popis_realizacie(r)
             pole_html = self.udaje_realizacie(r)
             odseky = [p for p in r['text'].split('\n') if p.strip()]
             text = ''.join(f'<p class="{"uvodna" if i == 0 else "tlmene"}">{T(p)}</p>' for i, p in enumerate(odseky))
@@ -3703,14 +4052,17 @@ class Web:
                 text += f'<p class="tlmene"><a class="odkaz-von" href="{esc(fb)}">Pozrieť na Facebooku {SVG_VON}</a></p>'
             kroky = [('', 'Úvod'), ('realizacie/', 'Realizácie'), (cesta, r['nazov'])]
             m = self.mesto(r) if self.mesto(r).lower() not in r['nazov'].lower() else ''
-            hlava = self.hlava_stranky(pre, kroky, r['nazov'], m, bok=pole_html, trieda='hlava-detail')
+            # s titulnou fotkou je tabuľka údajov v dvojstrane pri fotke, hlava má len H1 (audit naplno 25. 11. 2026,
+            # položka 13: H1 bol dole vedľa vysokej tabuľky a fotka začínala pri 1366 x 768 až na 657 px)
+            pri_fotke = bool(r.get('karta') and pole_html)
+            hlava = self.hlava_stranky(pre, kroky, r['nazov'], m, bok='' if pri_fotke else pole_html, trieda='hlava-detail')
             udaje_lb = self.udaje_lightboxu(r)
             galeria = self.galeria(pre, r, nm, udaje_lb)
             obal = r['obal'] or (r['galeria'][0] if r['galeria'] else None)
             og = self.og_cesta_realizacie(r)
             self.registruj_og(og, self.og_foto(obal), r['nazov'],
                               ', '.join(x for x in (r['rola'], r['roky']) if x), 'BM Building, s.r.o., bmbuilding.sk')
-            telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_stitok(r))
+            telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_stitok(r), udaje=pole_html if pri_fotke else '')
             # V médiách (ZMENY-KOLO-1.md 5.7) hneď pod textom, pred galériou; fotky bloku idú do toho istého dialógu
             # lightboxu ako galéria (iná skupina), bez galérie dostane stránka dialóg z prvého obrázka bloku
             media = self.v_mediach_blok(pre, r)
@@ -3772,7 +4124,7 @@ class Web:
             if r_n:
                 fakty.append(('Stavba', f'<a href="{esc(self.rel(pre_n, "realizacie/" + r_n["slug"] + "/"))}">{T(r_n["nazov"])}</a>'))
                 if self.roky_karty(r_n):
-                    fakty.append(('Roky' if r_n['roky'] else 'Rok', T(self.roky_karty(r_n))))
+                    fakty.append((self.popisok_rokov(self.roky_karty(r_n)), T(self.roky_karty(r_n))))
             bok_n = '<dl class="fakty udaje">' + ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in fakty) + '</dl>'
             dvoj = self.detail_dvojstrana(pre_n, n, n['nadpis'], odseky)
             telo_n = (self.hlava_stranky(pre_n, kroky_n, n['nadpis'], datum_text(n['datum']), bok=bok_n, trieda='hlava-detail')
@@ -3838,6 +4190,38 @@ class Web:
                         lastmod=self.vydanie, pata_firma=False, typ_stranky=['WebPage', 'ContactPage'],
                         stranka_navyse={'about': {'@id': self.abs_url('#firma')}})
 
+    def ochrana_hosting(self, t):
+        """Odseky časti Hosting na /ochrana-udajov/ a zdroje k nim podľa hostingu ostrého webu (čl. 13 ods. 1 písm. c)
+        až f) a ods. 2 písm. a) nariadenia (EÚ) 2016/679, https://eur-lex.europa.eu/legal-content/SK/TXT/?uri=CELEX:32016R0679).
+        GitHub Pages (pages): GitHub, Inc. a prenos do USA ako doteraz. WebHouse (apache, audit naplno 25. 11. 2026,
+        položka 1): údaje o WebHouse len z jeho verejných stránok (texty.json ochrana.webhouse, overené 25. 11. 2026):
+        identita z informácií o ochrane osobných údajov (bod 1), úloha sprostredkovateľa a logy z Podmienok spracúvania
+        osobných údajov (DPA čl. 1 a 45), miesto spracúvania a prenos (DPA čl. 29 a 30), uchovávanie bezpečnostných
+        logov (informácie o ochrane osobných údajov, bod 7; presnú lehotu WebHouse neuvádza). Vráti (odseky, zdroje)."""
+        if self.hosting != 'apache':
+            return ([
+                'Web je statický a beží na službe GitHub Pages spoločnosti GitHub, Inc. Pri návšteve webu GitHub podľa svojej dokumentácie zaznamenáva a ukladá IP adresu návštevníka na bezpečnostné účely. Tieto technické záznamy spracúva GitHub, nie BM Building.',
+                'GitHub, Inc. sídli v USA. Podľa svojho vyhlásenia o ochrane osobných údajov spracúva osobné údaje aj v USA a pri prenose z Európskej únie do krajín, ktorým Európska komisia nepriznala primeranú úroveň ochrany, sa spravidla opiera o štandardné zmluvné doložky Európskej komisie.'],
+                [(t['github_url'], 'GitHub Pages, Data collection'),
+                 (t['github_privacy_url'], 'GitHub General Privacy Statement')])
+        w = t.get('webhouse') if isinstance(t.get('webhouse'), dict) else {}
+        udaje = {k: jeden_riadok(w.get(k)) for k in ('meno', 'adresa', 'ico')}
+        urls = {k: bezpecna_url(w.get(k), ['webhouse.sk']) for k in ('dpa_url', 'ochrana_url')}
+        chyba = [k for k, v in list(udaje.items()) + list(urls.items()) if not v]
+        if chyba:
+            # bez overených údajov o hostingu by text ochrany údajov nebol pravdivý: zostava pre FTP sa nezapíše
+            raise ChybaZostavy('sablona/texty.json ochrana.webhouse: chýba alebo je neplatné ' + ', '.join(chyba)
+                               + ' (údaje o WebHouse len z jeho verejných stránok)')
+        meno = udaje['meno']
+        return ([
+            f'Web je statický a beží na webhostingu spoločnosti {meno}, {udaje["adresa"]}, IČO {udaje["ico"]}. Pri návšteve webu server hostingu zaznamenáva IP adresu návštevníka, čas a technické údaje o požiadavke do technických a bezpečnostných záznamov (logov).',
+            'Účelom týchto záznamov je bezpečná a spoľahlivá prevádzka webu, napríklad odhalenie útoku alebo chyby. Právnym základom je čl. 6 ods. 1 písm. f) nariadenia (EÚ) 2016/679, teda oprávnený záujem na bezpečnej prevádzke webu.',
+            f'Príjemcom týchto údajov je {meno}, ako poskytovateľ webhostingu. Podľa svojich podmienok spracúvania osobných údajov ich spracúva ako sprostredkovateľ podľa čl. 28 nariadenia; na účely bezpečnosti a správy svojej infraštruktúry môže časť technických záznamov spracúvať aj ako samostatný prevádzkovateľ.',
+            'WebHouse podľa svojich informácií o ochrane osobných údajov uchováva bezpečnostné záznamy počas obdobia primeraného ich účelu, typu služby a riziku. Osobné údaje spracúva najmä v Európskom hospodárskom priestore a do tretej krajiny ich prenáša len pri splnení podmienok kapitoly V nariadenia.'],
+            [(urls['dpa_url'], 'WebHouse, Podmienky spracúvania osobných údajov (DPA), čl. 1, 29, 30 a 45'),
+             # body 1 (meno, sídlo a IČO v prvom odseku) a 7 (logy, uchovávanie); oprava po overení, kontrola spustenia
+             (urls['ochrana_url'], 'WebHouse, Ochrana osobných údajov, body 1 a 7')])
+
     def stranka_ochrana(self):
         t = self.texty['ochrana']
         cesta = 'ochrana-udajov/'
@@ -3848,15 +4232,15 @@ class Web:
         prev = f'{f["meno"]}, {adresa}' + (f', IČO {f["ico"]}' if f['ico'] else '') + '.'
         if f['zapis']:
             prev += ' ' + f['zapis']
+        hosting, zdroje_hostingu = self.ochrana_hosting(t)
         casti = [
             ('Prevádzkovateľ', [prev, f'Kontakt na prevádzkovateľa: {kontakt}.' if kontakt else '']),
             ('Čo tento web nerobí', [
                 'Web nepoužíva cookies, analytiku ani iné sledovacie nástroje a nemá žiadne formuláre. Nevkladá obsah tretích strán: mapy, Facebook ani písma z cudzích serverov sa nenačítavajú. Písmo a malý skript na pohyb a ovládanie stránky sú uložené priamo na tomto webe a nič neodosielajú.',
                 'Odkazy na Mapy Google, Mapy.cz a Facebook otvoria stránku tretej strany až po kliknutí. Na tej stránke platia pravidlá jej prevádzkovateľa.']),
-            # čl. 13 nariadenia 2016/679: právny základ, doba uchovávania a prenos mimo EÚ (brána pokus 1, správnosť 10)
-            ('Hosting', [
-                'Web je statický a beží na službe GitHub Pages spoločnosti GitHub, Inc. Pri návšteve webu GitHub podľa svojej dokumentácie zaznamenáva a ukladá IP adresu návštevníka na bezpečnostné účely. Tieto technické záznamy spracúva GitHub, nie BM Building.',
-                'GitHub, Inc. sídli v USA. Podľa svojho vyhlásenia o ochrane osobných údajov spracúva osobné údaje aj v USA a pri prenose z Európskej únie do krajín, ktorým Európska komisia nepriznala primeranú úroveň ochrany, sa spravidla opiera o štandardné zmluvné doložky Európskej komisie.']),
+            # čl. 13 nariadenia 2016/679: právny základ, doba uchovávania a prenos mimo EÚ (brána pokus 1, správnosť 10);
+            # text podľa hostingu ostrého webu (audit naplno 25. 11. 2026, položka 1, ochrana_hosting)
+            ('Hosting', hosting),
             ('Ak nás kontaktujete', [
                 'Ak nám napíšete e-mail alebo zavoláte, údaje, ktoré nám pritom poskytnete, použijeme len na vybavenie vašej požiadavky.',
                 'Právnym základom je čl. 6 ods. 1 písm. b) nariadenia (EÚ) 2016/679, ak ide o opatrenia pred uzatvorením zmluvy na vašu žiadosť, napríklad dopyt na stavebný dozor. Pri ostatných otázkach je ním čl. 6 ods. 1 písm. f), teda náš oprávnený záujem odpovedať na správu, ktorú ste nám poslali.',
@@ -3868,9 +4252,9 @@ class Web:
         html_casti = []
         for nadpis, odseky in casti:
             html_casti.append(f'<h2 class="nadpis-maly">{T(nadpis)}</h2>' + ''.join(f'<p>{T(p)}</p>' for p in odseky if p))
-        odkazy = (f'<p class="poznamka">Zdroje: <a href="{esc(t["github_url"])}">GitHub Pages, Data collection</a>, '
-                  f'<a href="{esc(t["github_privacy_url"])}">GitHub General Privacy Statement</a>, '
-                  f'<a href="{esc(t["uoou_url"])}">Úrad na ochranu osobných údajov SR</a>. '
+        odkazy = ('<p class="poznamka">Zdroje: '
+                  + ''.join(f'<a href="{esc(url)}">{T(text)}</a>, ' for url, text in zdroje_hostingu)
+                  + f'<a href="{esc(t["uoou_url"])}">Úrad na ochranu osobných údajov SR</a>. '
                   'Písmo Geist a Geist Mono (The Geist Project Authors), licencia SIL Open Font License 1.1: '
                   f'<a href="{esc(pre)}fonts/OFL-Geist.txt">fonts/OFL-Geist.txt</a>.</p>')
         kroky = [('', 'Úvod'), (cesta, 'Ochrana osobných údajov')]
@@ -3896,9 +4280,40 @@ class Web:
         self.stranka(None, t['title'], '', telo, '', [], do_mapy=False, zaklad=zaklad)
 
     def presmerovania(self):
+        """Staré adresy Joomly (ciele_presmerovani). GitHub Pages: statická stránka s meta refresh a canonical pre
+        každú adresu v index.php/. Apache (FTP na WebHouse): nič sa nezapisuje, priečinok index.php/ by sa vedľa súboru
+        index.php Joomly nedal vytvoriť; tie isté ciele ako 301 zapíše htaccess() (audit naplno, položka 1)."""
+        self.ciele_starych = self.ciele_presmerovani()
+        if self.hosting == 'apache':
+            return
+        for stara, ciel in self.ciele_starych:
+            cesta = stara.strip('/') + '/'
+            subor = cesta + 'index.html'
+            ciel_cesta, _, kotva = ciel.lstrip('/').partition('#')
+            rel = self.rel(self.pre(cesta), ciel_cesta) + (('#' + kotva) if kotva else '')
+            canon = self.abs_url(ciel_cesta)
+            robots = '<meta name="robots" content="noindex, nofollow">\n' if self.nahlad else ''
+            # prázdna ikona (data:,) a img-src data:: bez nej Firefox pýta /favicon.ico mimo CSP (porušenie, overenie
+            # kolo 1); skutočná ikona by sa pri okamžitom presmerovaní aj tak zrušila (requestfailed, oprava 1)
+            obsah = ('<!doctype html>\n<html lang="sk">\n<head>\n<meta charset="utf-8">\n'
+                     '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; base-uri \'none\'; form-action \'none\'">\n'
+                     f'{robots}<title>Stránka sa presunula | BM Building</title>\n'
+                     '<link rel="icon" href="data:,">\n'
+                     f'<meta http-equiv="refresh" content="0; url={esc(rel)}">\n'
+                     f'<link rel="canonical" href="{esc(canon)}">\n'
+                     '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n'
+                     f'<p>Stránka sa presunula na novú adresu: <a href="{esc(rel)}">{esc(canon)}</a></p>\n</body>\n</html>\n')
+            self.subory[subor] = obsah.encode('utf-8')
+
+    def ciele_presmerovani(self):
+        """[(stará cesta, cieľ)] zo sablona/presmerovania.json v poradí zoznamu; cieľ je cesta od koreňa webu, voliteľne
+        s kotvou. Rovnaké pravidlá pre oba hostingy: premenovaná kotva (KOTVY_PREMENOVANE), neplatná stará cesta sa
+        preskočí, neplatný cieľ je úvod, nezverejnená realizácia ide na zoznam, stará adresa na mieste stránky webu sa
+        preskočí. Volá sa až po zostavení stránok (kolízia so self.subory)."""
         cesty_webu = set(self.subory)
         d = json.loads((SABLONA / 'presmerovania.json').read_text(encoding='utf-8'))
         slugy = {r['slug'] for r in self.realizacie}
+        vysledok = []
         for z in d.get('presmerovania', []):
             stara = str(z.get('stara') or '')
             ciel = str(z.get('ciel') or '/')
@@ -3918,26 +4333,185 @@ class Web:
                 if not (Path(self.obsah) / 'realizacie' / f'{m.group(1)}.json').is_file():
                     varuj(f'presmerovanie {stara}: realizácia {m.group(1)} nie je zverejnená, cieľ /realizacie/')
                 ciel = '/realizacie/'
-            cesta = stara.strip('/') + '/'
-            subor = cesta + 'index.html'
-            if subor in cesty_webu:
+            if stara.strip('/') + '/index.html' in cesty_webu:
                 varuj(f'presmerovanie {stara}: koliduje so stránkou webu, preskočené')
                 continue
-            ciel_cesta, _, kotva = ciel.lstrip('/').partition('#')
-            rel = self.rel(self.pre(cesta), ciel_cesta) + (('#' + kotva) if kotva else '')
-            canon = self.abs_url(ciel_cesta)
-            robots = '<meta name="robots" content="noindex, nofollow">\n' if self.nahlad else ''
-            # prázdna ikona (data:,) a img-src data:: bez nej Firefox pýta /favicon.ico mimo CSP (porušenie, overenie
-            # kolo 1); skutočná ikona by sa pri okamžitom presmerovaní aj tak zrušila (requestfailed, oprava 1)
-            obsah = ('<!doctype html>\n<html lang="sk">\n<head>\n<meta charset="utf-8">\n'
-                     '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; base-uri \'none\'; form-action \'none\'">\n'
-                     f'{robots}<title>Stránka sa presunula | BM Building</title>\n'
-                     '<link rel="icon" href="data:,">\n'
-                     f'<meta http-equiv="refresh" content="0; url={esc(rel)}">\n'
-                     f'<link rel="canonical" href="{esc(canon)}">\n'
-                     '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n'
-                     f'<p>Stránka sa presunula na novú adresu: <a href="{esc(rel)}">{esc(canon)}</a></p>\n</body>\n</html>\n')
-            self.subory[subor] = obsah.encode('utf-8')
+            vysledok.append((stara, ciel))
+        return vysledok
+
+    def htaccess(self):
+        """.htaccess ostrého webu na webhostingu WebHouse (Apache 2.4; hosting apache, audit naplno 25. 11. 2026,
+        položka 1). Pravidlá prepisu platia len pre doménu a jej www: iná doména alebo subdoména s koreňom
+        v podpriečinku webu ich nezdedí. Poradie:
+          1. /.well-known/ bez presmerovania (overenie certifikátu Let's Encrypt, ktorý WebHouse vydáva),
+          2. staré adresy Joomly (ciele_presmerovani) jedným skokom 301 rovno na https a holú doménu, query sa zahodí
+             (QSD), kotva sa nekóduje (NE); ostatné adresy pod index.php (index.php?option=..., /index.php/component/)
+             na úvod,
+          3. priečinok stránky bez lomky na konci rovno na kanonickú adresu s lomkou (z http aj www jeden skok), len
+             priečinok zostavy (oprava po overení: priečinok Joomly s prázdnym index.html, napríklad /images alebo
+             /cache, dostal najprv 301 na adresu s lomkou a až potom 404, čo prezrádzalo Joomlu na hostingu),
+          4. www na holú doménu a http na https; %{HTTPS} !=on podľa návodu WebHouse „Ako nastaviť https prístup“
+             (https://helpdesk.webhouse.sk/357913--Ako-nastavi%C5%A5-https-pr%C3%ADstup),
+          5. na webe je len to, čo zapísala zostava: iné meno v koreni (súbory a priečinky Joomly, staré zálohy, súbory
+             zostavy pre GitHub Pages) vráti 404 s vlastnou stránkou, priečinok bez index.html tiež (bez výpisu obsahu
+             a bez Options, ktoré hosting v .htaccess nemusí povoliť), PHP nikde.
+        Ďalej DirectoryIndex index.html pred index.php Joomly (https://httpd.apache.org/docs/2.4/mod/mod_dir.html),
+        ErrorDocument 404 (https://httpd.apache.org/docs/2.4/mod/core.html#errordocument), typy AVIF, WebP, woff2
+        a webmanifest, UTF-8, hlavičky, ktoré web s CSP v meta znesie (nosniff, Referrer-Policy, zákaz rámca inou
+        stránkou cez X-Frame-Options a frame-ancestors, ktoré meta CSP nevie, Permissions-Policy, COOP), cache podľa
+        typu (app.js má v adrese ?v=, preto rok; písma a fotky bez odtlačku v mene mesiac; HTML vždy overiť) a gzip.
+        HSTS zámerne nie: pre návštevníkov je na rok nevratné a pri výpadku certifikátu alebo pri prechode na GitHub
+        Pages (cesta DNS ostáva zálohou) by web nešiel otvoriť ani s výnimkou. RewriteEngine nie je v IfModule:
+        bez mod_rewrite (WebHouse ho v návode používa) radšej chyba 500 hneď pri kontrole po nahratí, než web
+        s verejnými súbormi Joomly bez presmerovaní. Pravidlá overuje simulácia nastroje/htaccess_simulacia.py."""
+        p = urllib.parse.urlsplit(self.domena)
+        host = p.hostname or ''
+        if p.scheme != 'https' or not re.match(r'^[a-z0-9-]+(\.[a-z0-9-]+)+$', host) or p.path not in ('', '/'):
+            raise ChybaZostavy(f'hosting apache potrebuje doménu https bez cesty (nastavenia.json domena), nie {self.domena!r}')
+        d = 'https://' + host
+        hre = host.replace('.', '\\.')
+
+        def vzor(cesta):
+            # cesty sú overené na [A-Za-z0-9._/-]; zo znakov regulárneho výrazu je v nich len bodka
+            return cesta.replace('.', '\\.')
+
+        # mená v koreni výstupu (súbory a priečinky zostavy): pravidlo 3 len pre ne, pravidlo 5 všetko ostatné na 404
+        koren = sorted({k.split('/', 1)[0] for k in list(self.subory) + list(self.obrazky)} - {HTACCESS})
+        for meno in koren:
+            if not re.match(r'^[A-Za-z0-9._-]+$', meno) or meno in ('.', '..'):
+                raise ChybaZostavy(f'súbor webu {meno!r} sa nedá zapísať do .htaccess')
+        mena_korena = '(?:' + '|'.join(vzor(m) for m in koren) + ')'
+        r = [f'# Web {d}/ na webhostingu WebHouse (Apache). Súbor zapisuje build.py --hosting apache pri každej zostave,',
+             '# ručne ho nemeniť. Pravidlá overuje test_build.py (TestHostingApache) a nastroje/htaccess_simulacia.py.',
+             '',
+             '# znaková sada a typy, ktoré staršie mime.types nepoznajú',
+             'AddDefaultCharset UTF-8',
+             '<IfModule mod_mime.c>',
+             '  AddType image/avif .avif',
+             '  AddType image/webp .webp',
+             '  AddType font/woff2 .woff2',
+             '  AddType application/manifest+json .webmanifest',
+             '  AddCharset UTF-8 .css .js .json .svg .txt .webmanifest .xml',
+             '</IfModule>',
+             '',
+             '# úvod je index.html, nikdy nie index.php Joomly (index.php ostáva len pre iný web v podpriečinku)',
+             'DirectoryIndex index.html index.php',
+             'ErrorDocument 404 /404.html',
+             '',
+             'RewriteEngine On',
+             '',
+             f'# 0. pravidlá len pre {host} a www.{host}; iná doména alebo subdoména s koreňom v podpriečinku ich nezdedí',
+             f'RewriteCond %{{HTTP_HOST}} !^(?:www\\.)?{hre}\\.?(?::[0-9]+)?$ [NC]',
+             'RewriteRule ^ - [L]',
+             '',
+             '# 1. overenie certifikátu (Let\'s Encrypt) a iné súbory v /.well-known/ bez presmerovania',
+             'RewriteRule ^\\.well-known/ - [L]',
+             '',
+             f'# 2. staré adresy Joomly (sablona/presmerovania.json, {len(self.ciele_starych)}) jedným skokom 301 na {d}, bez query']
+        for stara, ciel in self.ciele_starych:
+            priznaky = 'R=301,L,QSD' + (',NE' if '#' in ciel else '')
+            r.append(f'RewriteRule ^{vzor(stara.strip("/"))}/?$ {d}{ciel} [{priznaky}]')
+        r += ['# ostatné adresy Joomly pod index.php (index.php?option=..., /index.php/component/...) na úvod',
+              f'RewriteRule ^index\\.php/ {d}/ [R=301,L,QSD]',
+              '',
+              '# 3. priečinok stránky bez lomky na konci rovno na kanonickú adresu s lomkou (len priečinok zostavy:',
+              '# priečinok Joomly s prázdnym index.html, napríklad /images, dostane hneď 404 z pravidla 5, nie skok)',
+              f'RewriteCond $1 ^{mena_korena}(?:/|$)',
+              'RewriteCond %{REQUEST_FILENAME} -d',
+              'RewriteCond %{REQUEST_FILENAME}/index.html -f',
+              f'RewriteRule ^(.+[^/])$ {d}/$1/ [R=301,L]',
+              '',
+              '# 4. www na holú doménu a http na https (návod WebHouse: Ako nastaviť https prístup)',
+              'RewriteCond %{HTTP_HOST} ^www\\. [NC]',
+              f'RewriteRule ^ {d}%{{REQUEST_URI}} [R=301,L]',
+              'RewriteCond %{HTTPS} !=on',
+              f'RewriteRule ^ {d}%{{REQUEST_URI}} [R=301,L]',
+              '',
+              '# 5. na webe je len to, čo zapísala zostava: iné meno v koreni (Joomla, staré súbory) vráti 404']
+        r += [f'RewriteCond $1 !^{mena_korena}$',
+              'RewriteRule ^([^/]+) - [R=404,L]',
+              '# priečinok bez index.html (fonts/, obrazky/, og/) bez výpisu obsahu',
+              'RewriteCond %{REQUEST_FILENAME} -d',
+              'RewriteCond %{REQUEST_FILENAME}/index.html !-f',
+              'RewriteRule ^. - [R=404,L]',
+              '# PHP sa nespúšťa nikde, nový web ho nemá',
+              'RewriteRule \\.ph(?:p[0-9]?|tml|ar)(?:/|$) - [R=404,L]',
+              '',
+              '# hlavičky, ktoré web s CSP v meta znesie; frame-ancestors meta CSP nevie, preto v hlavičke',
+              '<IfModule mod_headers.c>',
+              '  Header always set X-Content-Type-Options "nosniff"',
+              '  Header always set Referrer-Policy "strict-origin-when-cross-origin"',
+              '  Header always set X-Frame-Options "SAMEORIGIN"',
+              '  Header always set Content-Security-Policy "frame-ancestors \'self\'"',
+              '  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"',
+              '  Header always set Cross-Origin-Opener-Policy "same-origin"',
+              '</IfModule>',
+              '',
+              '# cache: HTML vždy overiť, app.js má v adrese ?v=<odtlačok> (rok), písma a fotky bez odtlačku v mene mesiac',
+              '<IfModule mod_expires.c>',
+              '  ExpiresActive On']
+        for typ, cas in CACHE_APACHE:
+            r.append(f'  ExpiresByType {typ} "{cas}"')
+        r += ['</IfModule>',
+              '',
+              '<IfModule mod_deflate.c>',
+              '  <IfModule mod_filter.c>',
+              '    AddOutputFilterByType DEFLATE ' + ' '.join(GZIP_APACHE),
+              '  </IfModule>',
+              '</IfModule>',
+              '']
+        return '\n'.join(r)
+
+    def llms_txt(self):
+        """llms.txt ostrého webu (audit naplno 25. 11. 2026, položka 7; firemný checklist zverejnenia ops/runbook.md
+        r. 44; formát https://llmstxt.org/): H1 s menom firmy, súhrn v citácii (description úvodu), odsek o firme
+        (H1 a O firme z hrdinu úvodu), kontaktné a fakturačné údaje, osvedčenia SKSI, potom zoznamy odkazov Služby,
+        Realizácie a Firma s popisom z texty.json alebo z údajov realizácie. Len z obsah/firma.json, texty.json,
+        realizácií a osvedčení, adresy cez doménu (abs_url), nič sa nevymýšľa. Údaje z obsahu idú do markdownu
+        s escapovaním znakov odkazu a HTML (\\ [ ] < > `), každý údaj na jednom riadku; výkričník a pomlčky em a en
+        stráži kontrola výstupu (skontroluj_text)."""
+        f = self.firma
+        t = self.texty
+
+        def md(s):
+            s = jeden_riadok(s)
+            for z in '\\[]<>`':
+                s = s.replace(z, '\\' + z)
+            return s
+
+        def odkaz(text, cesta, popis=''):
+            return f'- [{md(text)}]({self.abs_url(cesta)})' + (f': {md(popis)}' if jeden_riadok(popis) else '')
+
+        r = [f'# {md(f["meno"])}', '']
+        if jeden_riadok(t['uvod'].get('description')):
+            r += [f'> {md(t["uvod"]["description"])}', '']
+        o_firme = [jeden_riadok(t['uvod'].get('h1'))] + [jeden_riadok(x) for x in
+                                                          self.zoznam_textov(t['uvod'].get('o_firme_hrdina'), 'uvod.o_firme_hrdina')]
+        if any(o_firme):
+            r += [md(' '.join(x for x in o_firme if x)), '']
+        udaje = [(k, v) for k, v in (('Sídlo', self.adresa()), ('Telefón', f['tel']), ('E-mail', f['email']),
+                                      ('IČO', f['ico']), ('IČ DPH', f['ic_dph'])) if v]
+        veta = ' '.join(s_bodkou(f'{k}: {v}') for k, v in udaje)
+        if f['zapis']:
+            veta = (veta + ' ' + s_bodkou(f['zapis'])).strip()
+        if veta:
+            r += [md(veta), '']
+        if self.veta_osvedceni():
+            r += [md(self.veta_osvedceni()), '']
+        sluzby = [odkaz(t['sluzby'][s]['menu'], f'{s}/', t['sluzby'][s].get('description', ''))
+                  for s in self.poradie_sluzieb()]
+        if sluzby:
+            r += ['## Služby', ''] + sluzby + ['']
+        r += ['## Realizácie', '', odkaz('Všetky realizácie', 'realizacie/', t['realizacie'].get('description', ''))]
+        for x in self.realizacie:
+            druh = self.druh_karty(x)
+            popis = ' '.join(([s_bodkou(f'Druh stavby: {druh}')] if druh else []) + self.vety_realizacie(x))
+            r.append(odkaz(self.nazov_s_miestom(x), f'realizacie/{x["slug"]}/', popis))
+        r += ['', '## Firma', '',
+              odkaz(t['opravnenia']['h1'], 'opravnenia/', t['opravnenia'].get('description', '')),
+              odkaz(t['kontakt']['h1'], 'kontakt/', t['kontakt'].get('description', '')),
+              odkaz(t['ochrana']['h1'], 'ochrana-udajov/', t['ochrana'].get('description', '')), '']
+        return '\n'.join(r)
 
     def staticke(self):
         # favicon a logá zo značky (LOGO.md bod 5): SVG priamo zo sablona/, rastre renderované z tých istých ciest
@@ -3971,15 +4545,23 @@ class Web:
         if self.nahlad:
             self.subory['robots.txt'] = b'User-agent: *\nDisallow: /\n'
         else:
-            self.subory['robots.txt'] = f'User-agent: *\nAllow: /\n\nSitemap: {self.domena}/sitemap.xml\n'.encode('utf-8')
+            # roboti AI výslovne (AI_ROBOTI) a llms.txt len v ostrom behu: náhľad nesmie ísť do indexu ani do AI
+            self.subory['robots.txt'] = (''.join(f'User-agent: {b}\n' for b in AI_ROBOTI) + 'Allow: /\n\n'
+                                         f'User-agent: *\nAllow: /\n\nSitemap: {self.domena}/sitemap.xml\n').encode('utf-8')
+            self.subory['llms.txt'] = self.llms_txt().encode('utf-8')
             riadky = ['<?xml version="1.0" encoding="UTF-8"?>',
                       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
             for cesta, lastmod in sorted(self.mapa_stranok):
                 riadky.append(f'<url><loc>{esc(self.abs_url(cesta))}</loc>' + (f'<lastmod>{lastmod}</lastmod>' if lastmod else '') + '</url>')
             riadky.append('</urlset>')
             self.subory['sitemap.xml'] = ('\n'.join(riadky) + '\n').encode('utf-8')
-            self.subory['CNAME'] = (urllib.parse.urlsplit(self.domena).hostname + '\n').encode('utf-8')
-            self.subory['.nojekyll'] = b''
+            if self.hosting == 'apache':
+                # FTP na WebHouse: CNAME a .nojekyll sú len pre GitHub Pages; .htaccess až po všetkých súboroch webu
+                # (zoznam mien v koreni pre pravidlo 404)
+                self.subory[HTACCESS] = self.htaccess().encode('utf-8')
+            else:
+                self.subory['CNAME'] = (urllib.parse.urlsplit(self.domena).hostname + '\n').encode('utf-8')
+                self.subory['.nojekyll'] = b''
 
     def skontroluj_znaky_pisma(self):
         """Písmo Geist je podmnožina latinky (sablona/pismo-znaky.txt, nastroje/znaky_geist.py); znak mimo nej by
@@ -4079,10 +4661,13 @@ def _zapamataj(odt, data):
         _KODOVANE_BAJTY[0] -= len(_KODOVANE.pop(next(iter(_KODOVANE))))
 
 
-def zapis(web, vystup):
+def zapis(web, vystup, manifest=None, navyse=None):
+    """Zapíše web do vystup. manifest: zoznam zostavy (predvolený vystup/.zostava.json; pri hostingu apache vedľa
+    výstupu, aby sa nenahral na FTP). navyse: ďalšie polia zoznamu zostavy (pri hostingu apache commit, z ktorého sa
+    stavalo); zoznam zostavy pre GitHub Pages ostáva bez nich."""
     vystup.mkdir(parents=True, exist_ok=True)
     stary = {}
-    m = vystup / MANIFEST
+    m = vystup / MANIFEST if manifest is None else manifest
     if m.is_file():
         try:
             d = json.loads(m.read_text(encoding='utf-8'))
@@ -4152,19 +4737,84 @@ def zapis(web, vystup):
         while rodic != vystup and rodic.is_dir() and not any(rodic.iterdir()):
             rodic.rmdir()
             rodic = rodic.parent
-    zostava = (json.dumps({'verzia': 1, 'subory': dict(sorted(novy.items()))}, ensure_ascii=False, indent=0) + '\n').encode('utf-8')
+    zoznam = {'verzia': 1, **(navyse or {}), 'subory': dict(sorted(novy.items()))}
+    zostava = (json.dumps(zoznam, ensure_ascii=False, indent=0) + '\n').encode('utf-8')
     if not (m.is_file() and m.read_bytes() == zostava):
         m.write_bytes(zostava)
     return kodovanych
 
 
+def commit_repozitara(koren=KOREN):
+    """Commit, z ktorého zostava stavia: len čítanie .git/HEAD, referencie a packed-refs, git sa nespúšťa. Pri hostingu
+    apache ide do zoznamu zostavy vedľa výstupu a do výpisu, aby sa dal porovnať s commitom náhľadu, ktorý Mário
+    schválil (oprava po overení, kontrola spustenia: postup FTP stavia z disku, ktorý môže mať necommitnuté zmeny alebo
+    iný commit ako nasadený náhľad; čistotu pracovného stromu overuje postup príkazom git status, SPUSTENIE-FTP.md
+    časť 1). Vráti 40 znakov hex, alebo '' (bez priečinka .git, poškodený HEAD, neznáma referencia)."""
+    git = Path(koren) / '.git'
+    hex40 = re.compile(r'[0-9a-f]{40}')
+    try:
+        if not git.is_dir():
+            return ''
+        head = (git / 'HEAD').read_text(encoding='utf-8').strip()
+        if hex40.fullmatch(head):
+            return head
+        m = re.fullmatch(r'ref:\s*(refs/[A-Za-z0-9._/-]+)', head)
+        if not m or '..' in m.group(1):
+            return ''
+        ref = m.group(1)
+        if (git / ref).is_file():
+            sha = (git / ref).read_text(encoding='utf-8').strip()
+            return sha if hex40.fullmatch(sha) else ''
+        if (git / 'packed-refs').is_file():
+            for riadok in (git / 'packed-refs').read_text(encoding='utf-8').splitlines():
+                casti = riadok.split()
+                if len(casti) == 2 and casti[1] == ref and hex40.fullmatch(casti[0]):
+                    return casti[0]
+    except (OSError, UnicodeDecodeError):
+        return ''
+    return ''
+
+
+def manifest_ftp(vystup):
+    """Zoznam zostavy pre hosting apache: vedľa výstupu (<priečinok>.zostava.json), aby sa s priečinkom nenahral na FTP.
+    Priečinok musí byť mimo repozitára a prázdny alebo len so súbormi predchádzajúcej FTP zostavy, lebo na FTP sa
+    nahrá celý: zostava pre GitHub Pages (index.php/, CNAME, .zostava.json vnútri) ani ručne pridaný súbor v ňom
+    byť nesmú. Vráti (cesta zoznamu, chyba)."""
+    if vystup == KOREN or KOREN in vystup.parents:
+        return None, f'výstup pre FTP {vystup} patrí mimo repozitára, napríklad D:/ARLing-media/klienti/bmbuilding/web-ftp'
+    manifest = vystup.parent / (vystup.name + MANIFEST)
+    if not vystup.exists():
+        return manifest, ''
+    if not vystup.is_dir():
+        return None, f'výstup {vystup} nie je priečinok'
+    if (vystup / MANIFEST).exists():
+        return None, f'{vystup} je zostava pre GitHub Pages ({MANIFEST} vnútri); pre FTP zvoľ prázdny priečinok'
+    subory = {p.relative_to(vystup).as_posix() for p in vystup.rglob('*') if p.is_file()}
+    stary = set()
+    if subory and manifest.is_file():
+        try:
+            d = json.loads(manifest.read_text(encoding='utf-8'))
+            stary = set(d['subory'])
+        except (ValueError, KeyError, TypeError):
+            return None, f'zoznam zostavy {manifest} je poškodený; pre FTP zvoľ prázdny priečinok'
+    cudzie = sorted(subory - stary)
+    if cudzie:
+        return None, (f'{vystup} má súbory, ktoré nezapísala predchádzajúca FTP zostava ({", ".join(cudzie[:5])}'
+                      f'{", ..." if len(cudzie) > 5 else ""}); na FTP sa nahrá celý priečinok, zvoľ prázdny')
+    return manifest, ''
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description='Zostava statického webu BM Building z obsah/.')
-    ap.add_argument('--nahlad', action='store_true', help='náhľad: noindex, robots Disallow, bez sitemap, CNAME a .nojekyll')
+    ap.add_argument('--nahlad', action='store_true', help='náhľad: noindex, robots Disallow, bez sitemap, llms.txt, CNAME a .nojekyll')
     ap.add_argument('--vystup', type=Path, default=KOREN / 'web', help='výstupný priečinok (predvolený web/)')
     ap.add_argument('--obsah', type=Path, default=KOREN / 'obsah', help='priečinok obsahu (predvolený obsah/)')
     ap.add_argument('--fotky-web', type=Path, default=FOTKY_WEB,
                     help='hotové webové verzie fotiek s manifest.json (predvolený fotky-web/)')
+    ap.add_argument('--hosting', choices=HOSTINGY, default=None,
+                    help='hosting ostrého webu: pages (GitHub Pages, predvolený) alebo apache (FTP na WebHouse: .htaccess, '
+                         'presmerovania 301, bez CNAME, .nojekyll a index.php/, výstup mimo repozitára, zoznam zostavy '
+                         'vedľa neho); bez prepínača z premennej BMB_HOSTING')
     a = ap.parse_args(argv)
     for prud in (sys.stdout, sys.stderr):
         try:
@@ -4180,13 +4830,28 @@ def main(argv=None):
     if not nahlad and v_actions and os.environ.get('BMB_OSTRY', '').strip().lower() != 'ano':
         nahlad = True
         print('GitHub Actions bez BMB_OSTRY=ano: zostavujem náhľad (noindex). Ostrý web po prepnutí domény: BMB_OSTRY=ano.')
+    # hosting ostrého webu (audit naplno 25. 11. 2026, položka 1): prepínač má prednosť pred premennou BMB_HOSTING
+    hosting = a.hosting or os.environ.get('BMB_HOSTING', '').strip().lower() or 'pages'
+    if hosting not in HOSTINGY:
+        print(f'CHYBA: BMB_HOSTING={hosting!r} nepoznám, povolené: {", ".join(HOSTINGY)}', file=sys.stderr)
+        return 2
+    if hosting == 'apache' and nahlad:
+        print('CHYBA: hosting apache je len pre ostrý web na doméne (bez --nahlad; v GitHub Actions len s BMB_OSTRY=ano)',
+              file=sys.stderr)
+        return 2
     vystup = a.vystup.resolve()
     obsah = a.obsah.resolve()
     if vystup in (KOREN, obsah, SABLONA) or vystup in obsah.parents or obsah in vystup.parents or vystup == Path(vystup.anchor):
         print(f'CHYBA: výstup {vystup} nesmie byť koreň, obsah ani šablóna', file=sys.stderr)
         return 2
+    manifest = None
+    if hosting == 'apache':
+        manifest, chyba = manifest_ftp(vystup)
+        if chyba:
+            print('CHYBA: ' + chyba, file=sys.stderr)
+            return 2
     try:
-        web = Web(obsah, nahlad, fotky_web=a.fotky_web.resolve())
+        web = Web(obsah, nahlad, fotky_web=a.fotky_web.resolve(), hosting=hosting)
         web.postav()
         skontroluj_text(web.subory)
         # fb-ostro A4 (OPONENT.md S2): v Actions bez fotky sekcie alebo realizácie slidera nič nezapísať a skončiť kódom 1;
@@ -4195,13 +4860,20 @@ def main(argv=None):
             raise ChybaZostavy('v GitHub Actions chýba fotka sekcie alebo realizácia slidera z nastavenia.json (nič som '
                                'nezapísal, nasadenie sa nespustí a ostane posledný dobrý web): '
                                + '; '.join(PRISNE_VAROVANIA[:10]))
-        kodovanych = zapis(web, vystup)
+        commit = commit_repozitara() if hosting == 'apache' else ''
+        kodovanych = zapis(web, vystup, manifest=manifest,
+                           navyse={'commit': commit or 'neznámy'} if hosting == 'apache' else None)
     except ChybaZostavy as e:
         print('CHYBA: ' + str(e), file=sys.stderr)
         return 1
     stranky = sum(1 for k in web.subory if k.endswith('.html'))
-    print(f'hotovo: {vystup} ({"náhľad" if nahlad else "ostrý"}), {stranky} HTML, {len(web.realizacie)} realizácií, '
+    druh = ('náhľad' if nahlad else 'ostrý') + (', hosting apache' if hosting == 'apache' else '')
+    print(f'hotovo: {vystup} ({druh}), {stranky} HTML, {len(web.realizacie)} realizácií, '
           f'{len(web.obrazky)} obrázkov (nových {kodovanych}), varovaní {len(VAROVANIA)}')
+    if manifest is not None:
+        print(f'zoznam zostavy: {manifest} (na FTP nepatrí; nahrať celý priečinok {vystup} vrátane .htaccess)')
+        # commit zostavy pre záznam spustenia: musí byť commit schváleného náhľadu (SPUSTENIE-FTP.md časť 1)
+        print(f'commit: {commit or "neznámy (products/bmbuilding bez .git alebo s nečitateľným HEAD)"}')
     # súbory fotiek: hotové z fotky-web/ (kópia) a zakódované z obsah/ (nová alebo zmenená fotka, AVIF len s kodekom)
     print(f'fotky: z fotky-web {web.pocty_fotiek["fotky-web"]} súborov, z obsahu {web.pocty_fotiek["obsah"]} súborov, '
           f'AVIF {"áno" if web.avif else "nie (len WebP)"}')

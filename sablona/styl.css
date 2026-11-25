@@ -9,6 +9,10 @@
 @font-face{font-family:"BMB Sans";src:url(@PRE@fonts/geist-latin.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"BMB Mono";src:url(@PRE@fonts/geist-mono-latin-ext.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"BMB Mono";src:url(@PRE@fonts/geist-mono-latin.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+/* podmnožina Geist Mono pre číslice kót a počtov (nastroje/pismo_mono_cisla.py, audit naplno 25. 11. 2026, položka 44):
+   posledné pravidlo sa pri prekryve unicode-range skúša prvé (CSS Fonts 4), takže stránka s číslicami v Mono stiahne
+   len tento súbor (build.py ho prednačíta) a latinku Mono až pri písmenách; tie isté deskriptory ako latinka Mono */
+@font-face{font-family:"BMB Mono";src:url(@PRE@fonts/geist-mono-cisla.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0020-0040,U+00A0,U+00D7,U+2013,U+2212}
 
 /* ================================================================ KOSTRA (Stavba 1) */
 :root{
@@ -82,10 +86,18 @@ main,.pata{position:relative;z-index:1}
 .menu a:hover{text-decoration:underline}
 .menu a[aria-current]{text-decoration:underline;text-decoration-color:var(--modra);text-decoration-thickness:2px;text-underline-offset:.45em}
 .hlava-akcie{display:flex;align-items:center;gap:8px;flex:none}
-/* Menu a Zavrieť rovnako široké: otvorenie menu neposunie logo ani Zavolať (360 px bez vodorovného posunu) */
-.menu-m>summary{min-width:5.6em}
+/* Menu a Zavrieť rovnako široké: otvorenie menu neposunie logo ani Zavolať (360 px bez vodorovného posunu). Okraje
+   16 px namiesto 18 px: „Zavrieť“ (49,9 px textu) má s nimi 81,9 px a zmestí sa do 5,6 em (84 px) ako „Menu“; s 18 px
+   mal 85,9 px a Zavolať pri otvorení poskočilo o 1,9 px pri 390 až 1023 px (audit naplno 25. 11. 2026, položka 34).
+   Širšie tlačidlo (88 px) by pri 390 px stlačilo logo o 2 px. Do 389 px ostávajú okraje 12 px (blok nižšie). */
+.menu-m>summary{min-width:5.6em;padding-inline:16px}
 .menu-m>summary{list-style:none}
 .menu-m>summary::-webkit-details-marker{display:none}
+/* kým parser nedočíta summary, prehliadač by v details nakreslil predvolené „▶ Details“ (audit naplno, položka 18:
+   asi 0,9 s pri studenom načítaní na mobile); details bez vlastného summary je neviditeľné */
+details.menu-m:not(:has(>summary)){visibility:hidden}
+/* číslo v tlačidle Zavolať hlavičky len na počítači (blok od 1024 px) */
+.tel-cislo{display:none}
 /* otvorený panel cez celú šírku a výšku okna pod hlavičkou (doladenie-1, nález vážne: panel mal šírku obsahu, po
    stranách presvital pás stránky, spodná hrana presekla riadok bieleho H1 a pod Kontaktom ostal prázdny pás s čiarou);
    text položiek ostáva na čiare mriežky (vnútorný okraj = okraj stránky), stránka sa pod ním neposúva; panel začína
@@ -108,7 +120,10 @@ main,.pata{position:relative;z-index:1}
   .tlacidlo:hover svg{transform:translateX(3px)}
   .tlacidlo-obrys:hover{background:var(--grafit);border-color:var(--grafit);color:var(--vapno)}
 }
-.odkaz-sipka{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 4px;font-weight:500;font-size:16px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.3em}
+/* odkaz so šípkou bez ľavého vnútorného okraja: text začína na osi nadpisu, počtu a čiar nad ním (audit naplno 25. 11.
+   2026, položka 9: s padding 4 px bol text 4 px vpravo od osi na každej stránke a na 404 vedľa hrany tlačidla);
+   obrys fokusu je 3 px pred textom (outline-offset), vpravo 4 px ostáva medzi šípkou a obrysom */
+.odkaz-sipka{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 4px 0 0;font-weight:500;font-size:16px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.3em}
 .odkaz-sipka svg{flex:none;transition:transform .25s var(--krivka)}
 .odkaz-sipka:hover svg{transform:translateX(3px)}
 .odkaz-von{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--modra);text-underline-offset:.3em}
@@ -117,9 +132,10 @@ main,.pata{position:relative;z-index:1}
 /* Sekcie */
 .sekcia{padding-block:var(--rytmus)}
 .nadpis{font-size:var(--nadpis);line-height:1;letter-spacing:-.04em;font-weight:350}
-.nadpis-pocet{font-family:var(--mono);font-size:.28em;letter-spacing:0;color:var(--modra);vertical-align:.9em;margin-left:.4em}
+.nadpis-pocet{font-family:var(--pismo);font-size:.28em;letter-spacing:0;color:var(--modra);vertical-align:.9em;margin-left:.4em}
 .nadpis-maly{font-size:clamp(1.4rem,2vw,1.9rem);line-height:1.15;letter-spacing:-.03em;font-weight:420}
-.uvodny{margin-top:22px;max-width:34em;color:var(--tlmeny);font-size:clamp(17px,1.25vw,19px)}
+/* posledné slovo nie samo na riadku („známe.“, „Bulkovi.“; oprava po overení, kontrola dizajnu nález drobné) */
+.uvodny{margin-top:22px;max-width:34em;color:var(--tlmeny);font-size:clamp(17px,1.25vw,19px);text-wrap:pretty}
 .sekcia-hlava{margin-bottom:clamp(32px,5vw,64px)}
 .navod{font-size:14px;line-height:1.5;color:var(--tlmeny)}
 .viac{margin-top:32px}
@@ -158,6 +174,10 @@ main,.pata{position:relative;z-index:1}
 @container (max-width:500px){.uvod-nadtitulok-miesto{display:none}}
 /* 9,8 % šírky stĺpca: „stavebno-manažérska“ (9,76 em v Geist) zaberie najviac 96 % riadka; max-width drží 4 riadky */
 .uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,var(--h1-strop));line-height:1.04;letter-spacing:-.04em;font-weight:420;max-width:10.4em;text-wrap:wrap}
+/* „stavebno-manažérska“ ako jeden celok na riadku, ktorý sa pri rozostupoch textu podľa WCAG 1.4.12 (väčšie medzery
+   medzi písmenami) zalomí za spojovníkom namiesto pretečenia okna (audit naplno 25. 11. 2026, položka 39); bez
+   rozostupov sa slovo do riadka zmestí vždy (veľkosť písma je podiel šírky stĺpca) */
+.uvod-h1 .nz{display:inline-block;max-width:100%;white-space:normal}
 /* dva odseky O firme pod H1 (texty.json uvod.o_firme_hrdina): prvý ako úvodník, druhý (konateľ a zápis) tlmený */
 .firma-text p{max-width:34em;font-size:clamp(16px,1.12vw,19px);line-height:1.55;text-wrap:pretty}
 .firma-text p+p{margin-top:var(--m-12);color:var(--tlmeny)}
@@ -186,7 +206,9 @@ main,.pata{position:relative;z-index:1}
 /* Slider stavieb: fotky cez seba v ráme, prelínanie 1,2 s; popis stavby ako štítok v rohu fotky, ovládanie (počítadlo
    ako kóta, tlačidlá) na počítači nenápadne na fotke, na mobile pod ňou. Bez JS prvá fotka a jej popis. */
 .slider{position:relative;min-width:0;display:flex;flex-direction:column;--prelinanie:1.2s}
-.snimky{position:relative;list-style:none;margin:0;padding:0;aspect-ratio:4/5;overflow:hidden;background:var(--vapno-2)}
+/* touch-action pan-y: vodorovné potiahnutie prstom posunie slider (app.js 3b), zvislé posúva stránku, priblíženie
+   ostáva (audit naplno 25. 11. 2026, položka 11) */
+.snimky{position:relative;list-style:none;margin:0;padding:0;aspect-ratio:4/5;overflow:hidden;background:var(--vapno-2);touch-action:pan-y pinch-zoom}
 /* nová fotka sa prelína nad starou (je, navrchu), stará ostane plná (bola), kým nová nedobehne: bez preblesku podkladu */
 .snimka{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity var(--prelinanie) var(--krivka),visibility 0s linear var(--prelinanie)}
 .snimka.je{z-index:1;opacity:1;visibility:visible;transition:opacity var(--prelinanie) var(--krivka),visibility 0s}
@@ -250,6 +272,13 @@ html:not(.js) .slider-ovladanie{display:none}
 @media (min-width:640px) and (max-width:1023px){
   .snimky,.firma-hlava{aspect-ratio:1/1}
   .udaj-siroky{grid-column:auto}
+}
+/* telefón na šírku (okno do 1023 px široké a najviac 600 px vysoké; audit naplno 25. 11. 2026, položka 32): hrdina na
+   výšku okna pod hlavičkou, nie štvorec 914 px, v ktorom bola na prvej obrazovke len obloha a H1 začínalo na 750 px.
+   H1 podľa výšky okna (8 % výšky, 20 až 40 px) a širšie (22 em), teda dva riadky v tmavej spodnej časti fotky */
+@media (max-width:1023px) and (orientation:landscape) and (max-height:600px){
+  .snimky,.firma-hlava{aspect-ratio:auto;height:calc(100vh - var(--hore));height:calc(100svh - var(--hore))}
+  .uvod-h1{font-size:clamp(1.25rem,8svh,2.5rem);max-width:22em}
 }
 @media (max-width:639px){
   .udaj{padding:12px 14px 13px}
@@ -372,7 +401,7 @@ picture{display:contents}
    (brána 3: glyf 22 px s čiarou 1,5 bez podkladu bol drobný a osamotený, Andrej: „nech to je pekné naozaj“): štvorcový
    čip 48 px s vlasovou čiarou (na papieri farba čiar webu, v modrom bloku biela 40 %), glyf 24 px zjednodušený podľa
    oficiálnych značiek (build.py SVG_FACEBOOK, SVG_LINKEDIN, SVG_INSTAGRAM). V Kontakte hneď pod tlačidlami, od 1024 px
-   s názvom siete 15 px za čipom, na mobile a tablete len čipy; v päte čipy 44 px. Hover (len myš) a focus-visible:
+   s názvom siete 15 px za čipom, na mobile a tablete len čipy; v päte tiež čipy 48 px. Hover (len myš) a focus-visible:
    na papieri modrý podklad a biela ikona, v modrom bloku biely podklad a modrá ikona; prechod 160 ms, pri obmedzenom
    pohybe bez prechodu. Prístupné meno nesie aria-label odkazu, viditeľný názov je jeho začiatok. */
 .siete{display:flex;flex-wrap:wrap;align-items:center;gap:var(--m-8) var(--m-24)}
@@ -387,9 +416,8 @@ picture{display:contents}
   .siet:hover .siet-meno{text-decoration-color:currentColor}
 }
 .kontakt-siete{margin-top:var(--m-24);gap:var(--m-12)}
+/* v päte čipy 48 px ako v Kontakte (audit naplno 25. 11. 2026, položka 33: 44 px proti 48 px v Kontakte) */
 .pata-siete{margin-top:var(--m-16);gap:var(--m-8)}
-.pata-siete .siet{min-height:44px}
-.pata-siete .siet-cip{width:44px;height:44px}
 
 /* Kóta (ukážka): vlasová čiara so šikmými koncami, údaj v Mono v strede preruší čiaru */
 /* margin-inline: šikmé konce (14 px pod 45°) siahajú 5 px za okraj, bez neho kóta presahuje stĺpec (overenie kolo 1) */
@@ -399,14 +427,20 @@ picture{display:contents}
 .kota::after{right:0}
 .kota-text{position:relative;padding:0 10px;background:var(--vapno);white-space:nowrap}
 .kota-slovo{font-family:var(--pismo)}
-.kota-prazdna{opacity:.6}
+/* karta bez rokov: nie kóta bez čísla, len vlasová čiara v riadku kóty, aby karty v rade ostali v spoločných riadkoch
+   (audit naplno 25. 11. 2026, položka 15: šesť kariet malo prázdnu kótovaciu čiaru so šikmými koncami) */
+.kota-prazdna{margin-inline:0;background-image:linear-gradient(var(--beton),var(--beton))}
+.kota-prazdna::before,.kota-prazdna::after{content:none}
 
-/* Pretáčané číslice kót: číslice dodá CSS, v HTML je len stĺpec s cieľovou číslicou (trieda c0 až c9) */
+/* Pretáčané číslice kót: číslice dodá CSS, v HTML je len stĺpec s cieľovou číslicou (trieda c0 až c9). Výška valca je
+   jeden riadok (1lh) a posun stĺpca po 5 % jeho výšky (20 riadkov): pri rozostupoch textu podľa WCAG 1.4.12 (riadkovanie
+   1,5) ostane v okne valca správna číslica (audit naplno 25. 11. 2026, položka 38: s 1,2em bola vidno zlá číslica);
+   prehliadač bez lh vezme 1.2em */
 .valce{display:inline-block;white-space:nowrap}
-.valec{display:inline-block;height:1.2em;overflow:hidden;vertical-align:bottom;line-height:1.2}
-.stlpec{display:block;white-space:pre;transform:translateY(calc(var(--c) * -1.2em));transition:transform .9s var(--krivka) calc(var(--i,0) * 40ms)}
+.valec{display:inline-block;height:1.2em;height:1lh;overflow:hidden;vertical-align:bottom;line-height:1.2}
+.stlpec{display:block;white-space:pre;transform:translateY(calc(var(--c) * -5%));transition:transform .9s var(--krivka) calc(var(--i,0) * 40ms)}
 .stlpec::before{content:"0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9"}
-.otocene .stlpec{transform:translateY(calc((var(--c) + 10) * -1.2em))}
+.otocene .stlpec{transform:translateY(calc((var(--c) + 10) * -5%))}
 .c0{--c:0}.c1{--c:1}.c2{--c:2}.c3{--c:3}.c4{--c:4}.c5{--c:5}.c6{--c:6}.c7{--c:7}.c8{--c:8}.c9{--c:9}
 .i0{--i:0}.i1{--i:1}.i2{--i:2}.i3{--i:3}.i4{--i:4}.i5{--i:5}.i6{--i:6}.i7{--i:7}.i8{--i:8}.i9{--i:9}
 
@@ -428,9 +462,9 @@ img[data-src],img.nacitava{opacity:0}
 .projekt-udaje{margin-top:var(--m-4);font-size:14px;line-height:1.5;color:var(--modra-svetla);font-variant-numeric:tabular-nums}
 .projekt-text{margin-top:var(--m-8);color:var(--na-tmavom-2);font-size:16px;line-height:1.55}
 
-/* Výkon úvodu (Lighthouse TBT, overenie kolo 1): sekcie pod hrdinom sa nevykresľujú, kým k nim človek nepríde;
-   odhad výšky si prehliadač po prvom vykreslení zapamätá (auto) */
-.stranka-uvod .kontakt{content-visibility:auto;contain-intrinsic-size:auto 1200px}
+/* Kontakt na úvode bez content-visibility (audit naplno 25. 11. 2026, položka 40): s ním bol nadpis, telefón, e-mail
+   a fakturačné údaje mimo okna v strome prístupnosti „ignored, notRendered“ pri nástrojoch s čiastočným režimom
+   prístupnosti; úspora pri jednej sekcii bola zanedbateľná (CLS 0,0001) */
 
 /* Činnosť (Služby a ceny v ukážke), bez cien: v stĺpci ceny počet realizácií a rok osvedčenia */
 .sluzby-hlava,.cennik,.cennik-pozn,.kalkulacka{grid-column:1/-1}
@@ -502,12 +536,15 @@ img[data-src],img.nacitava{opacity:0}
 @media (max-width:767px){html:not(.js) .pata{padding-bottom:calc(48px + 76px + env(safe-area-inset-bottom))}}
 .pata-mriezka{row-gap:20px}
 .pata-mriezka>*{grid-column:1/-1}
+/* ciele v päte aspoň 44 px (kontrola-vzhladu.md bod 5; audit naplno 25. 11. 2026, položka 33): logo 40 px má odkaz
+   široký 44 px, „Web: ARLing“ má zvislý vnútorný okraj vyrovnaný záporným okrajom, riadok textu sa tak nezmení */
+.pata-znak{min-width:44px}
 .pata-znak img{width:40px;height:40px}
 .pata-veta{margin-top:10px}
 .pata .male{color:var(--tlmeny);max-width:62em;font-size:14px}
 .pata-odkazy{display:flex;flex-wrap:wrap;gap:0 24px}
 .pata-odkazy a{display:inline-flex;align-items:center;min-height:44px;color:var(--modra)}
-.pata-arling{color:var(--tlmeny);text-decoration-color:var(--beton)}
+.pata-arling{display:inline-block;padding-block:11px;margin-block:-11px;color:var(--tlmeny);text-decoration-color:var(--beton)}
 
 /* Spodná lišta na mobile: vyjde, keď tlačidlo v úvode odíde z obrazu; bez skriptu stojí stále (noscript). Tlačidlá na
    hranách obsahu stránky (okraj ako .obsah) a rovnako široké s medzerou 8 px ako tie isté tlačidlá v Kontakte
@@ -518,6 +555,9 @@ img[data-src],img.nacitava{opacity:0}
 .hlava:has(.menu-m[open])~.lista{transform:translateY(calc(100% + 2px));visibility:hidden}
 .lista .tlacidlo{width:100%;min-height:50px;padding:0 12px}
 .lista .tlacidlo-obrys{background:var(--vapno)}
+/* pod 320 px (priblíženie 150 % na telefóne 411 px dá okno 274 px) „E-mail“ namiesto „Napísať e-mail“: text bol 4,4 px
+   od rámika (audit naplno 25. 11. 2026, položka 35); prístupné meno je vždy text viditeľného spanu */
+.lista-kratky{display:none}
 
 /* Lightbox v grafite ako pás: fotka na tmavom, popis pod vlasovou čiarou, počítadlo v Mono, tlačidlá s obrysom */
 .lightbox{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--grafit);color:var(--vapno);overflow:hidden;overscroll-behavior:contain}
@@ -550,7 +590,8 @@ img[data-src],img.nacitava{opacity:0}
 .otazka[open] summary::after{transform:rotate(0)}
 .otazka h3,.otazka h4{font-size:clamp(1.1rem,1.4vw,1.3rem);line-height:1.25;letter-spacing:-.02em;font-weight:450}
 .otazka p{max-width:40em;padding-bottom:12px}
-.otazka .zdroj{font-size:14px;color:var(--tlmeny);padding-bottom:20px}
+/* zdroj bez osamelého „h)“ alebo „písm. b)“ na poslednom riadku (oprava po overení, kontrola zadania a dizajnu) */
+.otazka .zdroj{font-size:14px;color:var(--tlmeny);padding-bottom:20px;text-wrap:pretty}
 .otazka .zdroj a{color:var(--modra)}
 
 /* @podstranky-zaciatok */
@@ -580,8 +621,11 @@ img[data-src],img.nacitava{opacity:0}
 .dekady a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid var(--grafit);border-radius:2px;text-decoration:none;font-size:15px}
 .dekady a[aria-current]{background:var(--modra);border-color:var(--modra);color:#fff}
 .dekady span{font:400 12px var(--mono)}
-/* údaje v hlave (dl.fakty ukážky): adresa a web strany pod jej menom, osoba pri role, etapy po riadkoch */
-.udaje dd{font-size:16px}
+/* údaje v hlave (dl.fakty ukážky): adresa a web strany pod jej menom, osoba pri role, etapy po riadkoch; riadky
+   hodnoty vyvážené, bez jedného slova na poslednom riadku („Projektový manažment a stavebný / dozor“, „017 04
+   Považská / Bystrica“; oprava po overení, kontrola v prehliadači nález drobné: pri 1440 px 32 takých hodnôt, s balance
+   2, pretty len 20) */
+.udaje dd{font-size:16px;text-wrap:balance}
 .fakty-pod{display:block;margin-top:3px;font-size:14px;line-height:1.45;color:var(--tlmeny)}
 .fakty-riadok{display:block}
 .fakty-riadok+.fakty-riadok{margin-top:2px}
@@ -664,6 +708,10 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 .sluzba-hlavne .tlmene{margin-top:16px}
 .sluzba-obal .sluzba-bok{grid-column:1/-1;margin-top:0;align-self:start;gap:24px;align-content:start}
 .doklad-h{font-size:15px;font-weight:500;margin-bottom:10px}
+/* hodnoty v boxe s dokladom bez osamelého slova na poslednom riadku („(SKSI)“, „spôsobilosti“; kontrola širokého
+   rozloženia, nález drobné: od 1921 px pri 60 z 85 šírok na /stavebny-dozor/, rovnaké slovo aj pri 1904 až 1920 px);
+   pretty mení len riadky so sirotou */
+.sluzba-bok .fakty dd{text-wrap:pretty}
 .bok-tlacidlo .tlacidlo{width:100%}
 /* číslo v tlačidle písmom webu s tabuľkovými číslicami (trieda cisla) ako vo vizitke, nie v Mono (doladenie-1: to isté
    číslo bolo na webe raz v Sans a raz v Mono so širokými medzerami) */
@@ -689,6 +737,12 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 /* úvodný odsek detailu ako popis, nie druhý nadpis (opakuje údaje z tabuľky nad ním, overenie kolo 1) */
 .detail-text .uvodna{font-size:clamp(1.15rem,1.4vw,1.45rem);line-height:1.35;max-width:30em}
 .detail-text .tlmene{margin-top:14px}
+/* detail realizácie s údajmi pri fotke (build.py detail_dvojstrana, audit naplno 25. 11. 2026, položka 13): hlava
+   stránky má len H1, v dvojstrane je v DOM fotka, tabuľka údajov a text. Do 1199 px pod sebou: fotka 24 px pod H1
+   (záporný okraj vyrovná spodok hlavy clamp(36px,5vw,72px)), tabuľka a text po 32 px. Oprava po overení (kontrola
+   dizajnu, nález vážne): s tabuľkou nad fotkou nebolo pri 390 x 844 z titulnej fotky v prvej obrazovke nič pri 11
+   z 26 detailov (Vtáčnik od 900 px), pri 360 x 780 pri 16 */
+.detail-s-udajmi{margin-top:calc(var(--m-24) - clamp(36px,5vw,72px))}
 
 /* Galéria: prvá fotka veľká (8 z 12 stĺpcov a dva riadky), ostatné 3 : 2; číslo fotky v Mono; štítok Vizualizácia */
 /* spodok galérie 48 až 96 px, nie rytmus sekcie (doladenie-1: Lumière pri 1440 px 238 px od fotky po čiaru susedov) */
@@ -783,10 +837,16 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 .doklad-odkaz{position:relative;display:block;width:100%;max-width:var(--doklad-max);aspect-ratio:210/297;border:1px solid var(--beton);background:#fff;cursor:zoom-in}
 .doklad-odkaz img{position:absolute;left:var(--m-12);top:var(--m-12);width:calc(100% - 2 * var(--m-12));height:calc(100% - 2 * var(--m-12));max-width:none;object-fit:cover}
 .doklad-popis{margin-top:var(--m-12);max-width:var(--doklad-max);font-size:15px;line-height:1.45;color:var(--tlmeny)}
+/* tabuľka osvedčenia na šírku rámu nad ňou: rám, popis a tabuľka majú jednu ľavú aj pravú hranu (audit naplno 25. 11.
+   2026, položka 24: rám 554 px stál vľavo nad tabuľkou cez celý stĺpec, pri 1920 px 868 px, vpravo od rámu 314 px
+   prázdnych); do asi 1220 px je stĺpec užší ako rám a nič sa nemení */
+.doklady .fakty{max-width:var(--doklad-max)}
 .doklad-register{margin-top:var(--m-12)}
 .register{margin-top:clamp(56px,7vw,96px)}
 .register .nadpis-maly{font-size:clamp(1.2rem,1.5vw,1.45rem);font-weight:500;letter-spacing:-.02em}
 .register .cena{font-size:15px;white-space:normal;text-align:left}
+/* riadok Zdroj bez osamelého „SR“ na poslednom riadku (oprava po overení, kontrola dizajnu nález drobné, 1024 px) */
+.register .cena small{text-wrap:pretty}
 .register .cena a{color:var(--modra)}
 /* do 639 px nadpis Obchodný register cez celý riadok a zdroj pod textom ako v hrdinovi (doladenie-3, overenie 3 nález
    vážne: stĺpec auto si vzal šírku celej vety zdroja, asi 245 px, nadpisu ostalo pri 320 px 20 px a písmená išli pod
@@ -800,6 +860,20 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
    Cakovandpartner|s, a www.bytyrosnicka.s|k (doladenie-3, overenie 3 nález drobné); od 360 px vedľa seba ako doteraz */
 @media (max-width:359px){
   .fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}
+}
+/* do 399 px štítok nad hodnotou aj v boxe s dokladom na stránkach služieb a v údajoch detailu realizácie (audit naplno
+   25. 11. 2026, položka 23: vedľa štítka mala hodnota pri 360 až 399 px asi 130 až 170 px a lámala sa po slovách) */
+@media (max-width:399px){
+  .sluzba-bok .fakty>div,.fakty.udaje>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}
+}
+/* box s dokladom na stránkach služieb do 1279 px štítok nad hodnotou ako do 399 px: vedľa štítka mala hodnota pri 1024
+   až 1279 px (box 5 z 12 stĺpcov) 162 až 199 px a pri 400 až 1023 px 166 až 236 px (oprava po overení, kontrola
+   dizajnu nález vážne: „Slovenská / komora / stavebných / inžinierov (SKSI)“ po slove, na Stavebnom manažmente číslo
+   osvedčenia cez pravý rámik a čiarka sama na riadku, pri 400 px vodorovný posun stránky 7 px). Zmerané v Chrome po 8
+   až 16 px pri 320 až 1920 px: riadkov s jedným slovom pri 400 až 1279 px 186 na 0, pretečení 51 na 0. Od 1280 px
+   vedľa seba ako doteraz */
+@media (max-width:1279px){
+  .sluzba-bok .fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}
 }
 .chyba{padding-bottom:var(--rytmus)}
 .chyba .uvod-akcie{margin-top:0}
@@ -815,8 +889,14 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   /* druhy ako mriežka 2 x 2: všetky štyri voľby sú vidno (oprava-2: vodorovne posúvací rad skryl Rodinné domy
      a Iné za okrajom pri 360 a 390 px bez nápovedy) */
   .filtre-druh{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
-  .filter{justify-content:space-between;min-width:0;padding:0 12px}
-  .filtre-vyber{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+  /* dvojriadkový názov druhu (Rodinné domy pri 320 px) zarovnaný vľavo ako jednoriadkové (položka 35) */
+  .filter{justify-content:space-between;min-width:0;padding:0 12px;text-align:left}
+  /* roletky v dvoch stĺpcoch, Miesto (najdlhšie hodnoty, „Nitrianske Hrnčiarovce (1)“ 161 px) cez celý riadok ako
+     prvé, pod ním Roky a Zoradiť; poradie v DOM je to isté, takže fokus ide podľa obrazovky (audit naplno 25. 11.
+     2026, položka 4: v troch stĺpcoch po 104 px pri 360 px sa orezalo „2020 až 20“ a „Bratislava (2“, pri 411 px
+     „Nitrianske Hrn“) */
+  .filtre-vyber{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+  .vyber-miesto{grid-column:1/-1}
   .vyber select{width:100%;font-size:14px;padding:0 4px}
   .chyba .uvod-akcie .odkaz-sipka{display:inline-flex}
 }
@@ -824,6 +904,20 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
    riadka nesedeli na čiare (oprava-2, /stavbyveduci/ pri 390 px) */
 @media (max-width:1023px){
   .otazky-nadpis{padding-bottom:var(--m-16)}
+}
+/* stránka služby do 1023 px v rytme úvodu: od boxu s dokladom alebo odkazu Všetky realizácie po nadpis ďalšej sekcie
+   96 px (48 + 48 px ako od 1024 px clamp(48px,5vw,76px)); oprava po overení, kontrola dizajnu nález drobné: pri 360
+   až 768 px tam bolo 176 až 197 px prázdneho papiera (spodok obalu a vrch sekcie, každý rytmus 88 px) a pôsobilo to
+   ako koniec stránky */
+@media (max-width:1023px){
+  .sluzba-obal{padding-bottom:var(--m-48)}
+  .sluzba-obal~.sekcia-karty,.sluzba-obal~.otazky-sekcia{padding-block:var(--m-48)}
+}
+/* karty v jednom stĺpci (do 479 px) bez rezervy druhého riadka názvu: riadky karty sa nezdieľajú s inou kartou, takže
+   jednoriadkový názov (RD Ahoj, Dvojdom S) nemá pod sebou prázdny riadok ako na /realizacie/ (oprava po overení,
+   kontrola dizajnu nález drobné: na stránkach služieb pri 360 a 390 px názov 44 px, na /realizacie/ 22 px) */
+@media (max-width:479px){
+  .karty>.projekt h3{min-height:0}
 }
 @media (min-width:480px){
   .karty{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -873,8 +967,35 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .detail .detail-text{grid-column:9/-1}
   /* čiara kóty vpravo na úrovni hornej hrany fotky vľavo: kóta je 16 px vysoká s čiarou v polovici (linka bmb-presnost) */
   .detail:not(.detail-bez-fotky) .detail-text>.kota:first-child{margin-top:calc(-1 * var(--m-8))}
+  /* detail s údajmi pri fotke (položka 13): fotka 32 px pod H1, pri 1024 až 1199 px cez celú šírku a pod ňou tabuľka
+     a text (blok nižšie), od 1200 px vľavo a tabuľka s textom vpravo. Predtým bol H1 dole vedľa tabuľky a fotka
+     Vtáčnika pri 1366 x 768 začínala na 657 px, pri okne 1366 x 633 z nej nebolo vidno nič. */
+  .detail-s-udajmi{margin-top:calc(var(--m-32) - clamp(36px,5vw,72px))}
+  .detail.detail-s-udajmi .detail-text>.kota:first-child{margin-top:0}
   .detail-bez-fotky .detail-text{grid-column:1/9}
   .stranka-text .text,.stranka-text>.poznamka{max-width:46em}
+}
+/* detail s údajmi pri 1024 až 1279 px (iPad na šírku, malý notebook) ako tablet: fotka cez celú šírku hneď pod H1,
+   tabuľka a text pod ňou cez celú šírku. Oprava po overení (kontrola dizajnu, nález vážne): vedľa 7 stĺpcov fotky mala
+   hodnota v tabuľke 147 až 223 px a lámala sa po slove, pod fotkou ostávalo pri 26 detailoch až 595 px (1024 px) a 361
+   px (1280 px) prázdna. Zmerané v Chrome nad všetkými 26 detailmi (oprava po overení v AUDIT-OPRAVY.md): tabuľka
+   a text vedľa seba pod fotkou (návrh kontroly) nechali pod kratším z nich až 344 px, fotka 6 a tabuľka 5 stĺpcov až
+   388 px; pod sebou 0 px. Hranica 1280 px: pri 1200 až 1279 px by aj najlepšie rozloženie vedľa seba (nižšie) nechalo
+   pod fotkou 259 až 293 px. build.py SIZES_DETAIL_UDAJE */
+@media (min-width:1024px) and (max-width:1279px){
+  .detail-s-udajmi .detail-foto{grid-column:1/-1;max-width:none}
+  .detail-s-udajmi .detail-text{grid-column:1/-1}
+}
+/* od 1280 px fotka vľavo cez oba riadky, vpravo tabuľka údajov s hornou čiarou na hornej hrane fotky a pod ňou kóta
+   a text; riadok 1 má výšku tabuľky (fotka zasahuje do pružného riadka 2), text začína 32 px pod tabuľkou. Tabuľka
+   a text na 5 stĺpcov hneď za fotkou (od čiary 8. stĺpca, bez voľného stĺpca): hodnota má pri 1280 px 305 px namiesto
+   223 px a stĺpec je kratší, pod fotkou ostáva pri 1366 px najviac 173 px namiesto 264 px (oprava po overení); od
+   1921 px úsek ŠIROKÉ OKNO vráti voľný stĺpec (9/-1, SIROKE.md) */
+@media (min-width:1280px){
+  .detail-s-udajmi{grid-template-rows:auto 1fr}
+  .detail-s-udajmi .detail-udaje{grid-column:8/-1;grid-row:1}
+  .detail-s-udajmi .detail-foto{grid-column:1/8;grid-row:1/span 2;align-self:start}
+  .detail-s-udajmi .detail-text{grid-column:8/-1;grid-row:2}
 }
 /* KARTY A OSVEDČENIA V SPOLOČNÝCH RIADKOCH (linka bmb-presnost, nulová tolerancia): karta v mriežke preberá riadky
    mriežky cez subgrid (fotka, kóta, nadpis, [popis ilustračnej fotky,] druh a miesto, rola), takže každá časť začína
@@ -951,6 +1072,9 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   /* sekcie pod hrdinom: skryté až kým nevojdú do obrazu (app.js pridá vstup len prvkom pod oknom) */
   .js .vstup{transition:opacity 700ms var(--krivka),transform 700ms var(--krivka)}
   .js .vstup:not(.videne){opacity:0;transform:translate3d(0,28px,0)}
+  /* skrytie bez prechodu, 700 ms len pri objavení (videne): app.js pridá vstup až po prvom hlásení pozorovateľa, keď je
+     blok už vykreslený pod oknom (audit naplno 25. 11. 2026, položka 48), a blok by sa inak 700 ms vytrácal */
+  .js .vstup:not(.videne){transition:none}
   @media (min-width:1024px){
     .snimka-0 img{--odkryt-od:inset(0 0 0 100%);transform-origin:100% 50%}
     .pohlad-ramec img{--odkryt-od:inset(0 0 0 100%);transform-origin:100% 50%;animation-delay:1140ms}
@@ -969,12 +1093,14 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   @keyframes zjavit-posun{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}
   @keyframes kreslit-zlava{from{clip-path:inset(-4% 100% -4% -4%)}to{clip-path:inset(-4% -4% -4% -4%)}}
   @keyframes odkryt{from{clip-path:var(--odkryt-od);transform:scale(1.04)}to{clip-path:inset(0 0 0 0);transform:none}}
-  @keyframes pretocit{from{transform:translateY(0)}to{transform:translateY(calc((var(--c) + 10) * -1.2em))}}
+  @keyframes pretocit{from{transform:translateY(0)}to{transform:translateY(calc((var(--c) + 10) * -5%))}}
 }
 /* Obmedzený pohyb: bez prechodov; prvky úvodu a sekcie hneď v konečnom stave (žiadna animácia, plná nepriehľadnosť,
    bez posunu a orezu), číslice kót bez pretáčania */
 @media (prefers-reduced-motion:reduce){
-  .tlacidlo,.tlacidlo svg,.odkaz-sipka svg,.siet,.siet-cip,.siet-meno,.filter,.lista,.lightbox-tl,.otazka summary::before,.otazka summary::after,.projekt-foto img,.dlazdica-foto img,.galeria-odkaz img,.snimka,.slider-popis,.slider-tl,.hlava,.vstup{transition:none}
+  /* .lista.vidno: vysunutie lišty má vlastný prechod s dvoma triedami, .lista ho neprebije (audit naplno 25. 11. 2026,
+     položka 37: pri obmedzenom pohybe lišta vychádzala 0,32 s) */
+  .tlacidlo,.tlacidlo svg,.odkaz-sipka svg,.siet,.siet-cip,.siet-meno,.filter,.lista,.lista.vidno,.lightbox-tl,.otazka summary::before,.otazka summary::after,.projekt-foto img,.dlazdica-foto img,.galeria-odkaz img,.snimka,.slider-popis,.slider-tl,.hlava,.vstup{transition:none}
   .snimka-0 img,.uvod-nadtitulok,.uvod-h1,.firma-text,.firma-fakty .udaj,.firma-zdroj,.uvod-akcie,.slider-popisy,.slider-ovladanie,.vstup{animation:none;opacity:1;transform:none;clip-path:none}
   /* aktívna fotka a popis slidera (dve triedy) bez prechodu: inak by .slider-popis.je prebilo .slider-popis vyššie
      a popis by sa prelínal 0,3 s s oneskorením 0,3 s (doladenie-1) */
@@ -1008,6 +1134,13 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .hlava .znak-logo{height:30px}
   .hlava-akcie .tlacidlo-male{padding:0 12px}
   .hlava .obsah{gap:8px}
+}
+/* pod 320 px (priblíženie 150 % na telefóne 411 px, okno 274 px; audit naplno 25. 11. 2026, položka 35): roletky pod
+   sebou (v dvoch stĺpcoch po 117 px by sa „rok neuvedený“ s šípkou nezmestil) a v lište „E-mail“ */
+@media (max-width:319px){
+  .filtre-vyber{grid-template-columns:minmax(0,1fr)}
+  .lista-dlhy{display:none}
+  .lista-kratky{display:inline}
 }
 /* najužšie okno (320 px): bankové spojenie a číslo účtu v Kontakte cez oba stĺpce (build.py KONTAKT_UCET, trieda
    fakt-ucet; doladenie-3, overenie 3 nález drobné: bunka 136 px, číslo účtu s pevnými medzerami sa nezmestilo
@@ -1159,6 +1292,9 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .kontakt-riadky-6{grid-template-rows:repeat(6,auto)}
   .kontakt .siet-meno{display:inline}
   .kontakt-siete{gap:var(--m-8) var(--m-24)}
+  /* na počítači Zavolať v hlavičke aj s číslom (audit naplno 25. 11. 2026, položka 27): tlačidlo asi 228 px, pri
+     1024 až 1099 px vedľa neho Menu, od 1100 px v pravom stĺpci hlavičky s rezervou aspoň 80 px */
+  .tel-cislo{display:inline;font-weight:400}
   .pata-mriezka>.pata-zaver{grid-column:1/7}
   .pata-mriezka>.male{grid-column:8/-1}
   .lista{display:none}
@@ -1166,16 +1302,28 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 @media (min-width:1100px){
   .menu-d{display:block}
   .menu-m{display:none}
+  /* menu hlavičky na osi stránky: tri stĺpce 1fr auto 1fr, logo vľavo, Zavolať vpravo (audit naplno 25. 11. 2026,
+     položka 19: menu bolo v strede medzi logom a Zavolať, o 51 px pri 1366 px a o 70 px od 1440 px vpravo od osi) */
+  .hlava .obsah{display:grid;grid-template-columns:1fr auto 1fr}
+  .hlava .znak{justify-self:start}
+  .menu-d{grid-column:2}
+  .hlava-akcie{grid-column:3;justify-self:end}
 }
 /* široké okno: vizitka Kontaktu na 5 stĺpcov od čiary 8. stĺpca (doladenie-1, nález drobné: pri 1920 px mala 6 stĺpcov
    a vpravo ostávalo 542 px prázdnej karty s dlhými čiarami); od 1921 px 4 stĺpce (úsek ŠIROKÉ OKNO) */
 @media (min-width:1680px){
   .kontakt-mapa{grid-column:8/-1}
 }
-/* úzky počítač (1024 až 1099 px, napr. tablet na šírku): stĺpec údajov má 2 z 12 stĺpcov, asi 144 px; hodnota ide
-   pod ikonu bez odsadenia, aby sa meno konateľa nelámalo a odkaz Oprávnenia mal najviac dva riadky (krasa-8) */
-@media (min-width:1024px) and (max-width:1099px){
+/* úzky počítač (1024 až 1119 px, napr. tablet na šírku): stĺpec údajov má 2 z 12 stĺpcov, asi 144 px; hodnota ide
+   pod ikonu bez odsadenia, aby sa meno konateľa nelámalo a odkaz Oprávnenia mal najviac dva riadky (krasa-8). Horná
+   hranica o šírku posuvníka (17 px) vyššie ako blok nižšie: okno 1100 až 1114 px s klasickým posuvníkom má obsah ako
+   1083 až 1097 px bez neho, hodnota „osvedčenia SKSI pre stavebný dozor a stavbyvedúceho“ mala s odsadením 34 px tri
+   riadky a pri výške okna 556 až 568 px boli tlačidlá Zavolať a Napísať e-mail 4 až 7 px pod oknom (oprava po overení,
+   kontrola v prehliadači nález drobné) */
+@media (min-width:1024px) and (max-width:1119px){
   .udaj dd{margin-left:0}
+}
+@media (min-width:1024px) and (max-width:1099px){
   /* štítok stavby na fotke: kratší názov (nastavenia uvod_slider nazov_mobil) aj tu, nielen do 1023 px; s celým
      názvom mal štítok Okánikovej 5 riadkov (118 px) a Lumière, Na Križovatkách a Ventúrska 4 riadky (doladenie-2,
      nález drobné: tmavý blok zakryl ľavý spodok fotky); riadok miesta a rokov vyvážený */
@@ -1273,6 +1421,9 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   /* titulná fotka detailu cez celých 7 stĺpcov (strop 1000 px patril k obsahu 1760 px, pri 2560 px by medzi fotkou
      a textom ostalo 390 px), SIZES_DETAIL v build.py ráta s tou istou šírkou */
   .detail .detail-foto{max-width:none}
+  /* tabuľka a text detailu s údajmi od čiary 9. stĺpca s voľným stĺpcom za fotkou ako pred opravou po overení (tá dala
+     do 1920 px stĺpce 8 až 12); pri 1921 až 3440 px sa nič nemení */
+  .detail-s-udajmi .detail-udaje,.detail-s-udajmi .detail-text{grid-column:9/-1}
   /* vizitka Kontaktu na 4 stĺpce od čiary 9. stĺpca (s 5 stĺpcami by mala pri 2560 px 986 px a riadky vizitky by boli
      z troch štvrtín prázdne, ten istý nález ako 6 stĺpcov pri 1920 px v doladení 1); pri 2560 px 784 px */
   .kontakt-mapa{grid-column:9/-1}
@@ -1305,6 +1456,22 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .sluzba-bok{grid-column:9/-1}
   .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body[class*="riadky-"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera);grid-auto-flow:column;max-width:none}
   .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body:not([class*="riadky-"]){max-width:calc((100% - var(--medzera)) / 2)}
+  /* stránka služby bez zoznamu (Stavebný manažment) ako sesterské stránky: text cez 8 stĺpcov, ikona a úvodný odsek
+     cez celú šírku textu, odseky pod nimi v dvoch stĺpcoch (prvý dlhý vľavo, druhý a tretí vpravo) ako karta
+     1. Stavebný manažment na úvode, box s osvedčeniami na 4 stĺpce. Mriežka, nie columns (pri columns sa ikona delila
+     a okraj odseku na začiatku druhého stĺpca sa orezal). Pri 2560 px bolo medzi textom (koniec 743 px) a boxom (od
+     1486 px) 742 px prázdnej plochy (audit naplno 25. 11. 2026, položka 25; návrh siroke-wf/dizajn-2/navrh-manazment.css).
+     Prehliadač bez :has nechá rozloženie do 1920 px. */
+  .sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne{grid-column:1/9;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto auto 1fr;column-gap:var(--medzera);align-content:start}
+  .sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne>:not(p),.sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne>.uvodna{grid-column:1/-1}
+  .sluzba-obal:not(:has(.cinnost-body)) .sluzba-hlavne>.uvodna+p{grid-row:span 2}
+  .sluzba-obal:not(:has(.cinnost-body)) .sluzba-bok{grid-column:9/-1}
+  /* Ďalšie realizácie na stránke služby v štyroch stĺpcoch, každý stĺpec pod jednou kartou nad ním, poradie po
+     riadkoch ako karty; položky v riadku mriežky majú rovnakú výšku, čiary pod nimi ležia na sebe, text drží hore.
+     Pri 2560 px mal zoznam 19 riadkov s textom len vľavo a vpravo 1764 px prázdnych (kontrola širokého rozloženia,
+     nález drobné; návrh siroke-wf/dizajn-2/navrh-dalsie.css) */
+  .zoznam-dalsie{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--medzera)}
+  .zoznam-dalsie li{align-content:start}
 }
 /* ultraširoké okno (od 2561 px, monitory 21 : 9 a 4K): obsah je na strope 2400 px a okraje rastú s oknom (pri 3440 px
    511,5 px s posuvníkom). Slider s presahom po ľavú hranu okna by vpravo nechal prázdny pás 167 až 712 px (2752 až
@@ -1320,3 +1487,7 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 
 /* atribút hidden má prednosť pred display prvkov (filter bez JS skrytý, ovládanie slidera, tlačidlá lightboxu pri 1 fotke) */
 .filtre[hidden],.prazdne[hidden],.viac-obal[hidden],.slider-ovladanie[hidden],.lightbox-tl[hidden],.dlazdica[hidden],.lista[hidden],.lb-zoznam[hidden],.lightbox-stitok[hidden]{display:none}
+/* karty zoznamu realizácií nad prvou dávkou (build.py data-neskor) sú do spustenia app.js mimo rozloženia, takže sa ich
+   lenivé fotky nesťahujú (audit naplno 25. 11. 2026, položka 46); app.js atribút hneď zmaže a skryje ich atribútom
+   hidden, bez JS (aj keď app.js nepribehne, vložený skript zruší triedu js) sú viditeľné všetky */
+.js [data-neskor]{display:none}

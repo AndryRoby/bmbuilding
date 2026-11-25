@@ -1,8 +1,9 @@
 /* BM Building, skript webu: pretočenie číslic kót, jemné objavenie sekcií úvodu, mobilné menu (Esc, klik mimo,
    kotva), čiara pod pripnutou hlavičkou, slider stavieb v úvode, spodná lišta Zavolať a Napísať e-mail, filter
    a zoradenie realizácií, lightbox s viacerými galériami na stránke (markup skladá generátor webu).
-   Prelínanie fotiek slidera a odkrytie fotky sú CSS. Pri posune stránky sa tu nepočíta rozloženie: lištu, slider
-   a objavenie sekcií prepínajú pozorovatelia (IntersectionObserver).
+   Prelínanie fotiek slidera a odkrytie fotky sú CSS. Pri spustení (bez kotvy v adrese) ani pri posune stránky sa tu
+   nečíta rozloženie (žiadny vynútený prepočet): lištu, čiaru hlavičky, slider a objavenie sekcií prepínajú
+   pozorovatelia (IntersectionObserver). Generátor webu súbor pri zostave zhustí (bez komentárov a odsadenia).
    Web ukáže všetok obsah aj bez tohto súboru. Žiadne údaje z obsahu sa nevkladajú ako HTML: len atribúty,
    textContent a presun existujúcich prvkov. */
 (function () {
@@ -33,8 +34,14 @@
   // 0b. Sekcie pod hrdinom úvodu (nadpis, karty Činnosti, veta SKSI a otázky zo zákona) sa jemne objavia pri vstupe do obrazu
   //     (pohybový jazyk pôvodného webu, ÚVOD v3). Trieda vstup len prvkom celých pod oknom (čo už človek vidí, sa
   //     neskryje), videne raz pri vstupe; CSS skrýva len pri triede js a bez obmedzeného pohybu, takže bez skriptu
-  //     a pri obmedzenom pohybe je všetko hneď viditeľné. Kontakt nie: je v content-visibility auto a pri rýchlom
-  //     posune ho pozorovateľ nemusí zachytiť (snímka celej stránky ho ukázala prázdny).
+  //     a pri obmedzenom pohybe je všetko hneď viditeľné. Kontakt sa neskrýva (modrý blok je vidno hneď, aj pri
+  //     rýchlom posune). Fokus klávesnice v ešte skrytom bloku ho odkryje hneď (focusin): Chrome posunie stránku
+  //     len tak, aby bol odkaz v okne, často do spodných 8 %, ktoré pozorovateľ nesleduje, a obrys fokusu by ostal
+  //     neviditeľný (audit naplno 25. 11. 2026, položka 6, WCAG 2.4.7).
+  //     Polohu bloku pri načítaní dá prvé hlásenie pozorovateľa ioPoloha (boundingClientRect a rootBounds z rozloženia,
+  //     ktoré prehliadač aj tak počíta), nie innerHeight a getBoundingClientRect: tie pri spustení skriptu vynútili
+  //     prepočet celého rozloženia, pri CPU 4x 270 až 313 ms (audit naplno, položka 48). Blok pod oknom sa tak skryje
+  //     až po prvom vykreslení, keď ho človek ešte nevidí.
   if (pohyb && maIO && d.querySelector('.stranka-uvod')) {
     var ioVstup = new IntersectionObserver(function (zaznamy) {
       zaznamy.forEach(function (z) {
@@ -45,26 +52,53 @@
     }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
     // threshold 0: karta Činnosti je na mobile vysoká aj 2 000 px (19 bodov dozoru), pri podiele 0,12 by sa objavila
     // až po 240 px prázdneho miesta na spodku okna; teraz hneď, keď jej horný okraj prejde 8 % nad spodok okna
-    var vyskaOkna = window.innerHeight || d.documentElement.clientHeight;
+    var ioPoloha = new IntersectionObserver(function (zaznamy) {
+      zaznamy.forEach(function (z) {
+        ioPoloha.unobserve(z.target);
+        // horný okraj na spodku okna alebo nižšie (celý blok pod oknom): skryť a čakať na vstup; čo už vidno, ostane
+        if (!z.rootBounds || z.boundingClientRect.top < z.rootBounds.bottom) return;
+        z.target.classList.add('vstup');
+        ioVstup.observe(z.target);
+      });
+    }, { threshold: 0 });
     vsetky('.cinnost-sekcia .nadpis, .cinnost-karta, .cinnost-sksi, .zakon-list').forEach(function (el) {
-      if (el.getBoundingClientRect().top < vyskaOkna) return;
-      el.classList.add('vstup');
-      ioVstup.observe(el);
+      ioPoloha.observe(el);
+    });
+    d.addEventListener('focusin', function (e) {
+      var v = e.target && e.target.closest ? e.target.closest('.vstup:not(.videne)') : null;
+      if (!v) return;
+      v.classList.add('videne');
+      ioVstup.unobserve(v);
     });
   }
 
   // 1. Mobilné menu (details funguje aj bez skriptu): pri otvorení text Zavrieť, Esc zavrie a vráti ohnisko na
-  //    tlačidlo, klik na kotvu na tej istej stránke alebo klik mimo panelu zavrie.
+  //    tlačidlo, klik na kotvu na tej istej stránke alebo klik mimo panelu zavrie. Systémové Späť v Androide (aj gesto)
+  //    zavrie otvorené menu cez CloseWatcher a nechá človeka na stránke (audit naplno 25. 11. 2026, položka 26: Späť
+  //    pri otvorenom menu opustilo stránku); prehliadač bez CloseWatcher sa správa ako doteraz.
   vsetky('details.menu-m').forEach(function (menu) {
     var tl = menu.querySelector('summary');
     if (!tl) return;
     var povodny = tl.textContent;
+    var strazca = null;
     function zavri(spat) {
       if (!menu.open) return;
       menu.open = false;
       if (spat) tl.focus();
     }
-    menu.addEventListener('toggle', function () { tl.textContent = menu.open ? 'Zavrieť' : povodny; });
+    menu.addEventListener('toggle', function () {
+      tl.textContent = menu.open ? 'Zavrieť' : povodny;
+      if (menu.open && !strazca && typeof CloseWatcher === 'function') {
+        try {
+          strazca = new CloseWatcher();
+          strazca.onclose = function () { strazca = null; zavri(true); };
+        } catch (e) { strazca = null; }
+      } else if (!menu.open && strazca) {
+        var s = strazca;
+        strazca = null;
+        s.destroy();
+      }
+    });
     // Esc zavrie otvorené menu aj vtedy, keď fokus nie je v ňom (ťuk na prázdnu plochu panela presunie fokus na body;
     // kontrola 3 v prehliadači, nález drobné), a vráti fokus na tlačidlo
     d.addEventListener('keydown', function (e) {
@@ -105,9 +139,32 @@
   }
 
   // 3. Pripnutá hlavička: vlasová čiara pod ňou až po posune stránky (trieda posunute), na začiatku splýva s úvodom.
+  //    Posun nad 4 px hlási pozorovateľ značky vysokej 4 px na vrchu stránky (aj prvým hlásením po príchode na kotvu
+  //    alebo po obnovení v strede stránky), nie čítanie window.pageYOffset: to hneď pri spustení vynútilo prepočet
+  //    celého rozloženia, na /realizacie/ a detaile pri CPU 4x 61 až 265 ms (audit naplno 25. 11. 2026, položka 48).
+  //    Bez IntersectionObserver ako predtým cez posun, prvé čítanie až v requestAnimationFrame.
   (function () {
     var hlava = d.querySelector('.hlava');
     if (!hlava) return;
+    if (maIO && d.body) {
+      var znacka = d.createElement('div');
+      znacka.setAttribute('aria-hidden', 'true');
+      // CSSOM, nie atribút style (CSP); body má position relative, značka je mimo toku a bez kliknutí
+      var st = znacka.style;
+      st.position = 'absolute';
+      st.top = '0';
+      st.left = '0';
+      st.width = '1px';
+      st.height = '4px';
+      st.pointerEvents = 'none';
+      st.visibility = 'hidden';
+      d.body.insertBefore(znacka, d.body.firstChild);
+      new IntersectionObserver(function (zaznamy) {
+        var z = zaznamy[zaznamy.length - 1];
+        if (z) hlava.classList.toggle('posunute', !z.isIntersecting);
+      }).observe(znacka);
+      return;
+    }
     var caka = false;
     var obnov = function () { caka = false; hlava.classList.toggle('posunute', (window.pageYOffset || 0) > 4); };
     window.addEventListener('scroll', function () {
@@ -115,7 +172,7 @@
       caka = true;
       window.requestAnimationFrame(obnov);
     }, { passive: true });
-    obnov();
+    window.requestAnimationFrame(obnov);
   })();
   // Odložená fotka slidera: skutočný zdroj je v data-src a data-srcset, kým nepríde na rad (bez skriptu je
   //    viditeľná len prvá fotka). AVIF (data-avif): fotka sa obalí do picture so zdrojom
@@ -280,11 +337,40 @@
           var stoj = b.getAttribute('aria-pressed') !== 'true';
           b.setAttribute('aria-pressed', stoj ? 'true' : 'false');
           nastav('tlacidlo', stoj);
+          if (!stoj) nastav('tah', false);
           return;
         }
         ukaz(i + Number(smer), true);
       });
     });
+    // Potiahnutie prstom alebo perom po fotke (myš má šípky a pauzu pri prejdení): vodorovne aspoň 48 px a viac ako
+    // 1,5-násobok zvislého pohybu ako v lightboxe, prepne ako šípky. Slider potom stojí ako po šípke (tá drží fokus
+    // v slideri), kým sa človek nedotkne miesta mimo neho alebo nepustí prehrávanie tlačidlom; pri priblížení stránky
+    // sa neposúva. Zvislý pohyb posúva stránku (styl.css touch-action pan-y na .snimky). Audit naplno 25. 11. 2026,
+    // položka 11: potiahnutie stavbu nemenilo.
+    var plocha = slider.querySelector('.snimky');
+    if (plocha && 'PointerEvent' in window) {
+      var tahS = null;
+      plocha.addEventListener('pointerdown', function (e) {
+        tahS = e.isPrimary && e.pointerType !== 'mouse' ? { x: e.clientX, y: e.clientY, id: e.pointerId } : null;
+      });
+      plocha.addEventListener('pointerup', function (e) {
+        if (!tahS || e.pointerId !== tahS.id) return;
+        var dx = e.clientX - tahS.x;
+        var dy = e.clientY - tahS.y;
+        tahS = null;
+        var vv = window.visualViewport;
+        if (vv && vv.scale > 1.01) return;
+        if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          nastav('tah', true);
+          ukaz(i + (dx < 0 ? 1 : -1), true);
+        }
+      });
+      plocha.addEventListener('pointercancel', function () { tahS = null; });
+      d.addEventListener('pointerdown', function (e) {
+        if (dovody.tah && !slider.contains(e.target)) nastav('tah', false);
+      }, true);
+    }
     planuj();
     // pri obmedzenom pohybe sa slider sám neposúva a planuj nič nepripraví: susedné fotky sa načítajú hneď po načítaní
     // stránky, aby prvé stlačenie Ďalšia alebo Predchádzajúca nečakalo na sťahovanie (doladenie-1)
@@ -331,12 +417,18 @@
 
   // 5. Filter, zoradenie a postupné načítanie realizácií: stav v adrese ?druh=&roky=&mesto=&zoradit=, počet
   //    v aria-live, prázdny výsledok. Všetky karty sú v HTML (bez skriptu viditeľné všetky); filter a zoradenie
-  //    idú cez všetky karty, z výsledku sa ukáže prvých data-naraz a tlačidlo Zobraziť ďalšie s počtom zvyšných.
-  //    Po kliknutí ide fokus na nadpis prvej novej karty (klávesnica pokračuje tam, kde skončila).
+  //    idú cez všetky karty, z výsledku sa ukáže prvých data-naraz a tlačidlo Zobraziť ďalšie s počtom zvyšných
+  //    (zvyšok najviac polovica dávky sa ukáže hneď s dávkou). Po kliknutí ide fokus na nadpis prvej novej karty
+  //    (klávesnica pokračuje tam, kde skončila) a karta sa posunie do okna.
   var filtre = d.querySelector('[data-filtre]');
   var zoznam = d.querySelector('[data-zoznam]');
   if (filtre && zoznam) {
     var dlazdice = vsetky('.dlazdica', zoznam);
+    // karty nad prvou dávkou majú z build.py data-neskor a styl.css ich do spustenia tohto skriptu necháva mimo
+    // rozloženia, aby sa ich lenivé fotky nesťahovali (audit naplno 25. 11. 2026, položka 46: pri 1440 px a Slow 4G
+    // 8 fotiek, 357 kB). Atribút sa zmaže hneď a obnov nižšie v tej istej úlohe (bez vykreslenia medzi tým) skryje
+    // karty mimo výberu atribútom hidden; keby niečo ďalej zlyhalo, karty ostanú viditeľné ako bez skriptu.
+    dlazdice.forEach(function (li) { li.removeAttribute('data-neskor'); });
     var tlacidlaF = vsetky('[data-druh]', filtre);
     var roky = filtre.querySelector('[data-roky]');
     var mesto = filtre.querySelector('[data-mesto]');
@@ -381,25 +473,31 @@
         vsetky('img[loading="lazy"]', li).forEach(function (img) { img.setAttribute('loading', 'eager'); });
       });
     };
+    // koľko kariet z n vybraných ukázať pri kolko: malý zvyšok (najviac polovica dávky) ide naraz s dávkou, aby za
+    // posledným kliknutím neostali dve karty („Zobraziť ďalšie (14)“ ukázalo 12 a nechalo „(2)“, audit naplno
+    // 25. 11. 2026, položka 17); build.py stav_zoznamu ráta rovnako
+    var hranica = function (pocet, kolko) { return !naraz || pocet - kolko <= Math.floor(naraz / 2) ? pocet : kolko; };
     var obnov = function (zapis, novaPrva) {
-      var n = 0;
-      var m = 0;
       var prvaNova = null;
       var poradie = dlazdice.slice().sort(porovnaj);
-      dalsiaDavka = [];
-      poradie.forEach(function (li) {
+      var vyhovuje = poradie.map(function (li) {
         var druhy = ' ' + (li.getAttribute('data-druh') || '') + ' ';
         var rok = Number(li.getAttribute('data-rok')) || 0;
         var dekada = rok ? String(rok - rok % 10) : '0';
-        var ok = (!s.druh || druhy.indexOf(' ' + s.druh + ' ') >= 0) && (!s.roky || s.roky === dekada)
+        return (!s.druh || druhy.indexOf(' ' + s.druh + ' ') >= 0) && (!s.roky || s.roky === dekada)
           && (!s.mesto || li.getAttribute('data-mesto') === s.mesto);
-        if (ok && naraz && n >= ukazat && n < ukazat + naraz) dalsiaDavka.push(li);
-        var vidno = ok && (!naraz || n < ukazat);
-        if (ok) n++;
-        if (vidno) {
-          m++;
-          if (novaPrva !== undefined && m === novaPrva + 1) prvaNova = li;
-        }
+      });
+      var n = vyhovuje.filter(function (x) { return x; }).length;
+      var m = hranica(n, ukazat);
+      var dalej = hranica(n, ukazat + naraz);
+      var k = 0;
+      dalsiaDavka = [];
+      poradie.forEach(function (li, j) {
+        var ok = vyhovuje[j];
+        var vidno = ok && k < m;
+        if (ok && !vidno && k < dalej) dalsiaDavka.push(li);
+        if (vidno && novaPrva !== undefined && k === novaPrva) prvaNova = li;
+        if (ok) k++;
         if (li.hidden === vidno) li.hidden = !vidno;
         zoznam.appendChild(li);
       });
@@ -418,8 +516,11 @@
       if (prvaNova) {
         var odkaz = prvaNova.querySelector('.dlazdica-nazov a');
         // preventScroll: bez neho prehliadač posunul stránku k nadpisu prvej novej karty (pri 1600 px o 798 px).
-        // Nové karty sa ukážu tam, kde bolo tlačidlo, fokus ide za nimi.
+        // Nové karty sa ukážu tam, kde bolo tlačidlo, fokus ide za nimi; prvá nová karta sa potom posunie celá do okna
+        // najkratšou cestou (block nearest; audit naplno 25. 11. 2026, položka 36: nadpis s fokusom ostal pod oknom).
+        // Do 767 px drží scroll-padding-bottom html kartu nad spodnou lištou.
         if (odkaz) odkaz.focus({ preventScroll: true });
+        if (typeof prvaNova.scrollIntoView === 'function') prvaNova.scrollIntoView({ block: 'nearest' });
       }
       if (zapis) {
         var p = new URLSearchParams();
@@ -439,7 +540,13 @@
     if (roky) roky.addEventListener('change', function () { s.roky = roky.value; zmena(); });
     if (mesto) mesto.addEventListener('change', function () { s.mesto = mesto.value; zmena(); });
     if (zoradit) zoradit.addEventListener('change', function () { s.zoradit = zoradit.value; zmena(); });
-    if (zrusit) zrusit.addEventListener('click', function () { s.druh = ''; s.roky = ''; s.mesto = ''; zmena(); });
+    // Zrušiť filter je v prázdnom výsledku, ktorý sa ním skryje: fokus ide na tlačidlo Všetky, nie na body (oprava po
+    // overení, kontrola v prehliadači: čítačka stratila miesto a ďalší Tab išiel až na Kontakt za zoznamom, WCAG 2.4.3)
+    if (zrusit) zrusit.addEventListener('click', function () {
+      s.druh = ''; s.roky = ''; s.mesto = ''; zmena();
+      var vsetkyDruhy = filtre.querySelector('[data-druh=""]');
+      if (vsetkyDruhy) vsetkyDruhy.focus();
+    });
     if (viac) viac.addEventListener('click', function () {
       var bolo = ukazat;
       predNacitaj();

@@ -13,22 +13,30 @@
      kroky    [{akcia: "viac" | "druh" | "roky" | "mesto" | "zoradit" | "zrusit", hodnota}].
    Výstup: zoznam stavov (po spustení a po každom kroku): viditelne (data-poradie neskrytých kariet v poradí DOM),
      poradie (všetky karty v poradí DOM), stav (text data-stav), viac_skryte, viac_pocet, prazdne_skryte,
-     fokus (data-poradie karty, na ktorej odkaz v tomto kroku dostal fokus, inak null), search (adresa po kroku).
-   Z app.js sa vezme presne časť medzi komentármi „// 5. Filter“ a „// 6. Lightbox“ a spustí sa vo vm s premennými
-   d (dokument) a vsetky (ako v app.js). Ak sa značky v app.js nenájdu alebo kód siahne na nepodporovaný selektor,
-   skript skončí chybou (kód 2), takže test nemôže potichu prejsť. */
+     fokus (data-poradie karty, na ktorej odkaz v tomto kroku dostal fokus, inak null), fokus_druh (data-druh tlačidla
+     filtra, ktoré v tomto kroku dostalo fokus, inak null; po Zrušiť filter tlačidlo Všetky), posun (data-poradie karty, ktorú
+     app.js v tomto kroku posunul do okna cez scrollIntoView, a jeho block, inak null; audit naplno 25. 11. 2026,
+     položka 36), neskor (data-poradie kariet, ktoré ešte majú data-neskor; po spustení app.js žiadna, položka 46),
+     search (adresa po kroku).
+   Karta môže mať vo vstupe neskor: true (atribút data-neskor z build.py pre karty za prvou dávkou).
+   Z app.js sa vezme časť 5 od riadka „var filtre = d.querySelector('[data-filtre]')“ po riadok
+   „var dlg = d.getElementById('lightbox')“ (začiatok časti 6) a spustí sa vo vm s premennými d (dokument) a vsetky
+   (ako v app.js). Značky sú kód, nie komentáre, lebo web dostáva app.js zhustený bez komentárov (build.py zhusti_js,
+   audit naplno položka 45). Ak sa značky v app.js nenájdu alebo kód siahne na nepodporovaný selektor, skript skončí
+   chybou (kód 2), takže test nemôže potichu prejsť. */
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
 
 const vstup = JSON.parse(fs.readFileSync(0, 'utf8'));
 const zdroj = fs.readFileSync(vstup.app_js, 'utf8');
-const od = zdroj.indexOf('// 5. Filter');
-const po = zdroj.indexOf('// 6. Lightbox');
+const od = zdroj.indexOf("var filtre = d.querySelector('[data-filtre]')");
+const po = zdroj.indexOf("var dlg = d.getElementById('lightbox')");
 if (od < 0 || po < 0 || po < od) { process.stderr.write('app.js: značky časti 5 a 6 sa nenašli\n'); process.exit(2); }
 const kod = zdroj.slice(od, po);
 
 let aktivny = null;
+let posunuty = null;
 
 class El {
   constructor(tag, attrs, text) {
@@ -47,6 +55,7 @@ class El {
   getAttribute(n) { return this.attrs.has(n) ? this.attrs.get(n) : null; }
   setAttribute(n, v) { this.attrs.set(n, String(v)); }
   hasAttribute(n) { return this.attrs.has(n); }
+  removeAttribute(n) { this.attrs.delete(n); }
   get textContent() { return this._text + this.children.map((c) => c.textContent).join(''); }
   set textContent(v) { this._text = String(v); this.children = []; }
   appendChild(c) {
@@ -59,6 +68,7 @@ class El {
   addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }
   vyvolaj(t) { (this.listeners[t] || []).forEach((f) => f.call(this, { type: t, target: this })); }
   focus() { aktivny = this; }
+  scrollIntoView(o) { posunuty = { el: this, block: o && o.block !== undefined ? o.block : null }; }
   potomkovia() { const o = []; const ch = (e) => e.children.forEach((c) => { o.push(c); ch(c); }); ch(this); return o; }
   querySelectorAll(sel) { const cast = rozober(sel); return this.potomkovia().filter((e) => sedi(e, cast, this)); }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
@@ -109,8 +119,9 @@ const stav = E('p', { class: 'filtre-stav', 'data-stav': '', 'aria-live': 'polit
 const zoznam = E('ul', { class: 'karty karty-zoznam', id: 'zoznam-realizacii', 'data-zoznam': '', 'data-naraz': vstup.naraz });
 vstup.karty.forEach((k) => {
   const a = E('a', { href: '../realizacie/x/' }, k.nazov);
-  zoznam.appendChild(E('li', { class: 'dlazdica', 'data-poradie': k.poradie, 'data-druh': k.druh, 'data-rok': k.rok, 'data-mesto': k.mesto })
-    .pridaj(E('h2', { class: 'dlazdica-nazov' }).pridaj(a)));
+  const atr = { class: 'dlazdica', 'data-poradie': k.poradie, 'data-druh': k.druh, 'data-rok': k.rok, 'data-mesto': k.mesto };
+  if (k.neskor) atr['data-neskor'] = '';
+  zoznam.appendChild(E('li', atr).pridaj(E('h2', { class: 'dlazdica-nazov' }).pridaj(a)));
 });
 const viacPocet = E('span', { class: 'viac-pocet', 'data-viac-pocet': '' });
 const viac = E('button', { class: 'tlacidlo', 'data-viac': '' }, 'Zobraziť ďalšie ').pridaj(viacPocet);
@@ -135,6 +146,10 @@ function snimka() {
   const lis = zoznam.children.filter((e) => e.tagName === 'LI');
   let fokus = null;
   for (let e = aktivny; e; e = e.parent) if (e.tagName === 'LI') { fokus = Number(e.getAttribute('data-poradie')); break; }
+  let posun = null;
+  if (posunuty) {
+    for (let e = posunuty.el; e; e = e.parent) if (e.tagName === 'LI') { posun = { poradie: Number(e.getAttribute('data-poradie')), block: posunuty.block }; break; }
+  }
   return {
     viditelne: lis.filter((e) => !e.hidden).map((e) => Number(e.getAttribute('data-poradie'))),
     poradie: lis.map((e) => Number(e.getAttribute('data-poradie'))),
@@ -144,6 +159,11 @@ function snimka() {
     prazdne_skryte: prazdne.hidden,
     filtre_skryte: filtre.hidden,
     fokus,
+    // data-druh tlačidla filtra s fokusom (Všetky = ""), inak null; po Zrušiť filter má byť "" (oprava po overení,
+    // WCAG 2.4.3: predtým fokus padol na body)
+    fokus_druh: aktivny && aktivny.tagName === 'BUTTON' && aktivny.hasAttribute('data-druh') ? aktivny.getAttribute('data-druh') : null,
+    posun,
+    neskor: lis.filter((e) => e.hasAttribute('data-neskor')).map((e) => Number(e.getAttribute('data-poradie'))),
     search: win.location.search,
   };
 }
@@ -152,6 +172,7 @@ vm.runInNewContext('(function () {\n' + kod + '\n})();', { d: doc, vsetky, windo
 const stavy = [snimka()];
 for (const k of vstup.kroky) {
   aktivny = null;
+  posunuty = null;
   if (k.akcia === 'viac') viac.vyvolaj('click');
   else if (k.akcia === 'zrusit') zrusit.vyvolaj('click');
   else if (k.akcia === 'druh') {

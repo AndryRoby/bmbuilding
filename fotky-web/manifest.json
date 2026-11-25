@@ -8561,6 +8561,13 @@
      "bajty": 60482,
      "sha256": "52adc11f6a008bd693e9c1ea982906e5272c38ae2f486dd8dc7e9b90d1b3449d"
     },
+    "|840|avif": {
+     "subor": "5c92e95f50c387a9/840.avif",
+     "w": 840,
+     "h": 630,
+     "bajty": 64094,
+     "sha256": "9e40b3a67738049f712a1a849894e2a3686bea5ec5d8fb2af24536b9bad19465"
+    },
     "|960|avif": {
      "subor": "5c92e95f50c387a9/960.avif",
      "w": 960,
@@ -11045,6 +11052,13 @@
      "bajty": 131580,
      "sha256": "e7ec55acb61ceefe0f7aca04d8f053b8af96aa886cf0bb446199abed866e8d9a"
     },
+    "|840|avif": {
+     "subor": "703a189d5ce2e936/840.avif",
+     "w": 840,
+     "h": 1120,
+     "bajty": 151864,
+     "sha256": "dbcb3888bc0ef9e16101f418ca01581ad29eff5ab01b125fa6648255fe989d78"
+    },
     "|960|avif": {
      "subor": "703a189d5ce2e936/960.avif",
      "w": 960,
@@ -12829,6 +12843,13 @@
      "bajty": 61054,
      "sha256": "6d8f87b342245857107a736fbe1f7b31f4f712a67a0b459701cfb704d920119a"
     },
+    "|840|avif": {
+     "subor": "856594541681bb33/840.avif",
+     "w": 840,
+     "h": 559,
+     "bajty": 63080,
+     "sha256": "ccd7d52598f4ee26267529d40c19472416808b5e5b2d01c8e6ca66ff11f8e482"
+    },
     "|960|avif": {
      "subor": "856594541681bb33/960.avif",
      "w": 960,
@@ -14324,6 +14345,13 @@
      "bajty": 66812,
      "sha256": "c9d32fc84283a24ec77d3d6b4b18be1a01dc7faa0cd3f793c2d0c6dd6148b3f5"
     },
+    "|840|avif": {
+     "subor": "934df3fa79db4fad/840.avif",
+     "w": 840,
+     "h": 560,
+     "bajty": 85041,
+     "sha256": "bd7bd3586c507355532827f47f3769db494e16c482bd14a07ccab8989de3f306"
+    },
     "|960|avif": {
      "subor": "934df3fa79db4fad/960.avif",
      "w": 960,
@@ -14690,6 +14718,13 @@
      "h": 960,
      "bajty": 100508,
      "sha256": "e1486649c5e223baef5e86bb84e26377faf3d8ea71c60f51268b719a3d1ad6b9"
+    },
+    "|840|avif": {
+     "subor": "9823e3d05f77ddf4/840.avif",
+     "w": 840,
+     "h": 1120,
+     "bajty": 106177,
+     "sha256": "bdb193796ae491dcd54f1ffd1f9ddb6d8dc2f50ecb1d61aa4288f0429d29b1b0"
     },
     "|960|avif": {
      "subor": "9823e3d05f77ddf4/960.avif",
@@ -16383,6 +16418,13 @@
      "bajty": 64658,
      "sha256": "f739b31d83336f7e0a2648617c5ca7b91ee1c4f95bd196a76cd4ede0a2cb7eb7"
     },
+    "|840|avif": {
+     "subor": "b2dedd04a3ad1051/840.avif",
+     "w": 840,
+     "h": 473,
+     "bajty": 69424,
+     "sha256": "ce868e55f98df3d8e65675cc4473dd5d44952cf0cb6271142e635427732d9d87"
+    },
     "|960|avif": {
      "subor": "b2dedd04a3ad1051/960.avif",
      "w": 960,
@@ -17571,6 +17613,13 @@
      "bajty": 102998,
      "sha256": "d343540759c46745b7a10b6096bc3b97d1d097f4efd544991f960f31e8891ebf"
     },
+    "|840|avif": {
+     "subor": "bf94629c5d8f52d5/840.avif",
+     "w": 840,
+     "h": 1120,
+     "bajty": 107320,
+     "sha256": "6fdb18dfabde07725776a48ac4ab8e8d651225d2ac80d1c7649501a2319a8202"
+    },
     "|960|avif": {
      "subor": "bf94629c5d8f52d5/960.avif",
      "w": 960,
@@ -18251,6 +18300,13 @@
      "h": 405,
      "bajty": 72378,
      "sha256": "60cdbb6cfe8e98c4d5d08862f9658004782050cf12ca6cca9910e89b3e88c6bb"
+    },
+    "|840|avif": {
+     "subor": "c6feb5b881d2e1a4/840.avif",
+     "w": 840,
+     "h": 473,
+     "bajty": 89515,
+     "sha256": "f024b36e6bd9153966eed91da849bd2854f1adfab1872153f31ed5b0a9570e6c"
     },
     "|960|avif": {
      "subor": "c6feb5b881d2e1a4/960.avif",
@@ -19236,6 +19292,13 @@
      "bajty": 137436,
      "sha256": "532ff09e916c7139c78fc87bf02bd5fb6b677eac8f17fc6808cdfbdca985fc3f"
     },
+    "|840|avif": {
+     "subor": "d2f2be56a21f4a04/840.avif",
+     "w": 840,
+     "h": 1116,
+     "bajty": 137580,
+     "sha256": "2a9b8d011b04aa8cbc65ce5db2187f634b73525182814fba8d342dfd52363bb3"
+    },
     "|960|avif": {
      "subor": "d2f2be56a21f4a04/960.avif",
      "w": 960,
@@ -19531,6 +19594,13 @@
      "h": 532,
      "bajty": 80252,
      "sha256": "ab6b8c0ed3c9b5b6167563f2be7f0cc9ce02877767d8f4b29eb168c97eae461c"
+    },
+    "|840|avif": {
+     "subor": "d479e89a154070dc/840.avif",
+     "w": 840,
+     "h": 620,
+     "bajty": 91117,
+     "sha256": "f44a6bd6320ef930bfcab1f1065104925cbad76942dc8af2d76b25d29a9918c6"
     },
     "|960|avif": {
      "subor": "d479e89a154070dc/960.avif",
@@ -22219,6 +22289,13 @@
      "h": 540,
      "bajty": 64386,
      "sha256": "8df1859a1880a2b2fe0e40f147cb182c04ae388dd6ce91c7e3a8db529630be37"
+    },
+    "|840|avif": {
+     "subor": "f53aaea5ed3b9cd4/840.avif",
+     "w": 840,
+     "h": 630,
+     "bajty": 74938,
+     "sha256": "78416ccb87f00f725300d336fe9b7047643e62b7524c29a1b56f700dce686f0a"
     },
     "|960|avif": {
      "subor": "f53aaea5ed3b9cd4/960.avif",
