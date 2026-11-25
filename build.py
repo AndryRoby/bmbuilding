@@ -78,18 +78,21 @@ SVG_KRIZIK = ('<svg width="18" height="18" viewBox="0 0 18 18" fill="none" strok
               'aria-hidden="true"><path d="M4 4l10 10M14 4 4 14"/></svg>')
 # vlasové čiary 12 stĺpcov cez celú stránku (najrozpoznateľnejší prvok štýlu, OLOVNICA-ROZBOR.md 6a)
 CIARY_HTML = '<div class="ciary" aria-hidden="true"><div class="ciary-vnutro">' + '<span></span>' * 12 + '</div></div>'
-# ikony sociálnych sietí (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): vlastné obrysy vlasovou čiarou ako šípky
-# a ikona Fotky, nie logá sietí na farebnom podklade; text nesie aria-label odkazu (CSP: inline SVG, nič cudzie)
-# Jednotná sada (ÚVOD v3, Instagram Mária): rovnaký rám 19 x 19 so zaobleným rohom 4,5, čiara 1,5, bodky ako plné
-# kruhy r 1 (nie krátke ťahy, tie mali pri 1,5 px tvar obdĺžnika), znak v optickom strede rámu (11, 11)
-_SIET_SVG = ('<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" '
-             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
-             '<rect x="1.75" y="1.75" width="18.5" height="18.5" rx="4.5"/>')
-SVG_FACEBOOK = _SIET_SVG + '<path d="M14.25 6.75h-1.5c-1.45 0-2.5 1.05-2.5 2.5V20.25M8 11.75h5.75"/></svg>'
-SVG_LINKEDIN = (_SIET_SVG + '<path d="M7 10v6.5M10.5 16.5V10M10.5 12.75c0-1.7 1.1-2.75 2.55-2.75s2.45 1 2.45 2.75v3.75"/>'
-                '<circle cx="7" cy="6.9" r="1" fill="currentColor" stroke="none"/></svg>')
-SVG_INSTAGRAM = (_SIET_SVG + '<circle cx="11" cy="11" r="4.1"/>'
-                 '<circle cx="15.9" cy="6.1" r="1" fill="currentColor" stroke="none"/></svg>')
+# ikony sociálnych sietí (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): vlastné SVG, nie logá sietí na farebnom
+# podklade; text nesie aria-label odkazu (CSP: inline SVG, nič cudzie). krasa-8 (brána 3: obrysy 22 px s čiarou 1,5
+# boli drobné, „naozaj pekné“ nestačilo): glyf 24 x 24 zjednodušený podľa oficiálnych značiek, vlastné krivky, rám
+# kreslí čip v CSS (.siet-cip, 48 px s vlasovou čiarou). Facebook: plné „f“ (driek 4, priečka a koniec oblúka 3,5,
+# zošikmený koniec priečky ako v značke); LinkedIn: plné „in“ (kruhová bodka i, driek 3,5, oblúk n); Instagram:
+# fotoaparát čiarou 1,75 (zaoblený štvorec, objektív, plná bodka blesku). Všetky tri v optickom strede (12, 12).
+_SIET_SVG = '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+SVG_FACEBOOK = (_SIET_SVG + '<path fill="currentColor" d="M9.25 21.75V12.75H6.5V9.25H9.25V7.75C9.25 4.15 11.35 2.25 '
+                '14.9 2.25H17.5V5.75H15.6C13.95 5.75 13.25 6.45 13.25 8V9.25H16.9L16.4 12.75H13.25V21.75Z"/></svg>')
+SVG_LINKEDIN = (_SIET_SVG + '<path fill="currentColor" d="M3.6 9H7.1V20.5H3.6ZM9.4 9H12.85V10.6C13.4 9.55 14.65 8.7 '
+                '16.4 8.7C19.7 8.7 20.4 10.9 20.4 13.85V20.5H16.9V14.75C16.9 13.3 16.75 12 15.15 12C13.55 12 12.85 '
+                '13.05 12.85 14.75V20.5H9.4Z"/><circle fill="currentColor" cx="5.35" cy="5.35" r="2.05"/></svg>')
+SVG_INSTAGRAM = (_SIET_SVG + '<g fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3.25" y="3.25" '
+                 'width="17.5" height="17.5" rx="5"/><circle cx="12" cy="12" r="4.1"/></g>'
+                 '<circle fill="currentColor" cx="17.15" cy="6.85" r="1.15"/></svg>')
 SVG_PAUZA = ('<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" '
              'aria-hidden="true" focusable="false"><path class="ikona-pauza" d="M5.5 3v10M10.5 3v10"/>'
              '<path class="ikona-hraj" d="M4.5 2.8v10.4L13 8z"/></svg>')
@@ -130,10 +133,13 @@ PISMA = ('geist-latin.woff2', 'geist-latin-ext.woff2', 'geist-mono-latin.woff2',
 # webu; favicon.svg je sablona/logo-favicon.svg. Cesty v site.webmanifest sú relatívne k manifestu (náhľad aj ostrý web).
 FAVICON_SUBORY = ('favicon.ico', 'favicon-32.png', 'favicon-48.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png',
                   'site.webmanifest')
-# jediný vložený skript (hash v CSP): trieda js pre pohyb, ktorý čaká na vstup do obrazu; keď app.js do 4 s nepribehne,
-# trieda zmizne a všetko ostane v konečnom stave (obsah sa nikdy neskrýva natrvalo)
-SKRIPT_JS = ("(function(d){d.classList.add('js');setTimeout(function(){if(window.BMB==null)d.classList.remove('js')},4000)})"
-             "(document.documentElement)")
+# jediný vložený skript (hash v CSP): trieda js pre pohyb, ktorý čaká na vstup do obrazu, a pre filter a ovládanie
+# slidera, ktoré bez JS nie sú. Trieda zmizne len vtedy, keď app.js naozaj nepribehol: odložený skript (defer) sa vždy
+# spustí pred DOMContentLoaded, aj keď sa sťahuje dlho, a pri chybe načítania DOMContentLoaded príde tiež, takže obsah
+# sa nikdy neskrýva natrvalo. Doladenie-2 (overenie 2, Slow 3G): predtým časovač 4 s od skriptu v hlave triedu zrušil,
+# kým sa app.js ešte sťahoval, ovládanie slidera na 0,7 s zmizlo a údaje pod ním skočili o 48 px hore a späť.
+SKRIPT_JS = ("(function(d){d.classList.add('js');document.addEventListener('DOMContentLoaded',function(){"
+             "if(window.BMB==null)d.classList.remove('js')})})(document.documentElement)")
 # bez JS spodná lišta Zavolať a Napísať e-mail na mobile stojí stále (päta má pod sebou miesto, nič nezakryje)
 # a fotky kariet pásu z noscript namiesto prázdnych (ukážka U:17)
 NOSCRIPT_CSS = 'img[data-src]{display:none}@media (max-width:767px){.lista{transform:none;visibility:visible}}'
@@ -165,10 +171,14 @@ BODKA = '\u00a0· '
 # uvod_slider; prelínanie a čas na fotku ovláda app.js (data-prelinanie, data-interval v ms)
 SLIDER_PRELINANIE_MS = 1200
 SLIDER_INTERVAL_MS = 8000
+# dlhý zoznam Činnosti v dvoch stĺpcoch so spoločnými riadkami: styl.css má triedy riadky-3 až riadky-12 (krasa-8)
+RIADKY_ZOZNAMU_MAX = 12
 # kotvy úvodu premenované v 1. kole pripomienok (cieľ presmerovania starej adresy -> nový cieľ)
 KOTVY_PREMENOVANE = {'/#sluzby': '/#cinnost'}
 # oddeľovač častí popisu fotky v lightboxe (ten istý reťazec delí a skladá app.js vo funkcii ukaz)
 LB_ODDELOVAC = ' · '
+# fakturačné údaje Kontaktu s dlhou hodnotou: na mobile cez oba stĺpce (styl.css .fakt-siroky, doladenie-2)
+KONTAKT_SIROKE = ('Sídlo', 'Zápis')
 
 VAROVANIA = []
 # Prísne varovania (fb-ostro A4, OPONENT.md S2): fotka slidera úvodu z nastavenia.json (uvod_slider)
@@ -840,15 +850,11 @@ def avif_bajty(p, sirka, vyska, pomer=None, box=None):
 # orezy (PLAN-1-1.md časť 8): karta pásu 4 : 5 a mobilný rám pohľadu A 5 : 4; súbor NN-<šírka>-<kód>.webp
 OREZY = {'45': (4, 5), '54': (5, 4), '43': (4, 3), '34': (3, 4)}
 SIRKY_OREZU = (480, 720, 960)
-# karta s malým zdrojom (brána bmb-presnost pokus 1, nález 1): výrez 4 : 5 karty mriežky, služby a novinky musí mať
-# aspoň KARTA_MIN_OREZ px zdroja, aby pri najširšej karte (422 CSS px pri 1920 px, hustota 2: 844 px obrazovky) na 1 px
-# zdroja nepripadalo viac než 1,25 px obrazovky (844 / 1,25 = 675,2). Menší zdroj nejde cez celý rám: celá fotka
-# (výrez 4 : 3, fotka na výšku 3 : 4) stojí v strede rámu 4 : 5 na podklade, široká najviac KARTA_CELA_MAX CSS px
-# a najviac KARTA_CELA_ZVACSENIE x šírku výrezu zdroja / 2 (trieda cap-N), takže zväčšenie ostáva do 1,2
+# karta s malým zdrojom (brána bmb-presnost pokus 1, nález 1): výrez 4 : 5 karty mriežky, služby a novinky s aspoň
+# KARTA_MIN_OREZ px zdroja je ostrý aj pri najširšej karte (422 CSS px pri 1920 px, hustota 2: 844 px obrazovky, na 1 px
+# zdroja najviac 1,25 px obrazovky, 844 / 1,25 = 675,2). Menší zdroj ide od doladenia-1 tiež cez celý rám (celá fotka
+# v strede rámu na rozmazanom podklade pôsobila ako pokazená fotka); stránka služby ho dá až za karty s väčším zdrojom
 KARTA_MIN_OREZ = 676
-KARTA_CELA_MAX = 360
-KARTA_CELA_ZVACSENIE = 1.2
-KARTA_CELA_MIN = 160
 
 
 def orez_rozmer(w, h, pomer):
@@ -1205,18 +1211,110 @@ def png_bajty(im):
 # 4 od 1024 px (obsah najviac 1760 px: (1760 - 3 x 24) / 4 = 422)
 SIZES_KARTA = ('(min-width: 1024px) min(23vw, 425px), (min-width: 640px) 31vw, (min-width: 480px) 47vw, '
                'calc(100vw - 32px)')
-
-
-def sizes_karty_cela(cap):
-    """sizes celej fotky karty s malým zdrojom (KARTA_MIN_OREZ): šírka rámu karty mínus 2 x 24 px, najviac cap CSS px."""
-    return (f'(min-width: 1024px) min(23vw - 48px, {cap}px), (min-width: 640px) min(31vw - 48px, {cap}px), '
-            f'(min-width: 480px) min(47vw - 48px, {cap}px), min(100vw - 80px, {cap}px)')
 # fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px, inak celá šírka
 SIZES_DETAIL = '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
-# slider úvodu (3A.2): od 1024 px 7 z 12 stĺpcov s presahom k ľavému okraju okna (asi 58vw) a výškou okna pod
-# hlavičkou; fotka 4 : 3 v ráme cez object-fit: cover je široká 4/3 výšky rámu (133vh - 176 px), ak je to viac.
-# Od 640 px rám 1 : 1, mobil 4 : 5 na celú šírku okna: fotka 4 : 3 je široká 133vw a 167vw.
-SIZES_SLIDER = '(min-width: 1024px) max(58vw, 133vh - 176px), (min-width: 640px) 133vw, 167vw'
+# slider úvodu (3A.2): pole od 1024 px má 7 z 12 stĺpcov s presahom k ľavému okraju okna a výšku okna pod hlavičkou
+# (krasa-8: 100vh mínus hlavička 84 px, pri výške okna do 820 px 64 px; najmenej 480 px, najviac 75vw), od 640 px rám
+# 1 : 1 a mobil 4 : 5 na celú šírku okna. Šírka poľa je vw / 2 + obsah / 12 - 5 / 12 medzery mriežky, zmerané v Chrome
+# 729,8 px pri 1280, 778,8 pri 1366, 821 pri 1440, 876 pri 1536, 1096,7 pri 1920 a 1416,7 pri 2560 px; zhora ju drží
+# min(57.7vw, 50vw + 137px) (nad 1888 px má obsah 1760 px). object-fit: cover kreslí fotku širšiu než pole cez celú
+# výšku poľa, takže fotka je široká max(šírka poľa, výška poľa x pomer fotky) a sizes ráta build pre každú fotku
+# z jej pomeru (sizes_slidera). krasa-8, agent Fotky slidera (brána 3: jeden sizes pre všetky fotky rátal s 4 : 3,
+# fotky 16 : 9 mali pri 1366 x 768 hustotu 0,77, pri 1920 x 1080 0,81, fotky na výšku brali zbytočne veľký súbor):
+# ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/OPRAVA-FOTKY.md
+SLIDER_SIRKA_POLA = 'min(57.7vw, 50vw + 137px)'
+# výška poľa: hlavička nad 820 px výšky okna a pod ňou (styl.css --hore), najmenšia výška a strop vo vw
+SLIDER_HLAVICKA = 84
+SLIDER_HLAVICKA_NIZKE = 64
+SLIDER_NIZKE_OKNO = 820
+SLIDER_MIN_VYSKA = 480
+SLIDER_MAX_VYSKA_VW = 75
+# od 1080 px výšky okna je v pravom stĺpci hrdinu aj prvý odsek O firme a pole je najmenej také vysoké ako stĺpec
+# s okrajmi mriežky: Chrome zmeral 882 až 974 px pri šírke okna 1024 až 2560 px (krasa-8, Fotky slidera,
+# D:/Temp/.../krasa-8/fotky/pole-okna*.json, doladenie-2 meranie-sweep); sizes ráta s horným odhadom. Prah je ten
+# istý ako v styl.css (max-height:1079px a min-height:1080px): pole so stĺpcom potrebuje okno najviac 974 + 84 =
+# 1058 px (1648 px šírky), pri prahu 960 px stĺpec natiahol fotku pod spodok okna (doladenie-2, nález vážne);
+# 1080 nechá rezervu 22 px a 1920 x 1080 ostáva vysoké okno. Pri zmene textov hrdinu premerať.
+SLIDER_VYSOKE_OKNO = 1079
+SLIDER_STLPEC = 980
+# výška rámu na mobile (4 : 5, do 639 px) a tablete (1 : 1, 640 až 1023 px) ako násobok šírky okna
+SLIDER_RAM_MOBIL = 1.25
+SLIDER_RAM_TABLET = 1.0
+
+
+def _cislo(x, des=2):
+    """Násobok do sizes zaokrúhlený na des desatinných miest (chyba pod 0,01 %). Nie nahor: fotka 16 : 9 na mobile
+    360 px pri hustote 3 je široká presne 2400 px obrazovky a zaokrúhlenie nahor by prehliadač poslalo po súbor
+    2844 px (o 219 kB väčší pri Hrnčiarovciach) kvôli 0,1 px."""
+    return round(x, des) + 0.0
+
+
+def pomer_slidera(w, h, orez=0.0):
+    """Šírka obrázka slidera k výške poľa: pomer fotky, pri orez_dole delený (1 - orez), lebo obrázok je o tú časť
+    vyšší než pole (styl.css .snimka-N img height)."""
+    return (w / h) / (1 - orez)
+
+
+def _nasobky_slidera(w, h, orez=0.0):
+    """Čísla do sizes_slidera: k x 100 (vh), k x hlavička 64 a 84 px, k x 480 px, k x 75 (vw), k x stĺpec hrdinu
+    (px), tablet a mobil (vw)."""
+    k = pomer_slidera(w, h, orez)
+    return (_cislo(k * 100), round(k * SLIDER_HLAVICKA_NIZKE), round(k * SLIDER_HLAVICKA), round(k * SLIDER_MIN_VYSKA),
+            _cislo(k * SLIDER_MAX_VYSKA_VW), round(k * SLIDER_STLPEC), _cislo(100 * max(1.0, k * SLIDER_RAM_TABLET)),
+            _cislo(100 * max(1.0, k * SLIDER_RAM_MOBIL)))
+
+
+def sizes_slidera(w, h, orez=0.0):
+    """sizes fotky slidera w x h (orez = orez_dole z nastavení) pri object-fit: cover v poli slidera: na počítači
+    max(šírka poľa, k x výška poľa), na tablete k x 100vw a na mobile 1,25 k x 100vw (k = pomer_slidera), najmenej
+    šírka poľa. Výška poľa podľa výšky okna: do 820 px 100vh - 64 px (najmenej 480 px), do 1079 px 100vh - 84 px
+    (najviac 75vw), od 1080 px navyše najmenej SLIDER_STLPEC (pravý stĺpec s odsekom O firme). Násobky na stotiny
+    a px na celé (od fotky po cover sa líši najviac o 0,5 px, šírka poľa je horný odhad), takže prehliadač vyberie
+    súbor aspoň taký široký, ako je fotka na obrazovke."""
+    vh, h64, h84, v480, vw75, stlpec, tablet, mobil = _nasobky_slidera(w, h, orez)
+    nizke = (f'(min-width: 1024px) and (max-height: {SLIDER_NIZKE_OKNO}px) max({SLIDER_SIRKA_POLA}, '
+             f'{vh:g}vh - {h64}px, {v480}px)')
+    stredne = (f'(min-width: 1024px) and (max-height: {SLIDER_VYSOKE_OKNO}px) max({SLIDER_SIRKA_POLA}, '
+               f'min({vh:g}vh - {h84}px, {vw75:g}vw))')
+    vysoke = f'(min-width: 1024px) max({SLIDER_SIRKA_POLA}, min({vh:g}vh - {h84}px, {vw75:g}vw), {stlpec}px)'
+    return ', '.join((nizke, stredne, vysoke, f'(min-width: 640px) {tablet:g}vw', f'{mobil:g}vw'))
+
+
+def sizes_slidera_px(w, h, orez, vw, vh):
+    """Dĺžka, ktorú prehliadač vypočíta zo sizes_slidera pri okne vw x vh CSS px (tie isté čísla ako v reťazci),
+    pre testy a merania."""
+    kvh, h64, h84, v480, vw75, stlpec, tablet, mobil = _nasobky_slidera(w, h, orez)
+    if vw >= 1024:
+        sirka = min(0.577 * vw, 0.5 * vw + 137)
+        if vh <= SLIDER_NIZKE_OKNO:
+            return max(sirka, kvh * vh / 100 - h64, v480)
+        vyska = min(kvh * vh / 100 - h84, vw75 * vw / 100)
+        return max(sirka, vyska) if vh <= SLIDER_VYSOKE_OKNO else max(sirka, vyska, stlpec)
+    return (tablet if vw >= 640 else mobil) * vw / 100
+
+
+def pole_slidera_px(vw, vh):
+    """Pole slidera (šírka, výška) v CSS px podľa rozloženia v styl.css pri okne vw x vh bez posuvníka: od 1024 px
+    šírka vw / 2 + obsah / 12 - 5 / 12 medzery mriežky a výška clamp(480px, 100vh - hlavička, 75vw), tablet 1 : 1,
+    mobil 4 : 5 na celú šírku okna. Od 1080 px výšky okna je pole navyše najmenej také vysoké ako pravý stĺpec
+    hrdinu (882 až 974 px, SLIDER_STLPEC), to tu nie je: rozhoduje pri úzkych vysokých oknách (1024 x 1366)."""
+    if vw >= 1024:
+        okraj = min(64.0, max(16.0, 0.039 * vw))
+        medzera = min(24.0, max(12.0, 0.016 * vw))
+        obsah = min(1760.0, vw - 2 * okraj)
+        hore = SLIDER_HLAVICKA_NIZKE if vh <= SLIDER_NIZKE_OKNO else SLIDER_HLAVICKA
+        return vw / 2 + obsah / 12 - 5 * medzera / 12, max(float(SLIDER_MIN_VYSKA), min(vh - hore, SLIDER_MAX_VYSKA_VW * vw / 100))
+    return float(vw), vw * (SLIDER_RAM_TABLET if vw >= 640 else SLIDER_RAM_MOBIL)
+
+
+def sirka_slidera_px(w, h, orez, vw, vh):
+    """Šírka fotky slidera po object-fit: cover v CSS px: max(šírka poľa, pomer_slidera x výška poľa)."""
+    sirka, vyska = pole_slidera_px(vw, vh)
+    return max(sirka, pomer_slidera(w, h, orez) * vyska)
+# fotka slidera širšia než SIRKY[-1] x SIRKA_BLIZKO (predloha 16 : 9, 2844 px) má v AVIF navyše súbor v plnej šírke
+# predlohy: pole na tablete a mobile je 1 : 1 a 4 : 5, takže fotka 16 : 9 je pri hustote 2 až 3 široká 2600 až 2900 px
+# obrazovky (768 x 1024: 2731 px, 390 x 844: 2600 px, 1440 x 900 pri hustote 2: 2901 px, 2560 x 1440: 2411 px)
+SLIDER_MAX_SIRKA = 4000
 # druh stavby na karte zoznamu v jednotnom čísle: prvá zhoda v názve, potom v texte realizácie. Rekonštrukcia
 # a stavebné úpravy nie sú druh stavby (ZMENY-KOLO-1.md 5.1, „bez rekonštrukcie“), karta ukáže druh budovy
 DRUHY_KARTY = (('Polyfunkčný objekt', r'polyfunkčn'), ('Rezidencia', r'rezidenci'), ('Bytové domy', r'bytové domy'),
@@ -1277,10 +1375,13 @@ def sizes_pre_cover(sizes, w, h, ram=POMER_RAMU_COVER):
 GALERIA_BUNKY = {'mriezka': (571, 381), 'malo': (868, 579), 'prva': (1165, 784)}
 ZVACSENIE_MAX = 1.25
 SIZES_PRED_PO = '(min-width:768px) 46vw, calc(100vw - 32px)'
-# blok V médiách na stránke realizácie (ZMENY-KOLO-1.md 5.7): výrez tabuľky 7 z 12 stĺpcov od 1024 px, fotky strán
-# po dvoch v pravom stĺpci (5 z 12), na mobile celá šírka a dve vedľa seba
-SIZES_MEDIA_TABULKA = '(min-width:1024px) min(56vw, 1000px), calc(100vw - 32px)'
-SIZES_MEDIA_STRANA = '(min-width:1024px) min(19vw, 340px), calc(50vw - 24px)'
+# blok V médiách na stránke realizácie (ZMENY-KOLO-1.md 5.7): výrez tabuľky (krasa-8, brána 3: pri 1440 px 765 x
+# 720 px, prevalcoval stránku) 5 z 12 stĺpcov od 1024 px (1440 px: 540 px), od 1536 px 4 z 12 (1920 px: 571 px),
+# na tablete 5 z 8, na mobile celá šírka; plná veľkosť v lightboxe. Fotky strán po dvoch v pravom stĺpci (6 z 12
+# stĺpcov: pri 1440 px 314 px, pri 1920 px 422 px, teda asi 22vw).
+SIZES_MEDIA_TABULKA = ('(min-width:1536px) min(30vw, 580px), (min-width:1024px) 38vw, (min-width:768px) 58vw, '
+                       'calc(100vw - 32px)')
+SIZES_MEDIA_STRANA = '(min-width:1024px) min(22vw, 430px), calc(50vw - 24px)'
 
 
 def nacitaj_pravidla():
@@ -1820,8 +1921,23 @@ class Web:
             for s in self.sirky_variantu(f, fmt):
                 self.variant(r, f, s, fmt)
 
-    def srcset(self, pre, r, f, fmt='webp', orez=''):
-        return ', '.join(f'{esc(pre + self.variant(r, f, s, fmt, orez))} {s}w' for s in self.sirky_variantu(f, fmt, orez))
+    def srcset(self, pre, r, f, fmt='webp', orez='', sirky=None):
+        """srcset fotky vo formáte fmt; sirky (zoznam šírok) nahradí predvolené šírky (slider: sirky_slidera)."""
+        sirky = self.sirky_variantu(f, fmt, orez) if sirky is None else sirky
+        return ', '.join(f'{esc(pre + self.variant(r, f, s, fmt, orez))} {s}w' for s in sirky)
+
+    def sirky_slidera(self, f, fmt):
+        """Šírky súborov fotky slidera: šírky celej fotky a v AVIF navyše plná šírka predlohy, keď je širšia než
+        SIRKY[-1] x SIRKA_BLIZKO (predloha 16 : 9 má 2844 px, pole slidera je takmer štvorcové, krasa-8). Súbor
+        v plnej šírke len z predlohy: hotový vo fotky-web (záznam so súborom) alebo pri pláne predlôh
+        (nastroje/predlohy_web.py, ktorý ho vyrobí); nikdy zväčšený Lanczosom zo zdroja v obsah/."""
+        sirky = self.sirky_variantu(f, fmt)
+        w = f['zaklad'][0]
+        if fmt != 'avif' or not sirky or w <= sirky[-1] or w <= SIRKY[-1] * SIRKA_BLIZKO or w > SLIDER_MAX_SIRKA:
+            return sirky
+        if self.predlohy is not None or (f.get('fw') and self.fotky_web.subor(f['sha'], '', w, 'avif') is not None):
+            return sirky + [w]
+        return sirky
 
     def orez_srcset(self, pre, r, f, kod, fmt='webp'):
         sirky = self.sirky_variantu(f, fmt, kod)
@@ -1829,11 +1945,13 @@ class Web:
         cesty = {s: (self.variant(r, f, s, fmt, kod), max(1, round(s * b / a))) for s in sirky}
         return ', '.join(f'{esc(pre + c)} {s}w' for s, (c, _) in cesty.items()), cesty
 
-    def img(self, pre, r, f, sizes, lcp=False, lazy=True, trieda='', alt=None, orez=None, odlozene=False, zdroje=''):
+    def img(self, pre, r, f, sizes, lcp=False, lazy=True, trieda='', alt=None, orez=None, odlozene=False, zdroje='',
+            sirky_avif=None):
         """Fotka ako <picture>: <source type="image/avif"> so srcset a sizes, potom <img> so WebP (src, srcset,
         sizes, rozmery). zdroje: <source> s media pred AVIF (mobilný výrez pohľadu A). odlozene (karta pásu): v src
         prázdny obrázok, skutočné srcset v data-src, data-srcset a AVIF v data-avif; obal picture so zdrojom AVIF
-        doplní až app.js (source bez srcset by bol neplatný HTML). lcp: fetchpriority=high bez loading=lazy."""
+        doplní až app.js (source bez srcset by bol neplatný HTML). lcp: fetchpriority=high bez loading=lazy.
+        sirky_avif: šírky AVIF namiesto predvolených (slider: sirky_slidera, navyše plná šírka predlohy)."""
         orez = orez or ''
         webp = self.sirky_variantu(f, 'webp', orez)
         srcset = self.srcset(pre, r, f, 'webp', orez)
@@ -1845,7 +1963,7 @@ class Web:
             stred = [s for s in webp if s <= 960]
             w, h = f['max_w'], f['max_h']
         src = self.variant(r, f, stred[-1] if stred else webp[0], 'webp', orez)
-        avif = self.srcset(pre, r, f, 'avif', orez)
+        avif = self.srcset(pre, r, f, 'avif', orez, sirky_avif)
         if lcp:
             nacit = 'fetchpriority="high"'
         elif lazy and not odlozene:
@@ -1874,6 +1992,26 @@ class Web:
             p = SABLONA / f'arimo-{v}.ttf'
             odt += hashlib.sha256(p.read_bytes()).hexdigest()[:16] if p.is_file() else 'x'
         return odt + hashlib.sha256(self.logo_svg.encode('utf-8')).hexdigest()[:16]
+
+    def og_foto(self, f):
+        """Fotka do OG obrázka (cesta k súboru alebo None): zdroj z obsah/, ale pri retušovanej predlohe (fotky-web,
+        predloha.retus) najväčší celý súbor WebP z fotky-web, lebo retuš je len v predlohe a zdroj ju nemá (doladenie-2,
+        overenie 2: og/bmbuilding.jpg z RD Ahoj 01 mal obe rozmazané plochy na gabióne, ktoré web inde zakrýva).
+        Funguje aj v GitHub Actions, predlohy z D: netreba; súbor sa overí sha256 z manifestu. Retušovaná predloha bez
+        použiteľného súboru dá OG bez fotky (zdroj s plochami nikdy)."""
+        if not f:
+            return None
+        z = self.fotky_web.zaznam(f['sha']) if f.get('sha') else None
+        if not z or z['predloha'].get('retus') is not True:
+            return f['zdroj']
+        sirky = sorted((int(k.split('|')[1]) for k in (z.get('subory') or {})
+                        if re.match(r'^\|\d+\|webp$', str(k))), reverse=True)
+        for s in sirky:
+            hotovy = self.fotky_web.subor(f['sha'], '', s, 'webp')
+            if hotovy and hashlib.sha256(Path(hotovy['cesta']).read_bytes()).hexdigest() == hotovy['sha256']:
+                return hotovy['cesta']
+        varuj(f'{f["rel"]}: retušovaná predloha bez súboru WebP vo fotky-web, OG obrázok bez fotky')
+        return None
 
     def registruj_og(self, cesta, foto, nadpis, riadok2, riadok3):
         pismo_odt = self.pismo_odt()
@@ -1971,22 +2109,25 @@ class Web:
         v = f' {vyzva}' if vyzva else ''
         return f'<div class="{trieda}"{v}>{"".join(a)}{navyse}</div>' if a else ''
 
-    def socialne(self):
+    def socialne(self, popisy=False):
         """Sociálne siete ako ikony (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): Facebook z obsah/firma.json, LinkedIn
         konateľa z sablona/nastavenia.json (len https na linkedin.com), Instagram len keď je jeho adresa v nastaveniach
         (profil konateľa, Andrej 24. 11. 2026 večer, len https na instagram.com, inak sa ikona vynechá). Ikona je vlastné
-        SVG z jednej sady, názov siete nesie aria-label odkazu; profil sa otvorí v novej karte (target _blank,
-        rel noopener)."""
+        SVG z jednej sady v štvorcovom čipe (span.siet-cip, krasa-8), názov siete nesie aria-label odkazu; profil sa
+        otvorí v novej karte (target _blank, rel noopener). popisy (Kontakt): za čipom názov siete (span.siet-meno), ktorý
+        CSS ukáže len na počítači; aria-label ním začína, takže viditeľný popis je v prístupnom mene (WCAG 2.5.3)."""
         f = self.firma
         kto = f['konatel'] or 'konateľ'
-        siete = [(f['facebook'], 'Facebook BM Building', SVG_FACEBOOK), (self.linkedin, f'LinkedIn: {kto}', SVG_LINKEDIN),
-                 (self.instagram, f'Instagram: {kto}', SVG_INSTAGRAM)]
-        return [f'<a class="siet" href="{esc(url)}" target="_blank" rel="noopener" aria-label="{esc(meno)}">{svg}</a>'
-                for url, meno, svg in siete if url]
+        siete = [(f['facebook'], 'Facebook BM Building', 'Facebook', SVG_FACEBOOK),
+                 (self.linkedin, f'LinkedIn: {kto}', 'LinkedIn', SVG_LINKEDIN),
+                 (self.instagram, f'Instagram: {kto}', 'Instagram', SVG_INSTAGRAM)]
+        return [f'<a class="siet" href="{esc(url)}" target="_blank" rel="noopener" aria-label="{esc(meno)}">'
+                f'<span class="siet-cip">{svg}</span>' + (f'<span class="siet-meno">{T(kratke)}</span>' if popisy else '')
+                + '</a>' for url, meno, kratke, svg in siete if url]
 
-    def siete(self, trieda=''):
-        """Riadok ikon sociálnych sietí (kontakt na úvode, stránka Kontakt, päta); bez sietí nič."""
-        soc = self.socialne()
+    def siete(self, trieda='', popisy=False):
+        """Riadok ikon sociálnych sietí (Kontakt hneď pod tlačidlami s popismi, päta len čipy); bez sietí nič."""
+        soc = self.socialne(popisy)
         t = f' {trieda}' if trieda else ''
         return f'<p class="siete{t}">{"".join(soc)}</p>' if soc else ''
 
@@ -2013,11 +2154,15 @@ class Web:
                 f'alt="{esc(alt_loga)}" loading="lazy" decoding="async"><span class="vizitka-riadky">{"".join(riadky)}</span></address>')
 
     def kontakt_sekcia(self, pre, hlavna=False, nadpis=None, veta=None):
-        """Sekcia Kontakt z ukážky (U:1075 až U:1149) na svetlejšom podklade: vľavo nadpis, výzva, Zavolať a Napísať
-        e-mail a fakturačné údaje so všetkým zo starého webu (stary-web/kontakt.md, aj bankové spojenie podľa
-        FAKTY-WEB.md r. 14) a Facebook; vpravo karta namiesto ilustračnej mapy (ulica ukážky je vymyslená): kontaktný
-        blok v poradí banneru na plote a pod ním Navigovať (Mapy Google) a Mapy.cz. Je to záver každej stránky okrem
-        /kontakt/, kde je hlavným obsahom (hlavna=True: nadpis h2 Kontaktné údaje, bez výzvy)."""
+        """Sekcia Kontakt z ukážky (U:1075 až U:1149) na svetlejšom podklade (na úvode modrý blok): vľavo nadpis, výzva,
+        Zavolať a Napísať e-mail a hneď pod nimi riadok sietí (čipy, na počítači s popismi, krasa-8); vpravo karta
+        namiesto ilustračnej mapy (ulica ukážky je vymyslená): kontaktný blok v poradí banneru na plote a pod ním
+        Navigovať (Mapy Google) a Mapy.cz; pod oboma fakturačné údaje so všetkým zo starého webu (stary-web/kontakt.md,
+        aj bankové spojenie podľa FAKTY-WEB.md r. 14), na počítači v dvoch stĺpcoch so spoločnými riadkami (trieda
+        kontakt-riadky-N, polovica riadkov nahor; krasa-8, brána 3: pod pripnutou kartou ostávalo 200 až 380 px prázdnej
+        plochy).
+        Je to záver každej stránky okrem /kontakt/, kde je hlavným obsahom (hlavna=True: nadpis h2 Kontaktné údaje,
+        bez výzvy)."""
         f = self.firma
         tk = self.texty['kontakt']
         nadpis = (tk.get('sekcia_nadpis') or 'Kontaktné údaje') if hlavna else (nadpis or 'Kontakt')
@@ -2028,8 +2173,16 @@ class Web:
         pole = [('Obchodné meno', f['meno']), ('Konateľ', f['konatel']), ('Sídlo', adresa), ('IČO', f['ico']),
                 ('IČ DPH', f['ic_dph']), ('Zápis', f['zapis']), ('Bankové spojenie', tk.get('banka', '')),
                 ('Číslo účtu', tk.get('ucet', ''))]
-        dl = ''.join(f'<div><dt>{T(k)}</dt><dd{CISLA if k in ("IČO", "IČ DPH", "Číslo účtu") else ""}>{T(v)}</dd></div>'
-                     for k, v in pole if v)
+        riadky = [(k, v) for k, v in pole if v]
+        # Sídlo ako v údajoch hrdinu: „Podhorská 9,“ a „902 01 Pezinok“ sa vnútri nezalomia (doladenie-1, nález drobné:
+        # pri 360 a 390 px sa PSČ oddelilo od mesta). Na mobile sú údaje v dvoch stĺpcoch a dlhé hodnoty (Sídlo, Zápis)
+        # idú cez oba (trieda fakt-siroky, styl.css do 767 px; doladenie-2), na počítači nič nemení
+        bunky = []
+        for k, v in riadky:
+            trieda = ' class="fakt-siroky"' if k in KONTAKT_SIROKE else ''
+            bunky.append(f'<div{trieda}><dt>{T(k)}</dt><dd{CISLA if k in ("IČO", "IČ DPH", "Číslo účtu") else ""}>'
+                         f'{self.adresa_dvojriadok() if k == "Sídlo" else T(v)}</dd></div>')
+        dl = ''.join(bunky)
         vyzva = '' if hlavna else ' data-vyzva-dole'
         posobnost = tk.get('posobnost', '')
         return (f'<section class="sekcia kontakt" id="kontakt" aria-labelledby="kontakt-nadpis"{vyzva}>'
@@ -2037,14 +2190,16 @@ class Web:
                 f'<h2 class="nadpis" id="kontakt-nadpis">{T(nadpis)}</h2>'
                 + (f'<p class="uvodny">{T(veta)} {T(posobnost)}</p>' if veta else '')
                 + self.akcie('kontakt-akcie', 'data-vyzva-hore' if hlavna else '')
-                # vizitka (telefón, e-mail) v DOM hneď za tlačidlami, na mobile nad fakturačnými údajmi; na počítači
-                # vpravo a pripnutá, fakturačné údaje vľavo pod tlačidlami (overenie kolo 1)
+                # siete hneď pod tlačidlami (krasa-8, brána 3: ikony boli osamotené pod tabuľkou údajov)
+                + self.siete('kontakt-siete', popisy=True)
+                # vizitka (telefón, e-mail) v DOM hneď za tlačidlami a sieťami, na mobile nad fakturačnými údajmi; od 768 px
+                # vpravo vedľa nadpisu, fakturačné údaje pod oboma cez celú šírku (krasa-8: karta už nie je pripnutá)
                 + '</div><div class="kontakt-mapa"><figure class="mapa-karta">'
                 + self.vizitka(pre, alt_loga='Logo BM Building, s.r.o.' if hlavna else '')
                 + f'<figcaption class="mapa-spodok"><a class="tlacidlo tlacidlo-obrys" href="{esc(gmaps)}">Navigovať {SVG_SIPKA}</a>'
                 f'<a class="odkaz-von" href="{esc(mapy)}">Mapy.cz {SVG_VON}</a></figcaption></figure></div>'
-                + f'<div class="kontakt-udaje"><h3 class="kontakt-h">{T(tk.get("udaje_nadpis") or "Fakturačné údaje")}</h3><dl class="fakty kontakt-fakty">{dl}</dl>'
-                + self.siete('kontakt-pozn')
+                + f'<div class="kontakt-udaje"><h3 class="kontakt-h">{T(tk.get("udaje_nadpis") or "Fakturačné údaje")}</h3>'
+                f'<dl class="fakty kontakt-fakty kontakt-riadky-{(len(riadky) + 1) // 2}">{dl}</dl>'
                 + '</div></div></section>')
 
     def zaver(self, pre='', hlavny=None, dalej=None):
@@ -2059,6 +2214,15 @@ class Web:
         return (f'<div class="hlava-stranky{t}"><div class="obsah">{self.omrvinky(pre, kroky) if kroky else ""}'
                 f'<div class="mriezka hlava-mriezka"><h1 class="nadpis-stranky" id="nadpis">{h1_html}</h1>'
                 + (f'<div class="hlava-bok">{bok}</div>' if bok else '') + f'</div>{navyse}</div></div>')
+
+    def poradie_sluzieb(self):
+        """Slugy služieb (texty.json sluzby) v poradí kariet Činnosti na úvode (cinnost_doslova: 1. Stavebný manažment,
+        2. Stavebný dozor, 3. Stavbyvedúci); služba bez karty ide na koniec v pôvodnom poradí. Podmenu Činnosti
+        v mobilnom menu je v tomto poradí (doladenie-1, nález drobné: bolo Stavebný dozor, Stavbyvedúci, manažment)."""
+        karty = [v.get('slug') for k, v in (self.texty.get('cinnost_doslova') or {}).items()
+                 if not k.startswith('_') and isinstance(v, dict)]
+        sluzby = list(self.texty['sluzby'])
+        return sorted(sluzby, key=lambda s: (karty.index(s) if s in karty else len(karty), sluzby.index(s)))
 
     # --- kostra stránky
     def menu(self, pre, aktivne):
@@ -2085,8 +2249,8 @@ class Web:
         for c, t, k in polozky:
             m.append(f'<li>{a(c, t, k)}')
             if k == 'sluzby':
-                m.append('<ul>' + ''.join(f'<li>{a(s + "/", v["menu"], s)}</li>' for s, v in self.texty['sluzby'].items())
-                         + '</ul>')
+                m.append('<ul>' + ''.join(f'<li>{a(s + "/", self.texty["sluzby"][s]["menu"], s)}</li>'
+                                          for s in self.poradie_sluzieb()) + '</ul>')
             m.append('</li>')
         f = self.firma
         tel = ''
@@ -2108,11 +2272,15 @@ class Web:
                 '</div></header>\n')
 
     def pata(self, pre, stlpec_firma=True):
-        """Päta ukážky (U:1152 až U:1161): logo, jedna veta s adresou a IČO, ikony sietí (socialne), odkazy (Oprávnenia,
+        """Päta ukážky (U:1152 až U:1161): logo, jedna veta s adresou a IČO, ikony sietí (socialne, čipy 44 px bez
+        popisov, krasa-8), odkazy (Oprávnenia,
         Ochrana osobných údajov), drobné písmo s © a zápisom v registri a nenápadne „Web: ARLing“.
         Stránky a fakturačné údaje sú v sekcii Kontakt (kontakt_sekcia); stlpec_firma ostáva len pre spätnú zhodu."""
         f = self.firma
-        veta = f'{f["meno"]}, {self.adresa()}.' + (f' IČO {f["ico"]}.' if f['ico'] else '')
+        # adresa po častiach nezalomiteľná a „IČO“ s pevnou medzerou pred číslom (doladenie-1, nález drobné: pri 390 px
+        # končil riadok „Pezinok. IČO“ a číslo bolo na ďalšom)
+        veta = (f'{T(f["meno"])}, {self.adresa_dvojriadok()}.'
+                + (f' IČO {T(f["ico"])}.' if f['ico'] else ''))
         odkazy = []
         odkazy.append(f'<a href="{esc(self.rel(pre, "opravnenia/"))}">Oprávnenia</a>')
         odkazy.append(f'<a href="{esc(self.rel(pre, "ochrana-udajov/"))}">Ochrana osobných údajov</a>')
@@ -2124,7 +2292,7 @@ class Web:
         return ('<footer class="pata" data-vyzva-dole>\n<div class="obsah mriezka pata-mriezka">\n'
                 f'<div class="pata-zaver"><a class="znak pata-znak" href="{esc(self.rel(pre, ""))}"><img src="{esc(pre)}logo.svg" '
                 'width="40" height="40" alt="BM Building, úvod" loading="lazy"></a>'
-                f'<p class="pata-veta">{T(veta)}</p>{self.siete("pata-siete")}<p class="pata-odkazy">{"".join(odkazy)}</p></div>\n'
+                f'<p class="pata-veta">{veta}</p>{self.siete("pata-siete")}<p class="pata-odkazy">{"".join(odkazy)}</p></div>\n'
                 f'<p class="male">{male}</p>\n</div>\n</footer>\n')
 
     def lista(self):
@@ -2226,6 +2394,11 @@ class Web:
         h += [f'<link rel="preload" href="{esc(pre)}fonts/{p}" as="font" type="font/woff2" crossorigin>' for p in PRELOAD_PISMA]
         # úvod: preload fotky pohľadu A (LCP) podľa šírky, aby sa sťahovala hneď s hlavou dokumentu (Lighthouse mobil)
         h += preload_obr or []
+        # logo hlavičky s vysokou prioritou hneď s hlavou dokumentu: inak ako lenivý obrázok s nízkou prioritou čakalo
+        # na písma a fotky a pri Slow 4G sa ukázalo asi 0,7 s po prvom vykreslení (doladenie-2, nález drobné)
+        if self.logo_hlavicka:
+            h.append(f'<link rel="preload" href="{esc(pre)}logo-hlavicka.svg" as="image" type="image/svg+xml" '
+                     'fetchpriority="high">')
         h += ['<meta property="og:locale" content="sk_SK">', f'<meta property="og:type" content="{og_typ}">',
               '<meta property="og:site_name" content="BM Building">',
               f'<meta property="og:title" content="{esc(title)}">']
@@ -2271,24 +2444,21 @@ class Web:
 
     @staticmethod
     def mala_karta(f):
-        """Výrez 4 : 5 zdroja je menší než KARTA_MIN_OREZ: na karte mriežky by bola fotka mäkká (brána bmb-presnost).
-        Fotka s karta_foto cely_ram sa meria predlohou (f['zaklad'], zväčšené Upscaylom), nie zdrojom."""
+        """Výrez 4 : 5 zdroja je menší než KARTA_MIN_OREZ: na karte mriežky je fotka mäkšia (brána bmb-presnost);
+        stránka služby dá do štvorcov kariet najprv fotky s väčším zdrojom. Fotka s karta_foto cely_ram sa meria
+        predlohou (f['zaklad'], zväčšené Upscaylom), nie zdrojom."""
         if not f:
             return False
         w, h = f['zaklad'] if f.get('cely_ram') and f.get('zaklad') else (f['w'], f['h'])
         return orez_rozmer(w, h, OREZY['45'])[0] < KARTA_MIN_OREZ
 
     def img_karty(self, pre, r, f, alt, lcp=False):
-        """Fotka svetlej karty: výrez 4 : 5 cez celý rám, pri malom zdroji (mala_karta) celá fotka 4 : 3 (na výšku
-        3 : 4) v strede rámu na podklade, najviac KARTA_CELA_MAX CSS px a zväčšenie do KARTA_CELA_ZVACSENIE (trieda cap-N).
-        Rám karty ostáva 4 : 5, takže karty v riadku majú rovnakú výšku a polohu kóty, nadpisu a údajov."""
-        if not self.mala_karta(f):
-            return self.img(pre, r, f, SIZES_KARTA, lcp=lcp, alt=alt, orez='45')
-        kod = '43' if f['w'] >= f['h'] else '34'
-        vw, _ = orez_rozmer(f['w'], f['h'], OREZY[kod])
-        cap = max(KARTA_CELA_MIN, min(KARTA_CELA_MAX, int(vw * KARTA_CELA_ZVACSENIE / 2) // 8 * 8))
-        trieda = 'foto-cela' + (' na-vysku' if kod == '34' else '') + (f' cap-{cap}' if cap < KARTA_CELA_MAX else '')
-        return self.img(pre, r, f, sizes_karty_cela(cap), lcp=lcp, alt=alt, orez=kod, trieda=trieda)
+        """Fotka svetlej karty: vždy výrez 4 : 5 cez celý rám (object-fit cover), aj pri malom zdroji (mala_karta).
+        Doladenie-1 (nález vážne, krása asi 6 až 6,5 z 10): zmenšená celá fotka 4 : 3 v strede rámu na rozmazanej kópii
+        (foto-cela a foto-podklad z krasa-8) pôsobila v mriežke ostrých fotiek ako pokazená alebo ešte sa načítavajúca
+        fotka. Výrez malého zdroja je pri hustote 2 a 3 mierne mäkší (vedome, záložné riešenie overenia 1); šírky výrezu
+        idú z predlohy, keď ju fotka má (fotky-web, zväčšené Upscaylom), takže nová predloha kartu sama zaostrí."""
+        return self.img(pre, r, f, SIZES_KARTA, lcp=lcp, alt=alt, orez='45')
 
     def dlazdica(self, pre, r, nadpis='h3', data=False, poradie=0, lcp=False):
         """Svetlá karta realizácie v mriežke (karta pásu ukážky na svetlom podklade, PLAN-1-1.md časť 5): fotka 4 : 5
@@ -2497,6 +2667,7 @@ class Web:
         zoznam = self.nastavenia.get('uvod_slider')
         out = []
         self.slider_orez = {}
+        self.slider_nazov = {}
         if not isinstance(zoznam, list) or not zoznam:
             if self.realizacie:
                 varuj('nastavenia uvod_slider chýba alebo nie je zoznam: úvod bez slidera stavieb')
@@ -2534,6 +2705,17 @@ class Web:
                 orez = 0
             if orez:
                 self.slider_orez[f['rel']] = float(orez)
+            # nazov_mobil: kratší názov stavby v popise pod fotkou do 1023 px, kde má popis jeden riadok na názov
+            # (doladenie-1, nález drobné: dlhý názov sa pri 390 a 360 px skrátil tromi bodkami uprostred slova), a od
+            # doladenia-2 aj v štítku na fotke pri 1024 až 1099 px (celý názov mal až 5 riadkov); len časť úradného
+            # názvu z obsahu, ulica je v riadku miesta; celý názov ostáva od 1100 px a na stránke stavby
+            kratky = polozka.get('nazov_mobil')
+            if kratky is not None:
+                kratky = jeden_riadok(kratky) if isinstance(kratky, str) else ''
+                if 0 < len(kratky) <= 40:
+                    self.slider_nazov[f['rel']] = kratky
+                else:
+                    varuj(f'nastavenia uvod_slider: nazov_mobil fotky {f["rel"]} nie je text 1 až 40 znakov, celý názov')
             out.append((r, f, (float(stred[0]), float(stred[1]))))
         self._slider = out or self.zalozny_slider()
         return self._slider
@@ -2709,7 +2891,12 @@ class Web:
                 telo += f'<p class="cinnost-uvod">{T(jeden_riadok(c[u]))}</p>'
             body = [jeden_riadok(x) for x in self.zoznam_textov(c.get(b), f'cinnost_doslova.{kluc}.{b}') if jeden_riadok(x)]
             if body:
-                dlhe = ' cinnost-body-dlhe' if stlpce and len(body) > 4 else ''
+                # dva stĺpce so spoločnými riadkami (krasa-8): v ľavom stĺpci polovica bodov nahor, trieda riadky-N
+                # (styl.css má N od 3 do RIADKY_ZOZNAMU_MAX); dlhší zoznam ide v stĺpcoch po riadkoch, bez triedy
+                dlhe = ''
+                if stlpce and len(body) > 4:
+                    riadky = (len(body) + 1) // 2
+                    dlhe = ' cinnost-body-dlhe' + (f' riadky-{riadky}' if riadky <= RIADKY_ZOZNAMU_MAX else '')
                 telo += f'<ul class="cinnost-body{dlhe}">' + ''.join(f'<li>{T(x)}</li>' for x in body) + '</ul>'
         return telo
 
@@ -2790,7 +2977,7 @@ class Web:
             karty.append(f'<article class="cinnost-karta" aria-labelledby="{hid}"><div class="cinnost-hlava">'
                          + (f'<span class="cinnost-ikona">{ikona}</span>' if ikona else '')
                          + f'<div class="cinnost-cislo" aria-hidden="true">{self.kota(f"{i:02d}", "kota-velka")}</div>'
-                         f'<h3 class="cinnost-nadpis" id="{hid}">{nadpis}</h3>{self.cinnost_fakty(pre, slug, nadpis)}</div>'
+                         f'<h3 class="cinnost-nadpis" id="{hid}">{nadpis}</h3>{self.cinnost_fakty(pre, slug, nadpis.rstrip(":"))}</div>'
                          f'<div class="cinnost-text">{telo}</div></article>')
         if not karty:
             return ''
@@ -2802,11 +2989,12 @@ class Web:
         """Slider stavieb v úvode (ZMENY-KOLO-1.md 3.3 a 3A.2): fotky v ráme cez seba (prelínanie riadi app.js, 8 s na
         fotku), popis aktuálnej stavby ako štítok v rohu fotky (názov s odkazom na realizáciu, miesto, len roky) a
         nenápadné ovládanie (na počítači na fotke, na mobile pod ňou): počítadlo v štýle kót a tlačidlá Predchádzajúca,
-        Pozastaviť a Ďalšia. Prvá fotka je LCP (eager, fetchpriority high, preload),
+        Pozastaviť a Ďalšia. Prvá fotka je LCP (eager, fetchpriority high, preload s tými istými šírkami a sizes),
         ostatné majú skutočný zdroj v data-src, data-srcset a data-avif (tie isté šírky a kódovanie ako ostatné fotky)
         a app.js ich načíta tesne pred prechodom. Bez JS prvá fotka s popisom, ostatné skryté (NOSCRIPT_CSS
-        img[data-src]) a ovládanie skryté (hidden). Výrez pri orezaní drží stred z nastavení (trieda snimka-N a pravidlo
-        object-position v css_navyse, CSP nedovolí atribút style)."""
+        img[data-src]) a ovládanie skryté (styl.css html:not(.js)). Výrez pri orezaní drží stred z nastavení (trieda snimka-N a pravidlo
+        object-position v css_navyse, CSP nedovolí atribút style). sizes každej fotky podľa jej pomeru a orez_dole
+        (sizes_slidera), AVIF so šírkami sirky_slidera (krasa-8: hustota aspoň 1 aj pri fotke 16 : 9)."""
         t = self.texty['uvod']
         n = len(fotky)
         snimky, popisy, css = [], [], []
@@ -2814,19 +3002,21 @@ class Web:
         for i, (r, f, (sx, sy)) in enumerate(fotky):
             je = ' je' if i == 0 else ''
             alt = self.alt_bez_cisla(f) or self.nazov_s_miestom(r)
-            obr = self.img(pre, r, f, SIZES_SLIDER, lcp=(i == 0), alt=alt, odlozene=(i > 0))
+            # orez_dole: obrázok je vyšší než rám o túto časť, rám (overflow hidden) ju dole odreže pri každom pomere
+            orez = getattr(self, 'slider_orez', {}).get(f['rel'])
+            sizes = sizes_slidera(f['max_w'], f['max_h'], orez or 0.0)
+            sirky_avif = self.sirky_slidera(f, 'avif')
+            obr = self.img(pre, r, f, sizes, lcp=(i == 0), alt=alt, odlozene=(i > 0), sirky_avif=sirky_avif)
             if i == 0:
                 # preload len formátu, ktorý picture naozaj vyberie (AVIF, bez neho WebP): dva by stiahli fotku dvakrát
-                avif = self.srcset(pre, r, f, 'avif')
+                avif = self.srcset(pre, r, f, 'avif', sirky=sirky_avif)
                 typ, s = ('image/avif', avif) if avif else ('image/webp', self.srcset(pre, r, f))
                 preload.append(f'<link rel="preload" as="image" type="{typ}" imagesrcset="{s}" '
-                               f'imagesizes="{SIZES_SLIDER}" fetchpriority="high">')
+                               f'imagesizes="{sizes}" fetchpriority="high">')
             snimky.append(f'<li class="snimka snimka-{i}{je}" data-slug="{esc(r["slug"])}">{obr}</li>')
             pravidla = []
             if (sx, sy) != (0.5, 0.5):
                 pravidla.append(f'object-position:{sx * 100:g}% {sy * 100:g}%')
-            # orez_dole: obrázok je vyšší než rám o túto časť, rám (overflow hidden) ju dole odreže pri každom pomere
-            orez = getattr(self, 'slider_orez', {}).get(f['rel'])
             if orez:
                 pravidla.append(f'height:{100 / (1 - orez):.2f}%')
             if pravidla:
@@ -2835,8 +3025,14 @@ class Web:
             udaje = [T(x) for x in (r['miesto'],) if x]
             roky = self.roky_karty(r)
             if roky:
-                udaje.append(f'<span class="cisla">{T(roky)}</span>')
-            popisy.append(f'<li class="slider-popis{je}"><a href="{url}">{T(r["nazov"])}</a>'
+                # roky sa nezalomia („2018 až“ a „2021“ na dvoch riadkoch v užšom štítku pri 1024 px, doladenie-1)
+                udaje.append(f'<span class="cisla nz">{T(roky)}</span>')
+            # kratší názov do 1099 px (nastavenia uvod_slider nazov_mobil, doladenie-1 a 2): CSS ukáže vždy len jeden
+            # z dvoch spanov (display none ho vynechá aj z prístupného mena odkazu), bez neho celý názov
+            kratky = getattr(self, 'slider_nazov', {}).get(f['rel'])
+            nazov = (f'<span class="slider-nazov">{T(r["nazov"])}</span><span class="slider-nazov-kratky">{T(kratky)}</span>'
+                     if kratky and kratky != r['nazov'] else T(r['nazov']))
+            popisy.append(f'<li class="slider-popis{je}"><a href="{url}">{nazov}</a>'
                           + (f'<span class="slider-udaje">{BODKA.join(udaje)}</span>' if udaje else '') + '</li>')
         self.preload_hrdina = preload
         self.css_slider = '\n'.join(css) + ('\n' if css else '')
@@ -2844,8 +3040,10 @@ class Web:
         ovladanie = ''
         if n > 1:
             # počítadlo ako kóta s pretáčanými číslicami (pohybový jazyk pôvodného webu, ÚVOD v3): pri vstupe do obrazu
-            # sa 01 / 11 raz pretočí (app.js trieda otocene); prvá zmena fotky prepíše číslo aktuálnej fotky textom
-            ovladanie = (f'<div class="slider-ovladanie" role="group" aria-label="{esc(t["slider_ovladanie"])}" hidden>'
+            # sa 01 / 11 raz pretočí (app.js trieda otocene); prvá zmena fotky prepíše číslo aktuálnej fotky textom.
+            # Bez JS skryté cez styl.css html:not(.js), nie atribútom hidden: miesto ovládania je v rozložení od prvého
+            # vykreslenia (doladenie-1: na mobile ho odkryl až app.js a údaje pod ním sa posunuli o 48 px)
+            ovladanie = (f'<div class="slider-ovladanie" role="group" aria-label="{esc(t["slider_ovladanie"])}">'
                          f'<span class="kota slider-pocet"><span class="kota-text cisla otoc"><span class="slider-cislo">'
                          f'{self.valce_cisla("01")}</span><span class="kota-slovo"> / </span>'
                          f'<span class="slider-spolu">{self.valce_cisla(pocet, 2)}</span></span></span>'
@@ -2871,27 +3069,29 @@ class Web:
 
     def o_firme_text(self):
         """Dva odseky O firme pod H1 hrdinu (texty.json uvod.o_firme_hrdina, agent ÚVOD v3: pôvodné znenie sekcie
-        O firme bez vety o výročí). Na počítači vpravo pod H1, na mobile pod fotkou s H1. Bez textov nič."""
+        O firme bez vety o výročí). Na mobile, tablete a v nižších oknách počítača celý blok pod hrdinom; vo vysokom okne
+        počítača (od 1080 px, doladenie-2) prvý odsek vpravo pod H1 a druhý pod fotkou od čiary 8. stĺpca, nadpis len
+        pre čítačku (krasa-8, styl.css display: contents). Bez textov nič."""
         odseky = [jeden_riadok(x) for x in self.zoznam_textov(self.texty['uvod'].get('o_firme_hrdina'), 'uvod.o_firme_hrdina')
                   if jeden_riadok(x)]
         if not odseky:
             return ''
-        # nadtitulok O firme (oprava-2): na mobile a v nižších oknách počítača je blok pod hrdinom a nadtitulok ho
-        # uvedie; vo vysokom okne vpravo pod H1 je len pre čítačku (styl.css .firma-text-nad)
+        # nadtitulok O firme (oprava-2): blok alebo riadok pod hrdinom uvedie (styl.css .firma-text-nad)
         nad = jeden_riadok(self.texty['uvod'].get('o_firme_nadpis')) or 'O firme'
         return ('<div class="firma-text">' + f'<h2 class="firma-text-nad">{T(nad)}</h2>'
                 + ''.join(f'<p>{T(o)}</p>' for o in odseky) + '</div>')
 
     def o_firme_udaje(self, pre):
         """Údaje firmy v hrdinovi úvodu ako rad s ikonami zo vzorov (ZMENY-KOLO-1.md 3A.2) v poradí Sídlo, Na trhu,
-        Konateľ, Oprávnenia (s odkazom na stránku Oprávnenia); Sídlo a Oprávnenia cez celý riadok (udaj-siroky), Na trhu
-        a Konateľ vedľa seba. Ikona je v dt a skrytá pred čítačkou. Pod údajmi malým písmom zdroj (výpis z Obchodného
+        Konateľ, Oprávnenia (s odkazom na stránku Oprávnenia); na mobile Sídlo a Oprávnenia cez celý riadok (udaj-siroky),
+        Na trhu a Konateľ vedľa seba, na počítači 2 x 2 na mriežke (Sídlo a Konateľ 2 stĺpce, Na trhu a Oprávnenia 3 stĺpce,
+        krasa-8). Ikona je v dt a skrytá pred čítačkou. Pod údajmi malým písmom zdroj (výpis z Obchodného
         registra SR, len adresa orsr.sk z obsah/firma.json zapis_or_zdroj) a tlačidlá Zavolať a Napísať e-mail. Odkaz
         Vybrané realizácie je preč aj s tmavým pásom (ZMENY-KOLO-1.md 3A.6)."""
         t = self.texty['uvod']
         fi = self.firma
         na_trhu = f'od roku {fi["den_zapisu"][:4]}' if platny_datum(fi['den_zapisu']) else ''
-        udaje = [('Sídlo', T(self.adresa()), True), ('Na trhu', T(na_trhu), False), ('Konateľ', T(fi['konatel']), False),
+        udaje = [('Sídlo', self.adresa_dvojriadok(), True), ('Na trhu', T(na_trhu), False), ('Konateľ', T(fi['konatel']), False),
                  ('Oprávnenia', f'<a href="{esc(self.rel(pre, "opravnenia/"))}">{T(t["opravnenia"])}</a>', True)]
         def riadky(zoznam):
             return ''.join(f'<div class="udaj{" udaj-siroky" if siroky else ""}{" udaj-media" if siroky == "media" else ""}">'
@@ -2915,6 +3115,28 @@ class Web:
         return (f'<div class="firma-udaje"><dl class="firma-fakty">{dl}</dl>{zdroj}{media}'
                 + self.akcie('uvod-akcie', 'data-vyzva-hore') + '</div>')
 
+    def nadtitulok_uvodu(self, slova):
+        """Riadok kľúčových slov nad H1 (texty.json uvod.nadtitulok, spojené bodkou v strede). Celý text je v jednom span
+        (jedna položka flexu vedľa čiarky), posledné slovo (miesto, „Bratislava a okolie“) aj s bodkou pred ním je
+        v span.uvod-nadtitulok-miesto: styl.css ho v užšom stĺpci skryje, aby sa riadok nezlomil (krasa-8, brána 3).
+        Bez slov nič."""
+        casti = [T(jeden_riadok(x)) for x in self.zoznam_textov(slova, 'uvod.nadtitulok') if jeden_riadok(x)]
+        if not casti:
+            return ''
+        text = BODKA.join(casti[:-1])
+        text = (text + f'<span class="uvod-nadtitulok-miesto">{BODKA}{casti[-1]}</span>') if text else casti[-1]
+        return f'<p class="uvod-nadtitulok"><span>{text}</span></p>'
+
+    def adresa_dvojriadok(self):
+        """Adresa sídla v údajoch hrdinu: ulica s číslom a PSČ s mestom sa vnútri nezalomia (span.nz), v úzkom stĺpci
+        idú pod seba ako na obálke (krasa-8: stĺpec údajov má 2 z 12 stĺpcov mriežky)."""
+        f = self.firma
+        mesto = ' '.join(y for y in (f['psc'], f['mesto']) if y)
+        casti = [T(x) for x in (f['ulica'], mesto) if x]
+        if len(casti) < 2:
+            return T(self.adresa())
+        return f'<span class="nz">{casti[0]},</span> <span class="nz">{casti[1]}</span>'
+
     @staticmethod
     def h1_uvodu(text):
         """H1 úvodu so sadzbou: slovo so spojovníkom (stavebno-manažérska) sa nezalomí (span.nz, Geist nemá U+2011);
@@ -2933,14 +3155,12 @@ class Web:
         pre = ''
         fotky = self.slider_fotky()
         _, f = self.hrdina_foto()
-        self.registruj_og('og/bmbuilding.jpg', f['zdroj'] if f else None, 'Stavebný dozor',
+        self.registruj_og('og/bmbuilding.jpg', self.og_foto(f), 'Stavebný dozor',
                           'Stavbyvedúci a stavebný manažment, Bratislava a okolie', 'bmbuilding.sk')
         self.preload_hrdina, self.css_slider = [], ''
         slider = self.slider(pre, fotky) if fotky else ''
-        nad = BODKA.join(T(jeden_riadok(x)) for x in self.zoznam_textov(t.get('nadtitulok'), 'uvod.nadtitulok')
-                         if jeden_riadok(x))
         hlava = (f'<div class="firma-hlava" id="firma" data-vyzva-hore>'
-                 + (f'<p class="uvod-nadtitulok">{nad}</p>' if nad else '')
+                 + self.nadtitulok_uvodu(t.get('nadtitulok'))
                  + f'<h1 class="uvod-h1" id="uvod-nadpis">{self.h1_uvodu(t["h1"])}</h1></div>')
         casti = [f'<section class="uvod{"" if slider else " bez-slidera"}" aria-labelledby="uvod-nadpis">'
                  f'<div class="obsah mriezka uvod-mriezka">{hlava}{slider}{self.o_firme_text()}'
@@ -3039,8 +3259,11 @@ class Web:
             self.podstranka(cesta, kroky, t['title'], t['description'], telo, k, [sluzba], zaver_dalej=t.get('zaver'))
 
     def filtre(self, zoznam, roky_vyber=True):
-        """Ovládanie filtra a zoradenia pre app.js: bez JS skryté (hidden), zoznam ukazuje všetko v poradí od
-        najnovších. Druh z kategórií build.py, roky po desaťročiach podľa najvyššieho roku v roky, mesto z poľa miesto."""
+        """Ovládanie filtra a zoradenia pre app.js: bez JS skryté (styl.css html:not(.js), triedu js dá vložený skript
+        v hlave pred prvým vykreslením), zoznam ukazuje všetko v poradí od najnovších. Miesto filtra je v rozložení od
+        prvého vykreslenia (doladenie-1, nález vážne: s atribútom hidden ho odkryl až app.js a pri pomalej sieti
+        skočila časová os aj celý zoznam o 236 px nadol, CLS 0,155 pri 390 px). Druh z kategórií build.py, roky po
+        desaťročiach podľa najvyššieho roku v roky, mesto z poľa miesto."""
         pocty = self.pocty_druhov(zoznam)
         druhy = [f'<button class="filter" type="button" data-druh="" aria-pressed="true">Všetky<span>{len(zoznam)}</span></button>']
         for k, nazov in KATEGORIE:
@@ -3076,7 +3299,7 @@ class Web:
         # „od najnovších“ sa orezalo na „od najnovšíc“
         vyber += ('<label class="vyber">Zoradiť <select data-zoradit><option value="najnovsie">najnovšie</option>'
                   '<option value="najstarsie">najstaršie</option><option value="nazov">abecedne</option></select></label>')
-        return (f'<div class="filtre" data-filtre hidden><div class="filtre-druh" role="group" aria-label="Druh stavby">'
+        return (f'<div class="filtre" data-filtre><div class="filtre-druh" role="group" aria-label="Druh stavby">'
                 f'{"".join(druhy)}</div><div class="filtre-vyber">{vyber}</div></div>')
 
     def naraz(self):
@@ -3088,6 +3311,12 @@ class Web:
             varuj('nastavenia realizacie_naraz nie je číslo, použitých ' + str(REALIZACIE_NARAZ))
             n = REALIZACIE_NARAZ
         return max(0, n)
+
+    def stav_zoznamu(self, pocet):
+        """Text riadka stavu zoznamu realizácií pred prvým filtrom, rovnaký ako v app.js (obnov bez výberu):
+        „Zobrazené: N z M“, keď app.js ukáže len prvých naraz() kariet, inak prázdny."""
+        naraz = self.naraz()
+        return f'Zobrazené: {naraz} z {pocet}' if naraz and naraz < pocet else ''
 
     def stranka_realizacii(self):
         t = self.texty['realizacie']
@@ -3130,8 +3359,11 @@ class Web:
                                     for i, r in enumerate(zoznam, 1))
                 # postupné načítanie (zadanie bmb-fb-uplnost bod 4): všetky karty sú v HTML (bez JS viditeľné, odkaz
                 # na každú realizáciu pre vyhľadávače), app.js ukáže prvých data-naraz z výberu a tlačidlo Zobraziť
-                # ďalšie s počtom zvyšných; filter a zoradenie pracujú nad všetkými kartami, nielen nad zobrazenými
-                telo = (hlava + f'\n<div class="obsah zoznam"><p class="filtre-stav" data-stav aria-live="polite"></p>'
+                # ďalšie s počtom zvyšných; filter a zoradenie pracujú nad všetkými kartami, nielen nad zobrazenými.
+                # Riadok stavu má text už v HTML (ten istý, aký napíše app.js bez filtra v adrese, doladenie-1): pri
+                # pomalej sieti sa neobjaví dodatočne; bez JS je skrytý (styl.css html:not(.js)), lebo vidno všetky karty
+                telo = (hlava + f'\n<div class="obsah zoznam"><p class="filtre-stav" data-stav aria-live="polite">'
+                        f'{esc(self.stav_zoznamu(len(zoznam)))}</p>'
                         f'<ul class="karty karty-zoznam" id="zoznam-realizacii" data-zoznam data-naraz="{self.naraz()}">{dlazdice}</ul>'
                         '<p class="viac-obal" data-viac-obal hidden><button class="tlacidlo tlacidlo-obrys" type="button" '
                         'data-viac aria-controls="zoznam-realizacii">Zobraziť ďalšie <span class="viac-pocet" data-viac-pocet></span></button></p>'
@@ -3378,7 +3610,7 @@ class Web:
             galeria = self.galeria(pre, r, nm, udaje_lb)
             obal = r['obal'] or (r['galeria'][0] if r['galeria'] else None)
             og = self.og_cesta_realizacie(r)
-            self.registruj_og(og, obal['zdroj'] if obal else None, r['nazov'],
+            self.registruj_og(og, self.og_foto(obal), r['nazov'],
                               ', '.join(x for x in (r['rola'], r['roky']) if x), 'BM Building, s.r.o., bmbuilding.sk')
             telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_stitok(r))
             # V médiách (ZMENY-KOLO-1.md 5.7) hneď pod textom, pred galériou; fotky bloku idú do toho istého dialógu
@@ -3452,7 +3684,7 @@ class Web:
                       f'<p class="viac"><a class="odkaz-sipka" href="../">Všetky novinky {SVG_SIPKA}</a></p></div>')
             og = f'og/novinka-{n["slug"]}.jpg'
             obal = n['obal'] or (n['galeria'][0] if n['galeria'] else None)
-            self.registruj_og(og, obal['zdroj'] if obal else None, n['nadpis'],
+            self.registruj_og(og, self.og_foto(obal), n['nadpis'],
                               datum_text(n['datum']), 'BM Building, s.r.o., bmbuilding.sk')
             clanok = {'@type': 'Article', '@id': self.abs_url(cesta_n + '#clanok'), 'headline': skrat(n['nadpis'], 110),
                       'url': self.abs_url(cesta_n), 'datePublished': n['datum'], 'inLanguage': 'sk',
@@ -3500,7 +3732,9 @@ class Web:
         cesta = 'kontakt/'
         pre = self.pre(cesta)
         kroky = [('', 'Úvod'), (cesta, 'Kontakt')]
-        telo = (self.hlava_stranky(pre, kroky, t['h1'], bok=f'<p class="uvodny">{T(t["veta"])}</p>')
+        # hlava-kontakt: sekcia hneď pod hlavou má menšie horné odsadenie a menší nadpis Kontaktné údaje (styl.css
+        # .hlava-kontakt+.kontakt; doladenie-1, nález drobné: pri 1440 px 165 px prázdnej plochy a dva veľké nadpisy)
+        telo = (self.hlava_stranky(pre, kroky, t['h1'], bok=f'<p class="uvodny">{T(t["veta"])}</p>', trieda='hlava-kontakt')
                 + '\n' + self.kontakt_sekcia(pre, hlavna=True))
         # jeden uzol WebPage a ContactPage s @id namiesto dvoch uzlov pre tú istú URL (brána pokus 2, správnosť 7)
         self.podstranka(cesta, kroky, t['title'], t['description'], telo, 'kontakt', [], zaver=False,

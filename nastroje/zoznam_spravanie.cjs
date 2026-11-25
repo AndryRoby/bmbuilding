@@ -6,6 +6,7 @@
    Vstup (JSON na stdin):
      app_js   cesta k app.js (z výstupu build.py),
      naraz    hodnota data-naraz zoznamu,
+     stav     text riadka stavu z HTML (build.py ho píše pred prvým filtrom, doladenie 1),
      karty    [{poradie, druh, rok, mesto, nazov}] z vykreslenej stránky /realizacie/ v poradí HTML,
      druhy    hodnoty data-druh tlačidiel filtra, roky, mesta a zoradit hodnoty option zo selectov,
      search   počiatočná časť adresy ?… (napríklad "?zoradit=najstarsie"),
@@ -93,16 +94,18 @@ function sedi(e, cast, koren) {
   return i < 0;
 }
 
-// dokument podľa markup build.py (Web.realizacie_zoznam): filtre, stav, zoznam, Zobraziť ďalšie, prázdny výsledok
+// dokument podľa markup build.py (Web.realizacie_zoznam): filtre, stav, zoznam, Zobraziť ďalšie, prázdny výsledok.
+// Od doladenia 1 (25. 11. 2026) má filter v HTML miesto od prvého vykreslenia (bez atribútu hidden, bez JS ho skryje
+// styl.css html:not(.js)) a riadok stavu má text z build.py (vstup.stav), ktorý app.js prepíše len pri inom stave.
 const E = (tag, attrs, text) => new El(tag, attrs, text);
 const html = E('html');
-const filtre = E('div', { class: 'filtre', 'data-filtre': '', hidden: '' });
+const filtre = E('div', { class: 'filtre', 'data-filtre': '' });
 filtre.pridaj(...vstup.druhy.map((x) => E('button', { class: 'filter', 'data-druh': x, 'aria-pressed': x ? 'false' : 'true' }, x || 'Všetky')));
 const sel = (atr, hodnoty) => E('select', { [atr]: '' }).pridaj(...hodnoty.map((v) => E('option', { value: v }, v)));
 if (vstup.roky) filtre.appendChild(sel('data-roky', vstup.roky));
 if (vstup.mesta) filtre.appendChild(sel('data-mesto', vstup.mesta));
 if (vstup.zoradit) filtre.appendChild(sel('data-zoradit', vstup.zoradit));
-const stav = E('p', { class: 'filtre-stav', 'data-stav': '', 'aria-live': 'polite' });
+const stav = E('p', { class: 'filtre-stav', 'data-stav': '', 'aria-live': 'polite' }, vstup.stav || '');
 const zoznam = E('ul', { class: 'karty karty-zoznam', id: 'zoznam-realizacii', 'data-zoznam': '', 'data-naraz': vstup.naraz });
 vstup.karty.forEach((k) => {
   const a = E('a', { href: '../realizacie/x/' }, k.nazov);

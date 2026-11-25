@@ -327,47 +327,33 @@
     "webp": 0.997
    },
    "subory": {
-    "43|480|avif": {
-     "subor": "0579d45e80d1a9b6/480-43.avif",
+    "45|480|avif": {
+     "subor": "0579d45e80d1a9b6/480-45.avif",
      "w": 480,
-     "h": 360,
-     "bajty": 34358,
-     "sha256": "a0a789234e19c1ec371d3147da3d2c00e5c949b80bb020bc5be43a0668b516b6"
+     "h": 600,
+     "bajty": 52295,
+     "sha256": "691a8b3e2ebab9bba9b8b9f943752a8f170652883699a710328e10f54dcbdae4"
     },
-    "43|480|webp": {
-     "subor": "0579d45e80d1a9b6/480-43.webp",
+    "45|480|webp": {
+     "subor": "0579d45e80d1a9b6/480-45.webp",
      "w": 480,
-     "h": 360,
-     "bajty": 35398,
-     "sha256": "64d7b496993c13a9862808c57bdb0aa9c0b7efa4f9a52ebcb6db4316fdfcc586"
+     "h": 600,
+     "bajty": 55898,
+     "sha256": "eaf468244392d9b047322cfb73375d85c5274ba93cc9806f98ada4f9bd2f3886"
     },
-    "43|720|avif": {
-     "subor": "0579d45e80d1a9b6/720-43.avif",
-     "w": 720,
-     "h": 540,
-     "bajty": 73573,
-     "sha256": "8cf35b3c88f8096a4a6d2b18df4405e20902854f6def066cbf94c20330c6fee2"
-    },
-    "43|720|webp": {
-     "subor": "0579d45e80d1a9b6/720-43.webp",
-     "w": 720,
-     "h": 540,
-     "bajty": 75848,
-     "sha256": "0597871228946995313996dd027639daa5185ae9424664cf30c2aee779e19a10"
-    },
-    "43|896|avif": {
-     "subor": "0579d45e80d1a9b6/896-43.avif",
-     "w": 896,
+    "45|538|avif": {
+     "subor": "0579d45e80d1a9b6/538-45.avif",
+     "w": 538,
      "h": 672,
-     "bajty": 105933,
-     "sha256": "debdb43c4397cec78a674a5975d43a3a73d36878c6cf152bfbb43ee7b55b8bf3"
+     "bajty": 51202,
+     "sha256": "2527fbda0cf036d42f6a78cba0fb40d4298e58e4ecf81b18940000e92e69072f"
     },
-    "43|896|webp": {
-     "subor": "0579d45e80d1a9b6/896-43.webp",
-     "w": 896,
+    "45|538|webp": {
+     "subor": "0579d45e80d1a9b6/538-45.webp",
+     "w": 538,
      "h": 672,
-     "bajty": 111746,
-     "sha256": "a352e6f3fd6962d21a69d7f46393cc801b5e2b1f316f73dd9c28795167a6e888"
+     "bajty": 66942,
+     "sha256": "f0ce9ea4e303f1a62ad2a4e710ad9f296906b2c20054248fe6ee60b1405770cf"
     },
     "|480|avif": {
      "subor": "0579d45e80d1a9b6/480.avif",
@@ -5662,47 +5648,33 @@
     "webp": 0.997
    },
    "subory": {
-    "43|480|avif": {
-     "subor": "415de6b444aa6764/480-43.avif",
+    "45|480|avif": {
+     "subor": "415de6b444aa6764/480-45.avif",
      "w": 480,
-     "h": 360,
-     "bajty": 20134,
-     "sha256": "91c33188f75dcb5acc2ae243af5c7af9e51bf8bbdb18deaf2c9c4c74eedb6e86"
+     "h": 600,
+     "bajty": 21730,
+     "sha256": "13d68f9532e9a69091e2dd3fe77d1e1345ab2417da051bbdf6ddf0f0e362d330"
     },
-    "43|480|webp": {
-     "subor": "415de6b444aa6764/480-43.webp",
+    "45|480|webp": {
+     "subor": "415de6b444aa6764/480-45.webp",
      "w": 480,
-     "h": 360,
-     "bajty": 26592,
-     "sha256": "f0188550609795898c81fa6d7f2c37974f1db46f5674cd3b7252c0a6a109a632"
+     "h": 600,
+     "bajty": 31128,
+     "sha256": "c22e4191e29fb16054c3ffa3784ecaf443afdbccf05e9f87d895f8d886fde2a3"
     },
-    "43|720|avif": {
-     "subor": "415de6b444aa6764/720-43.avif",
-     "w": 720,
-     "h": 540,
-     "bajty": 37685,
-     "sha256": "115e3c83e8b7b36c81e44a75c3d65a6f55253d5ecee02d0d0605a850f99e2fc4"
-    },
-    "43|720|webp": {
-     "subor": "415de6b444aa6764/720-43.webp",
-     "w": 720,
-     "h": 540,
-     "bajty": 50638,
-     "sha256": "1edc21d955c6071e2f5b70487f2205c9b6f79b58b50766892b034764e2b7d584"
-    },
-    "43|853|avif": {
-     "subor": "415de6b444aa6764/853-43.avif",
-     "w": 853,
+    "45|512|avif": {
+     "subor": "415de6b444aa6764/512-45.avif",
+     "w": 512,
      "h": 640,
-     "bajty": 46561,
-     "sha256": "1c9edcba0ec42574c25466cb3ef5c05ecdcdabc587676e59abd32b981589b5f2"
+     "bajty": 24502,
+     "sha256": "b89f4ee028ee6ba843b094d041215bcd685b2bcc5b0a14dbf3cc59fc77d97f9a"
     },
-    "43|853|webp": {
-     "subor": "415de6b444aa6764/853-43.webp",
-     "w": 853,
+    "45|512|webp": {
+     "subor": "415de6b444aa6764/512-45.webp",
+     "w": 512,
      "h": 640,
-     "bajty": 64856,
-     "sha256": "b2a6e594e81dccf2c521d736fda478e7818bd1da544eedf687a54a176d843cd4"
+     "bajty": 32384,
+     "sha256": "15cde7dfd68411665a399de6e7008afaf9658e9435e9c1f9c3950a37860a189f"
     },
     "|1440|webp": {
      "subor": "415de6b444aa6764/1440.webp",
@@ -8373,7 +8345,7 @@
   },
   "5c92e95f50c387a90772a92d24c1d11053ea4cbb1c58abe165a11581355670c3": {
    "rel": "filmovy-klub-lumiere-spitalska-bratislava/08.jpg",
-   "kluc": "30653efa590b5cca3c33",
+   "kluc": "3f6ca03b311b27f429a8",
    "predloha": {
     "w": 2133,
     "h": 1600,
@@ -8393,43 +8365,79 @@
      "subor": "5c92e95f50c387a9/480-45.avif",
      "w": 480,
      "h": 600,
-     "bajty": 37617,
-     "sha256": "213824b178f1b7a3458672653135bd546c281ea6f29696537d953c2590b380b5"
+     "bajty": 34756,
+     "sha256": "2cb5e36599f505166b6691d7f65b3cbdb62957b627e8424ad2f094c18e6646bb",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "45|480|webp": {
      "subor": "5c92e95f50c387a9/480-45.webp",
      "w": 480,
      "h": 600,
-     "bajty": 47578,
-     "sha256": "4ada7072855a033bf339e2338cc277cf52bfd171d08fcc57058d51761d5e729b"
+     "bajty": 44274,
+     "sha256": "ecf837ebcfb0c4317508d0b2b9f73863a796dae21e6754d3923aeb1285da6589",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "45|720|avif": {
      "subor": "5c92e95f50c387a9/720-45.avif",
      "w": 720,
      "h": 900,
-     "bajty": 82748,
-     "sha256": "9aec93800423489c412f6747e0bcb47540773f5a5ed4ec4ca288619c4af4510f"
+     "bajty": 74912,
+     "sha256": "215b73395e6ce42021814d4834eab7bb1b9470b3c375c0ce1935d2dc0768531f",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "45|720|webp": {
      "subor": "5c92e95f50c387a9/720-45.webp",
      "w": 720,
      "h": 900,
-     "bajty": 102348,
-     "sha256": "94b43dc49db9da6310f25b623b790aa916ee663cf1b7838968dd314f0e004f96"
+     "bajty": 94864,
+     "sha256": "f5698915d4512eb926d851799de368de898282b4f7eb9e91c0999e2274892374",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "45|960|avif": {
      "subor": "5c92e95f50c387a9/960-45.avif",
      "w": 960,
      "h": 1200,
-     "bajty": 126226,
-     "sha256": "3ac1ecff121e947db16c0b6f95803cafc3ce16a855377b354b6753984a5ad568"
+     "bajty": 113397,
+     "sha256": "ad5d38b0639f7fc43420d049151766cab1f47f05b3b4473fff756f1c746eb331",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "45|960|webp": {
      "subor": "5c92e95f50c387a9/960-45.webp",
      "w": 960,
      "h": 1200,
-     "bajty": 162352,
-     "sha256": "95c2ed031640c82a13579f3854a71445c90e65e244a38b2be5e3411dd9ae7ef0"
+     "bajty": 145200,
+     "sha256": "4b4fada0cc6c4b55022d1c0a56621b24d60620319ff0e5aea077f7922f3ba29e",
+     "vyrez": [
+      0.0,
+      0.0,
+      0.7,
+      1.0
+     ]
     },
     "|1440|avif": {
      "subor": "5c92e95f50c387a9/1440.avif",
@@ -12813,47 +12821,47 @@
     "webp": 0.997
    },
    "subory": {
-    "43|480|avif": {
-     "subor": "859c0e89707436a1/480-43.avif",
+    "45|480|avif": {
+     "subor": "859c0e89707436a1/480-45.avif",
      "w": 480,
-     "h": 360,
-     "bajty": 20959,
-     "sha256": "9dc946a90f58303bbe93680311b20bfb469d634615f96fbcb85e9cc1f25b8809"
+     "h": 600,
+     "bajty": 24694,
+     "sha256": "47c316dac65c4bc87f87adcd2108ed3b85786a47edb690bcb3f131298b1bdca8"
     },
-    "43|480|webp": {
-     "subor": "859c0e89707436a1/480-43.webp",
+    "45|480|webp": {
+     "subor": "859c0e89707436a1/480-45.webp",
      "w": 480,
-     "h": 360,
-     "bajty": 26568,
-     "sha256": "6f2470bc0f3ccf627ae19cc99c4c5550a17650b6dc834692fb4aed37614f2cb8"
+     "h": 600,
+     "bajty": 34832,
+     "sha256": "34bbdffa4e9dd0e4e0cf0ce9ccd90db7251549742bfeb3377674d7e9d216d07f"
     },
-    "43|720|avif": {
-     "subor": "859c0e89707436a1/720-43.avif",
+    "45|720|avif": {
+     "subor": "859c0e89707436a1/720-45.avif",
      "w": 720,
-     "h": 540,
-     "bajty": 37859,
-     "sha256": "ef5f6a537dbd513f78363362f47eec2e8324576039b840cfb4f0704864c0afa8"
+     "h": 900,
+     "bajty": 36031,
+     "sha256": "4278b1a15139ddc4ead6d2115ebf35abcafa9811e7577e81c1e2957c4e4a3188"
     },
-    "43|720|webp": {
-     "subor": "859c0e89707436a1/720-43.webp",
+    "45|720|webp": {
+     "subor": "859c0e89707436a1/720-45.webp",
      "w": 720,
-     "h": 540,
-     "bajty": 50076,
-     "sha256": "1b6b3b90b39dd5e64d84be778c3a5048c884e23a896c211c44e699fcf9996c54"
+     "h": 900,
+     "bajty": 55490,
+     "sha256": "8d3155674e3c0e9c41f0b20784b57fd3cd4c69335b1c9e7dc7f159e9311e8a02"
     },
-    "43|960|avif": {
-     "subor": "859c0e89707436a1/960-43.avif",
-     "w": 960,
-     "h": 720,
-     "bajty": 48861,
-     "sha256": "697410deeab211a6d4e6919470a36e54c99e759bb657786c1b65e7da17790a2f"
+    "45|768|avif": {
+     "subor": "859c0e89707436a1/768-45.avif",
+     "w": 768,
+     "h": 960,
+     "bajty": 32527,
+     "sha256": "2204af8be5abad76d380d82a80c8b1e74743a0babcfd2c213ec5b71be904e035"
     },
-    "43|960|webp": {
-     "subor": "859c0e89707436a1/960-43.webp",
-     "w": 960,
-     "h": 720,
-     "bajty": 70468,
-     "sha256": "155fdfc5985e5cad3778cb4fb45bbd41889e9852e95ab7e41d0c4d0b2f1f342a"
+    "45|768|webp": {
+     "subor": "859c0e89707436a1/768-45.webp",
+     "w": 768,
+     "h": 960,
+     "bajty": 56204,
+     "sha256": "628fa2501ee9d2d03656e02aba6cf6bad05f22b541b1f9cce1e2ca754b512389"
     },
     "|1280|avif": {
      "subor": "859c0e89707436a1/1280.avif",
@@ -16266,6 +16274,13 @@
      "bajty": 359228,
      "sha256": "d70af8269721b0bd926b56d2ab3b4780bcb3e061cdae86ded13320b21723c5fe"
     },
+    "|2844|avif": {
+     "subor": "b2dedd04a3ad1051/2844.avif",
+     "w": 2844,
+     "h": 1600,
+     "bajty": 483160,
+     "sha256": "3482d9c90171cb18b428a0181836f0ff555fabf2cc0949797413d8f79c2fdeda"
+    },
     "|480|avif": {
      "subor": "b2dedd04a3ad1051/480.avif",
      "w": 480,
@@ -17391,47 +17406,47 @@
     "webp": 0.997
    },
    "subory": {
-    "34|480|avif": {
-     "subor": "bf94629c5d8f52d5/480-34.avif",
+    "45|480|avif": {
+     "subor": "bf94629c5d8f52d5/480-45.avif",
      "w": 480,
-     "h": 640,
-     "bajty": 56339,
-     "sha256": "f0d0a676a90227518fd54eca4b4e140a998b323ea10733ae944b1db4c3bcd092"
+     "h": 600,
+     "bajty": 52504,
+     "sha256": "ff3e8f3ff6a5445aa17b6ea9cd5a136701eac1f43098a066639b0ba930f37976"
     },
-    "34|480|webp": {
-     "subor": "bf94629c5d8f52d5/480-34.webp",
+    "45|480|webp": {
+     "subor": "bf94629c5d8f52d5/480-45.webp",
      "w": 480,
-     "h": 640,
-     "bajty": 62440,
-     "sha256": "295c9a14504003d69ca52ce5593dae815130e1d2b267600bb3d03b36bd586f54"
+     "h": 600,
+     "bajty": 58588,
+     "sha256": "22b6566318062aecd0fa4441fc773df541a41840d8a2f148c8c0726722433444"
     },
-    "34|720|avif": {
-     "subor": "bf94629c5d8f52d5/720-34.avif",
+    "45|720|avif": {
+     "subor": "bf94629c5d8f52d5/720-45.avif",
      "w": 720,
-     "h": 960,
-     "bajty": 80500,
-     "sha256": "ac021b2c1f42169b4ea10b979b8668360b049de919ee96b40eae96cc7836974a"
+     "h": 900,
+     "bajty": 75966,
+     "sha256": "4556381bda71d7ab645e398d57dbe1c93bf28454059bb1af8615b92c4e0efb60"
     },
-    "34|720|webp": {
-     "subor": "bf94629c5d8f52d5/720-34.webp",
+    "45|720|webp": {
+     "subor": "bf94629c5d8f52d5/720-45.webp",
      "w": 720,
-     "h": 960,
-     "bajty": 102998,
-     "sha256": "d343540759c46745b7a10b6096bc3b97d1d097f4efd544991f960f31e8891ebf"
+     "h": 900,
+     "bajty": 96034,
+     "sha256": "68c2ad9beb1581add5f615e8273da7210a27a64c42124e6c2f08d41a4808e73d"
     },
-    "34|960|avif": {
-     "subor": "bf94629c5d8f52d5/960-34.avif",
+    "45|960|avif": {
+     "subor": "bf94629c5d8f52d5/960-45.avif",
      "w": 960,
-     "h": 1280,
-     "bajty": 129081,
-     "sha256": "fcacc085cd70cedc8e9a78055e065ce5be3f0118541bb286eef80704f95bff98"
+     "h": 1200,
+     "bajty": 121025,
+     "sha256": "bfbf42181a37f393b76ed7f6f856891df21cb6d1028bd676b435033a3717dffd"
     },
-    "34|960|webp": {
-     "subor": "bf94629c5d8f52d5/960-34.webp",
+    "45|960|webp": {
+     "subor": "bf94629c5d8f52d5/960-45.webp",
      "w": 960,
-     "h": 1280,
-     "bajty": 150682,
-     "sha256": "0966d9bb44202c0233f862e94cd42ea366f88d468dd0d339d4feca42a5b3fbaf"
+     "h": 1200,
+     "bajty": 141054,
+     "sha256": "ad30b5c27f98476942397ea24e123a8dc1d8bfecaa7b0fa7f5716d61898f18dd"
     },
     "|1440|avif": {
      "subor": "bf94629c5d8f52d5/1440.avif",
@@ -18127,6 +18142,13 @@
      "h": 1350,
      "bajty": 613510,
      "sha256": "fdd7dea87dbac4460eab30e5db242d05c19745424088cabc70c639bfa0f550d9"
+    },
+    "|2844|avif": {
+     "subor": "c6feb5b881d2e1a4/2844.avif",
+     "w": 2844,
+     "h": 1600,
+     "bajty": 832615,
+     "sha256": "1fa0208b8daae420ed3c4b7f5b416666e673950b0ef994695edd7b8d46833ec3"
     },
     "|480|avif": {
      "subor": "c6feb5b881d2e1a4/480.avif",
@@ -19197,47 +19219,47 @@
     "webp": 0.997
    },
    "subory": {
-    "43|480|avif": {
-     "subor": "d4247b8990f30b83/480-43.avif",
+    "45|480|avif": {
+     "subor": "d4247b8990f30b83/480-45.avif",
      "w": 480,
-     "h": 360,
-     "bajty": 23516,
-     "sha256": "8a6b4f96a06a5ea6931a3dcefebab1b2dea858460eb8bff98ae4baaa2f478413"
+     "h": 600,
+     "bajty": 29377,
+     "sha256": "fcf504075dd59fc4ba501a3725562910e048a86be4c61c026f185a537795d71f"
     },
-    "43|480|webp": {
-     "subor": "d4247b8990f30b83/480-43.webp",
+    "45|480|webp": {
+     "subor": "d4247b8990f30b83/480-45.webp",
      "w": 480,
-     "h": 360,
-     "bajty": 28282,
-     "sha256": "c09260ea57b490982c137aaaf86598a6ff07fac17accf596d0eb89914284f572"
+     "h": 600,
+     "bajty": 36374,
+     "sha256": "a824bc9d27943bd32c4469245c2f686e71c45fb4a2a937894fda25a7cca7b3b5"
     },
-    "43|720|avif": {
-     "subor": "d4247b8990f30b83/720-43.avif",
+    "45|720|avif": {
+     "subor": "d4247b8990f30b83/720-45.avif",
      "w": 720,
-     "h": 540,
-     "bajty": 44346,
-     "sha256": "04fca070de51b8ffae1503f795d43dd6d855dacaa5714e61624229e4d4f3ec75"
+     "h": 900,
+     "bajty": 48499,
+     "sha256": "694181207f04cd86b42906d7c172d599fb81f4a51ec382ce368c562fe059cdd5"
     },
-    "43|720|webp": {
-     "subor": "d4247b8990f30b83/720-43.webp",
+    "45|720|webp": {
+     "subor": "d4247b8990f30b83/720-45.webp",
      "w": 720,
-     "h": 540,
-     "bajty": 53028,
-     "sha256": "3f7603bda0bc87460c4334038d877f48c4aa75c035174033af5be0d7686811d7"
+     "h": 900,
+     "bajty": 61544,
+     "sha256": "b38a2149e9dfb1f8717261c7862a74e60ae348db6ee28f2555b6968290cc3beb"
     },
-    "43|960|avif": {
-     "subor": "d4247b8990f30b83/960-43.avif",
+    "45|960|avif": {
+     "subor": "d4247b8990f30b83/960-45.avif",
      "w": 960,
-     "h": 720,
-     "bajty": 60004,
-     "sha256": "b766b586fcac56e1f911f094866a32f74b53eb2ad7b4976c5e447d296f952ec6"
+     "h": 1200,
+     "bajty": 63489,
+     "sha256": "aaf41f605239a4f8e0b04281efff5499cb24f5bd737bc6ede07aa1d79b0be139"
     },
-    "43|960|webp": {
-     "subor": "d4247b8990f30b83/960-43.webp",
+    "45|960|webp": {
+     "subor": "d4247b8990f30b83/960-45.webp",
      "w": 960,
-     "h": 720,
-     "bajty": 80444,
-     "sha256": "cc17bd79711dfc714322e142ddf8e67e54bbe0364c733fbb328d7e2f186a3668"
+     "h": 1200,
+     "bajty": 85780,
+     "sha256": "76a31ebf27cd7f3e5f53cea5fa63953f7033e9dd05af67a12ec3d3af970fab14"
     },
     "|1440|avif": {
      "subor": "d4247b8990f30b83/1440.avif",
@@ -21349,47 +21371,47 @@
     "webp": 0.997
    },
    "subory": {
-    "43|480|avif": {
-     "subor": "edc1186734f410e3/480-43.avif",
+    "45|480|avif": {
+     "subor": "edc1186734f410e3/480-45.avif",
      "w": 480,
-     "h": 360,
-     "bajty": 38556,
-     "sha256": "1e911e75cd61194177831fa2cf5a4fb45c804e1ed3cbfab8133a441f2931dcbd"
+     "h": 600,
+     "bajty": 49792,
+     "sha256": "cf22f0d06044ba903f5ebf05c97644162ed77af0b01a8d8d2ef404791a8f55b6"
     },
-    "43|480|webp": {
-     "subor": "edc1186734f410e3/480-43.webp",
+    "45|480|webp": {
+     "subor": "edc1186734f410e3/480-45.webp",
      "w": 480,
-     "h": 360,
-     "bajty": 43600,
-     "sha256": "b25d4b2800a77e84eb957d68d14f07d81b694f42457b2f9f9d420ee9ee4264b1"
+     "h": 600,
+     "bajty": 60894,
+     "sha256": "273c3b2796a412054878e1d42ae3ec778e2bdab4eb57757908fa299bcce3d9d0"
     },
-    "43|720|avif": {
-     "subor": "edc1186734f410e3/720-43.avif",
+    "45|720|avif": {
+     "subor": "edc1186734f410e3/720-45.avif",
      "w": 720,
-     "h": 540,
-     "bajty": 75734,
-     "sha256": "a1957f1011f1e682cc7dbd3c767dca6649e7edab417d8695838b423f8b57982d"
+     "h": 900,
+     "bajty": 74279,
+     "sha256": "39205da8cdb33b858588a7d9e8197f6a7ed87d3e82e22d1136d3e43b6534abc9"
     },
-    "43|720|webp": {
-     "subor": "edc1186734f410e3/720-43.webp",
+    "45|720|webp": {
+     "subor": "edc1186734f410e3/720-45.webp",
      "w": 720,
-     "h": 540,
-     "bajty": 88336,
-     "sha256": "60f93076e54edc72d43bb1957b444e45e6a015ebe3c16a2c3f84d706694bcd53"
+     "h": 900,
+     "bajty": 101654,
+     "sha256": "71fa1e0758fa0a0b069b2dab9c1bed1a0cc573cd45f892f73dfe287160be5fe3"
     },
-    "43|960|avif": {
-     "subor": "edc1186734f410e3/960-43.avif",
-     "w": 960,
-     "h": 720,
-     "bajty": 105387,
-     "sha256": "9a98b02965933b05dc54740c20ff6cc0213c25be6b9a274c7be1475f5a7578f5"
+    "45|851|avif": {
+     "subor": "edc1186734f410e3/851-45.avif",
+     "w": 851,
+     "h": 1064,
+     "bajty": 83657,
+     "sha256": "6552012ae88168e1f86cd4a1b8b3b770da5be7330fc46fd83e6ddfa773da0e1c"
     },
-    "43|960|webp": {
-     "subor": "edc1186734f410e3/960-43.webp",
-     "w": 960,
-     "h": 720,
-     "bajty": 131756,
-     "sha256": "364ee6e821c0ce38cf01f83a30fe2dd903a1c1478d2a6395bb93cc85fa750204"
+    "45|851|webp": {
+     "subor": "edc1186734f410e3/851-45.webp",
+     "w": 851,
+     "h": 1064,
+     "bajty": 116554,
+     "sha256": "67ee8997b292728382f642c0cb2d50b6d7b900ee3add732a7776a258beb5974b"
     },
     "|1440|avif": {
      "subor": "edc1186734f410e3/1440.avif",

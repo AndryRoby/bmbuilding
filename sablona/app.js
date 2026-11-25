@@ -9,6 +9,10 @@
   'use strict';
   window.BMB = 1;
   var d = document;
+  // trieda js (vložený skript v hlave ju dá pred prvým vykreslením a zruší pri DOMContentLoaded len vtedy, keď tento
+  // súbor nepribehol, napr. chyba načítania; odložený skript sa spustí vždy pred DOMContentLoaded, aj na pomalej
+  // sieti, doladenie-2); pridanie tu je len poistka, aby filter a ovládanie slidera nikdy neostali skryté
+  d.documentElement.classList.add('js');
   var maIO = 'IntersectionObserver' in window;
   var pohyb = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function vsetky(sel, koren) { return Array.prototype.slice.call((koren || d).querySelectorAll(sel)); }
@@ -172,7 +176,6 @@
     slider.style.setProperty('--prelinanie', (pohyb ? prelinanie : 0) + 'ms');
     var pauza = slider.querySelector('[data-slider="pauza"]');
     if (pauza) pauza.setAttribute('aria-pressed', dovody.tlacidlo ? 'true' : 'false');
-    ovladanie.hidden = false;
 
     // počítadlo: mení sa len skrytý text pre čítačku a číslica každého valca (trieda c0 až c9), markup kóty ostane,
     // takže každé číslo má to isté písmo a šírku ako prvé 01 a číslica sa pretočí o krok (overenie-1, nález drobné:
@@ -193,12 +196,17 @@
       var img = obrazok(j);
       if (img && img.hasAttribute('data-src')) nacitaj(img);
     }
+    // prejde sa až na načítanú a dekódovanú fotku (img.decode): pri obmedzenom pohybe sa stará fotka skryje hneď
+    // a nová by sa na zlomok sekundy kreslila prázdna (doladenie-1, nález drobné); chyba alebo 4 s prejdú aj tak
     function kedNacitana(j, fn) {
       var img = obrazok(j);
-      if (!img || (img.complete && img.naturalWidth > 0)) { fn(); return; }
       var hotovo = false;
       var raz = function () { if (!hotovo) { hotovo = true; fn(); } };
-      img.addEventListener('load', raz, { once: true });
+      var dekoduj = function () {
+        if (img && typeof img.decode === 'function') img.decode().then(raz, raz); else raz();
+      };
+      if (!img || (img.complete && img.naturalWidth > 0)) { dekoduj(); return; }
+      img.addEventListener('load', dekoduj, { once: true });
       img.addEventListener('error', raz, { once: true });
       window.setTimeout(raz, 4000);
     }
@@ -232,7 +240,8 @@
         if (popisy[j]) popisy[j].classList.add('je');
         i = j;
         nastavCislo(i + 1);
-        if (rucne) priprav((i + 1) % snimky.length);
+        // po ručnom prepnutí obe susedné fotky vopred (Ďalšia aj Predchádzajúca)
+        if (rucne) { priprav((i + 1) % snimky.length); priprav((i - 1 + snimky.length) % snimky.length); }
         planuj();
       });
     }
@@ -267,6 +276,12 @@
       });
     });
     planuj();
+    // pri obmedzenom pohybe sa slider sám neposúva a planuj nič nepripraví: susedné fotky sa načítajú hneď po načítaní
+    // stránky, aby prvé stlačenie Ďalšia alebo Predchádzajúca nečakalo na sťahovanie (doladenie-1)
+    if (!pohyb) {
+      var susedne = function () { priprav(1); priprav(snimky.length - 1); };
+      if (d.readyState === 'complete') susedne(); else window.addEventListener('load', susedne, { once: true });
+    }
   })();
 
   // 4b. Kotva z inej stránky (menu Činnosť z podstránky, napríklad ../#cinnost): písma a fotky môžu zmeniť výšku
@@ -430,7 +445,8 @@
         if (z[0] && z[0].isIntersecting) predNacitaj();
       }, { rootMargin: '0px 0px 900px 0px' }).observe(viacObal);
     }
-    filtre.hidden = false;
+    // filter a riadok stavu sú v rozložení od prvého vykreslenia (bez JS ich skryje styl.css html:not(.js)), app.js
+    // len nastaví stav z adresy; bez filtra v adrese sa nič neposunie (doladenie-1, CLS pri pomalej sieti)
     obnov(false);
   }
 
@@ -546,13 +562,15 @@
       }
       if (foto) {
         var sirka = Number(a.getAttribute('data-sirka') || sirky[sirky.length - 1]) || 0;
-        foto.setAttribute('loading', 'eager');
         foto.setAttribute('width', sirka ? String(sirka) : '');
         foto.setAttribute('height', a.getAttribute('data-vyska') || '');
         var av = avifZ(a);
         if (lbAvif) { if (av) lbAvif.setAttribute('srcset', av); else lbAvif.removeAttribute('srcset'); }
         foto.setAttribute('srcset', srcsetZ(a));
         foto.setAttribute('src', plnaZ(a));
+        // eager až po novom zdroji: prepnutie z lazy pred zmenou zdroja by stiahlo zástupnú fotku dialógu (doladenie-2,
+        // overenie 2: pri prvom otvorení navyše asi 207 kB, ktoré sa nikdy neukázali)
+        foto.setAttribute('loading', 'eager');
         // fotka nikdy väčšia než 1,25 násobok šírky súboru (FOTKY.md bod 3), doklad (data-presne) nie väčší než
         // súbor; CSSOM, nie atribút style (CSP)
         var nasobok = a.getAttribute('data-presne') === '1' ? 1 : 1.25;

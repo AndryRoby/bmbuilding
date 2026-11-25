@@ -20,7 +20,7 @@
  "uvod": {
   "title": "Stavebný dozor Bratislava a Pezinok | BM Building",
   "description": "BM Building, s.r.o. z Pezinka: stavebný dozor, technický dozor investora (TDI), stavbyvedúci a stavebný manažment v Bratislave a okolí.",
-  "_h1": "Hlavná veta hrdinu ako H1 doslovne podľa Andreja (ZMENY-KOLO-1.md 3A.1, 24. 11. 2026 večer, s.r.o. s bodkou). Veta o 20 rokoch v úvode nie je (novinka o 20 rokoch v Novinkách ostáva). nadtitulok: malý riadok kľúčových slov nad H1 (3A.1), build.py ich spojí bodkou v strede.",
+  "_h1": "Hlavná veta hrdinu ako H1 doslovne podľa Andreja (ZMENY-KOLO-1.md 3A.1, 24. 11. 2026 večer, s.r.o. s bodkou). Veta o 20 rokoch v úvode nie je (novinka o 20 rokoch v Novinkách ostáva). nadtitulok: malý riadok kľúčových slov nad H1 (3A.1), build.py ich spojí bodkou v strede; posledné slovo (miesto) sa v užšom stĺpci hrdinu (okno asi pod 1340 px) skryje, aby riadok ostal jeden (krasa-8, styl.css .uvod-nadtitulok-miesto).",
   "h1": "BM Building, s.r.o. je stavebno-manažérska spoločnosť so sídlom v Pezinku.",
   "nadtitulok": ["Stavebný manažment", "Stavebný dozor", "Stavbyvedúci", "Bratislava a okolie"],
   "_firma": "Údaje v hrdinovi úvodu ako rad s ikonami (ZMENY-KOLO-1.md 3A.2): Sídlo, Na trhu (rok zápisu v ORSR z obsah/firma.json den_zapisu), Konateľ a Oprávnenia skladá build.py v tomto poradí; zdroj je odkaz na výpis z ORSR (firma.json zapis_or_zdroj).",
@@ -50,10 +50,10 @@
   "otazky": ["co-robi-dozor", "rozdiel"]
  },
  "cinnost_doslova": {
-  "_poznamka": "Doslovný text stránky Činnosť starého webu bmbuilding.sk (Andrej ho poslal 24. 11. 2026, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md časť 4), slovo od slova. Upravené len medzery: „stavebných prác .“ na „stavebných prác.“ a „( projekt“ na „(projekt“. „s.r.o je“ ostáva bez bodky, malé začiatočné písmená a čiarky na konci bodov ostávajú. Nadpisy bez dvojbodky (3A.3). Z týchto dát je Činnosť na úvode (build.py cinnost) aj hlavný text stránok služieb (build.py stranky_sluzieb, časť so zhodným slug); slug je stránka služby. Poradie častí je poradie kľúčov.",
+  "_poznamka": "Doslovný text stránky Činnosť starého webu bmbuilding.sk (Andrej ho poslal 24. 11. 2026, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md časť 4), slovo od slova. Upravené len medzery: „stavebných prác .“ na „stavebných prác.“ a „( projekt“ na „(projekt“. „s.r.o je“ ostáva bez bodky, malé začiatočné písmená a čiarky na konci bodov ostávajú. Nadpisy ako na starej stránke: „1. Stavebný manažment:“ a „2. Stavebný dozor:“ s dvojbodkou, „3. Stavbyvedúci“ bez nej (rozhodnutie Fable 25. 11. 2026 po overení 2, Mário chce text od slova do slova). Z týchto dát je Činnosť na úvode (build.py cinnost) aj hlavný text stránok služieb (build.py stranky_sluzieb, časť so zhodným slug); slug je stránka služby. Poradie častí je poradie kľúčov.",
   "manazment": {
    "slug": "stavebny-manazment",
-   "nadpis": "1. Stavebný manažment",
+   "nadpis": "1. Stavebný manažment:",
    "odseky": [
     "BM Building, s.r.o je stavebno-manažérska spoločnosť, ktorá poskytuje podporné služby investorom a developerom pri realizácii ich projektov.",
     "Naša spoločnosť zabezpečí bezproblémový prechod z projektovej do realizačnej fázy. Stavebný manažment chápeme ako ucelený proces, ktorý zahŕňa koordináciu všetkých profesií, riadenie a kontrolu stavby počas prípravy, realizácie až po jej kolaudáciu na základe definovaných právnych, ekonomických a technických podmienok tak, aby sme včas odhalili a obmedzili riziká, našli riešenia a na druhej strane využili všetky poskytnuté príležitosti.",
@@ -63,7 +63,7 @@
   },
   "dozor": {
    "slug": "stavebny-dozor",
-   "nadpis": "2. Stavebný dozor",
+   "nadpis": "2. Stavebný dozor:",
    "uvod": "V rámci výkonu stavebný dozor ponúkame tieto činnosti:",
    "body": [
     "oboznámenie sa s podkladmi (projekt, zmluvy, stavebné povolenia, územné rozhodnutie)",

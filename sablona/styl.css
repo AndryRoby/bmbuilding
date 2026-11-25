@@ -30,6 +30,10 @@
   --m-4:4px;--m-8:8px;--m-12:12px;--m-16:16px;--m-24:24px;--m-32:32px;--m-48:48px;--m-64:64px;--m-96:96px;
   /* výška pripnutej hlavičky (64 px, od 1024 px 84 px, v nižších oknách 64 px); kotvy a pripnutý pás začínajú pod ňou */
   --hore:64px;
+  /* veľkosť nadpisov sekcií (.nadpis, napr. Činnosť a Kontakt): nikdy väčšie než H1 úvodu (doladenie-1, nález drobné:
+     Činnosť a Kontakt mali 38 až 80 px a H1 27 až 64 px); mobil a tablet najviac 44 px (H1 tam 31 až 48 px), od 1024 px
+     vlastná hodnota v bloku počítača */
+  --nadpis:clamp(1.75rem,8.2vw,2.75rem);
 }
 *{box-sizing:border-box}
 [hidden]{display:none}
@@ -82,7 +86,11 @@ main,.pata{position:relative;z-index:1}
 .menu-m>summary{min-width:5.6em}
 .menu-m>summary{list-style:none}
 .menu-m>summary::-webkit-details-marker{display:none}
-.menu-panel{position:absolute;left:0;right:0;top:100%;z-index:40;max-height:calc(100vh - var(--hore));max-height:calc(100svh - var(--hore));overflow-y:auto;background:var(--vapno);border-top:1px solid var(--grafit);border-bottom:1px solid var(--grafit);padding:4px 0 20px}
+/* otvorený panel cez celú šírku a výšku okna pod hlavičkou (doladenie-1, nález vážne: panel mal šírku obsahu, po
+   stranách presvital pás stránky, spodná hrana presekla riadok bieleho H1 a pod Kontaktom ostal prázdny pás s čiarou);
+   text položiek ostáva na čiare mriežky (vnútorný okraj = okraj stránky), stránka sa pod ním neposúva; panel začína
+   na spodnej čiare hlavičky (1 px nad jej spodkom), preto výška + 1 px až po spodok okna */
+.menu-panel{position:absolute;left:calc(-1 * var(--okraj));right:calc(-1 * var(--okraj));top:100%;z-index:40;height:calc(100vh - var(--hore) + 1px);height:calc(100dvh - var(--hore) + 1px);overflow-y:auto;overscroll-behavior:contain;background:var(--vapno);border-top:1px solid var(--grafit);padding:var(--m-8) var(--okraj) var(--m-32)}
 .menu-panel ul{list-style:none}
 .menu-panel>ul>li>a{display:flex;align-items:center;min-height:56px;border-bottom:1px solid var(--beton);font-size:26px;font-weight:300;letter-spacing:-.03em;text-decoration:none}
 .menu-panel ul ul{padding:4px 0 8px 1.6em;border-bottom:1px solid var(--beton)}
@@ -108,7 +116,7 @@ main,.pata{position:relative;z-index:1}
 
 /* Sekcie */
 .sekcia{padding-block:var(--rytmus)}
-.nadpis{font-size:clamp(2.4rem,5.2vw,5rem);line-height:1;letter-spacing:-.04em;font-weight:350}
+.nadpis{font-size:var(--nadpis);line-height:1;letter-spacing:-.04em;font-weight:350}
 .nadpis-pocet{font-family:var(--mono);font-size:.28em;letter-spacing:0;color:var(--modra);vertical-align:.9em;margin-left:.4em}
 .nadpis-maly{font-size:clamp(1.4rem,2vw,1.9rem);line-height:1.15;letter-spacing:-.03em;font-weight:420}
 .uvodny{margin-top:22px;max-width:34em;color:var(--tlmeny);font-size:clamp(17px,1.25vw,19px)}
@@ -139,8 +147,13 @@ main,.pata{position:relative;z-index:1}
 .firma-udaje{grid-area:udaje;margin-top:var(--m-24)}
 .uvod.bez-slidera .uvod-mriezka{grid-template-areas:"hlava hlava hlava hlava" "text text text text" "udaje udaje udaje udaje";padding-top:var(--m-24)}
 .uvod.bez-slidera .firma-hlava{grid-area:hlava}
+/* riadok kľúčových slov: čiarka patrí k prvému riadku (v strede verzálok prvého riadka, nie v strede bloku); text je
+   v jednom span, aby bol jednou položkou flexu. Posledné slovo (miesto, „Bratislava a okolie“) je len v stĺpci, kde sa
+   celý riadok zmestí do jedného riadka: v užšom stĺpci (pod 500 px, teda okno asi pod 1340 px) sa skryje (krasa-8,
+   brána 3: medzi 1024 a 1400 px sa riadok lámal na dva a čiarka visela v strede) */
 .uvod-nadtitulok{display:flex;align-items:baseline;gap:12px;font-size:clamp(13px,2.45cqi,16px);line-height:1.45;font-weight:500;letter-spacing:.01em;color:var(--modra);text-wrap:balance}
-.uvod-nadtitulok::before{content:"";flex:none;width:24px;height:1px;background:currentColor;align-self:center}
+.uvod-nadtitulok::before{content:"";flex:none;width:24px;height:1px;background:currentColor;align-self:flex-start;margin-top:calc(.725em - .5px)}
+@container (max-width:500px){.uvod-nadtitulok-miesto{display:none}}
 /* 9,8 % šírky stĺpca: „stavebno-manažérska“ (9,76 em v Geist) zaberie najviac 96 % riadka; max-width drží 4 riadky */
 .uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,4rem);line-height:1.04;letter-spacing:-.04em;font-weight:420;max-width:10.4em;text-wrap:wrap}
 /* dva odseky O firme pod H1 (texty.json uvod.o_firme_hrdina): prvý ako úvodník, druhý (konateľ a zápis) tlmený */
@@ -182,11 +195,17 @@ main,.pata{position:relative;z-index:1}
 .slider-popis{grid-area:1/1;max-width:100%;padding:8px 12px 9px;background:var(--na-foto);color:#fff;font-size:14px;line-height:1.35;pointer-events:auto;opacity:0;visibility:hidden;transition:opacity .3s var(--krivka),visibility 0s linear .3s}
 .slider-popis.je{opacity:1;visibility:visible;transition:opacity .4s var(--krivka) .3s,visibility 0s}
 .slider-popis a{font-weight:500;color:#fff;text-decoration-color:rgba(255,255,255,.45);text-underline-offset:.25em}
+/* kratší názov stavby (nastavenia uvod_slider nazov_mobil) do 1099 px (od 1024 px v bloku úzkeho počítača nižšie),
+   od 1100 px celý názov */
+.slider-nazov-kratky{display:none}
 .slider-popis a:hover{text-decoration-color:currentColor}
 .slider-popis :focus-visible{outline-color:#fff}
 .slider-udaje{display:block;margin-top:1px;font-size:13px;color:rgba(255,255,255,.8)}
 .slider-spodok{display:flex;align-items:center;justify-content:flex-end;padding:var(--m-8) 0 0}
 .slider-ovladanie{display:flex;align-items:center;gap:4px;flex:1 1 auto}
+/* bez JS (trieda js z vloženého skriptu v hlave) ovládanie nie je; s JS je v rozložení od prvého vykreslenia, takže
+   údaje pod ním sa pri pomalom načítaní neposunú (doladenie-1, predtým atribút hidden, ktorý zrušil až app.js) */
+html:not(.js) .slider-ovladanie{display:none}
 .slider-pocet{flex:1 1 auto;margin:0 var(--m-12) 0 5px;font-size:13px}
 .slider-cislo{color:var(--modra)}
 .slider-tl{display:inline-grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:2px;background:transparent;color:var(--grafit);cursor:pointer;transition:background-color .2s var(--krivka),color .2s var(--krivka)}
@@ -200,17 +219,26 @@ main,.pata{position:relative;z-index:1}
    nález vážne: prechod od 34 % zatmil viac ako polovicu fotky). Horná polovica fotky je čistá, pod H1 aspoň 55 %
    tmavej (meranie kontrastu nad všetkými 11 fotkami slidera v oprava-2/kontrast.json). Riadok kľúčových slov na fotke
    nie je (na 390 px sa lámal so samotnou bodkou a biely 13 px text by potreboval tmavú väčšinu fotky); kľúčové slová
-   ostávajú v title, description a v Činnosti. Štítok stavby nie je na fotke (zakrýval strechy): je pod počítadlom
-   ako popis fotky, grafitom na papieri. */
+   ostávajú v title, description a v Činnosti. Štítok stavby nie je na fotke (zakrýval strechy): je hneď pod fotkou ako
+   popis fotky, grafitom na papieri, až pod ním počítadlo a šípky (krasa-8: popis patrí k fotke). Popis má vždy presne
+   dva riadky (názov a miesto s rokmi, dlhší text sa skráti tromi bodkami, celý názov je na stránke realizácie): krátky
+   popis nenechá pod sebou prázdny riadok a prepnutie fotky neposunie nič pod ním (popisy ležia cez seba v jednej bunke). */
 @media (max-width:1023px){
   .slider,.firma-hlava{margin-inline:calc(-1 * var(--okraj))}
   .firma-hlava{z-index:3;align-self:start;aspect-ratio:4/5;display:flex;flex-direction:column;justify-content:flex-end;padding:var(--m-48) var(--okraj) var(--m-24);color:#fff;pointer-events:none;background:linear-gradient(180deg,rgba(14,15,15,0) 46%,rgba(14,15,15,.55) 66%,rgba(14,15,15,.88) 100%)}
   .uvod-nadtitulok{display:none}
-  .uvod-h1{margin-top:0;font-size:clamp(1.5rem,8.2cqi,3rem);line-height:1.06}
+  /* H1 na fotke 9,4 % šírky stĺpca (doladenie-1, nález drobné: 8,2 % dalo 29 px pri 390 px, menej než nadpisy sekcií,
+     a „stavebno-manažérska“ zaberalo len 80 % šírky; Andrej chce H1 veľké): 33,6 px pri 390, 30,8 px pri 360 px,
+     najdlhšie slovo asi 92 % riadka, stále štyri riadky; kontrast nad 11 fotkami premeraný (doladenie-1/kontrast) */
+  .uvod-h1{margin-top:0;font-size:clamp(1.5rem,9.4cqi,3rem);line-height:1.06}
   .slider-spodok{flex-direction:column;align-items:stretch;padding-inline:var(--okraj)}
-  .slider-popisy{position:static;order:2;padding:var(--m-4) 0 0}
-  .slider-popis{padding:0;background:none;color:var(--grafit);font-size:15px}
-  .slider-popis a{color:var(--grafit);text-decoration-color:var(--beton)}
+  .slider-popisy{position:static;grid-template-columns:minmax(0,1fr);justify-items:stretch;padding:var(--m-4) 0}
+  .slider-popis{padding:0;background:none;color:var(--grafit);font-size:15px;min-width:0}
+  .slider-popis a,.slider-udaje{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  /* span.slider-nazov je v HTML len pri názve, ktorý má kratšiu podobu (build.py slider) */
+  .slider-nazov{display:none}
+  .slider-nazov-kratky{display:inline}
+  .slider-popis a{line-height:1.45;color:var(--grafit);text-decoration-color:var(--beton)}
   .slider-popis :focus-visible{outline-color:var(--modra)}
   .slider-udaje{color:var(--tlmeny)}
   /* blok O firme pod údajmi a tlačidlami: vlasová čiara a nadtitulok, oba odseky rovnakou farbou */
@@ -261,8 +289,35 @@ main,.pata{position:relative;z-index:1}
 .cinnost-uvod{font-weight:500}
 .cinnost-text .cinnost-uvod:not(:first-child){margin-top:var(--m-24)}
 .cinnost-body{list-style:none;margin:var(--m-12) 0 0;padding:0;border-bottom:1px solid var(--beton)}
-.cinnost-body li{position:relative;padding:9px 0 10px 24px;border-top:1px solid var(--beton);font-size:16px;line-height:1.5;break-inside:avoid}
-.cinnost-body li::before{content:"";position:absolute;left:2px;top:calc(9px + .75em);width:12px;height:1.5px;background:var(--modra)}
+.cinnost-body li{position:relative;padding:9px 0 10px 24px;border-top:1px solid var(--beton);font-size:16px;line-height:1.5}
+/* značka bodu ako čiara (rámik), nie plocha 1,5 px: hrúbku rámika prehliadač zaokrúhli na celé body obrazovky rovnako
+   pri každej polohe, takže všetky značky majú jednu hrúbku (krasa-8: plocha 1,5 px vyšla na počítači so 100 % raz 1 px
+   a raz 2 px podľa toho, kde zoznam začína) */
+.cinnost-body li::before{content:"";position:absolute;left:2px;top:calc(9px + .75em);width:12px;height:0;border-top:1.5px solid var(--modra)}
+/* krátky zoznam (jeden bod Stavbyvedúceho) má mieru riadka ako odseky (najviac 40 em pri 17 px), nie celú šírku textu
+   (krasa-8, brána 3: pri 1920 px asi 150 znakov na riadok); šírka sa zaokrúhli nadol na celé stĺpce mriežky (text
+   Činnosti má 8 stĺpcov), aby vlasové čiary zoznamu končili na čiare stĺpca, nie pár px vedľa nej. Prehliadač bez
+   round() vezme 40 em. */
+.cinnost-karta .cinnost-body:not(.cinnost-body-dlhe){max-width:40em;max-width:calc(round(down,40em + var(--medzera) + 1px,(100% - 7 * var(--medzera)) / 8 + var(--medzera)) - var(--medzera))}
+/* koniec karty jednou čiarou (krasa-8, brána 3: spodná čiara zoznamu a čiara karty tesne nad sebou): keď text karty
+   končí zoznamom, zoznam nemá spodnú čiaru a karta nemá spodný okraj, čiaru pod posledným bodom kreslí karta (len karty
+   úvodu; stránka služby, kde je text tiež cinnost-text, má pod zoznamom vlastnú čiaru) */
+.cinnost-karta>.cinnost-text>.cinnost-body:last-child{border-bottom:0}
+.cinnost-karta:has(>.cinnost-text>.cinnost-body:last-child){padding-bottom:0}
+/* dlhé zoznamy v dvoch stĺpcoch ako mriežka (od 768 px): oba stĺpce majú spoločné riadky, takže čiary medzi bodmi
+   ležia v oboch stĺpcoch na sebe; poradie čítania ostáva po stĺpcoch ako v pôvodnom zozname (najprv celý ľavý stĺpec,
+   potom pravý, rovnako číta čítačka podľa DOM). Počet riadkov dá build.py triedou riadky-N (polovica bodov nahor),
+   bez triedy idú body po riadkoch. */
+.cinnost-body-dlhe.riadky-3{grid-template-rows:repeat(3,auto)}
+.cinnost-body-dlhe.riadky-4{grid-template-rows:repeat(4,auto)}
+.cinnost-body-dlhe.riadky-5{grid-template-rows:repeat(5,auto)}
+.cinnost-body-dlhe.riadky-6{grid-template-rows:repeat(6,auto)}
+.cinnost-body-dlhe.riadky-7{grid-template-rows:repeat(7,auto)}
+.cinnost-body-dlhe.riadky-8{grid-template-rows:repeat(8,auto)}
+.cinnost-body-dlhe.riadky-9{grid-template-rows:repeat(9,auto)}
+.cinnost-body-dlhe.riadky-10{grid-template-rows:repeat(10,auto)}
+.cinnost-body-dlhe.riadky-11{grid-template-rows:repeat(11,auto)}
+.cinnost-body-dlhe.riadky-12{grid-template-rows:repeat(12,auto)}
 /* body Činnosti na úvode majú tú istú značku ako na stránkach služieb a odrážky starého webu, bez čísel 01, 02
    (overenie-1, nález drobné: text je doslovný, rovnaký zoznam nemá vyzerať na úvode a na podstránke inak) */
 /* pod listom: veta o osvedčeniach SKSI a riadok listu so zákonom (ikona §, nadpis vľavo, otázky vpravo) */
@@ -274,16 +329,17 @@ main,.pata{position:relative;z-index:1}
 .zakon-nadpis{grid-column:auto;margin-top:0;font-size:clamp(1.5rem,2.2vw,2.1rem)}
 .zakon-list .otazky{border-top:1px solid var(--beton)}
 
-/* Kontakt na úvode ako modrý blok zo vzoru (3A.5): biele písmo, biele tlačidlo, vizitka ostáva svetlá karta */
-.stranka-uvod .kontakt{background:var(--modra);color:#fff;--tlmeny:rgba(255,255,255,.8)}
+/* Kontakt na úvode ako modrý blok zo vzoru (3A.5): biele písmo, biele tlačidlo, vizitka ostáva svetlá karta.
+   Odsadenie zhora a zdola 64 až 120 px (krasa-8, brána 3: 158 až 176 px a blok pôsobil rozťahane, vzor je kompaktný
+   pás); čipy sietí s bielou vlasovou čiarou, pri hover a fokuse biely podklad a modrá ikona */
+.stranka-uvod .kontakt{background:var(--modra);color:#fff;--tlmeny:rgba(255,255,255,.8);padding-block:clamp(var(--m-64),7vw,120px)}
 .stranka-uvod .kontakt :focus-visible{outline-color:#fff}
 .stranka-uvod .kontakt .uvodny{color:rgba(255,255,255,.86)}
 .stranka-uvod .kontakt .tlacidlo{background:#fff;border-color:#fff;color:var(--modra)}
 .stranka-uvod .kontakt .tlacidlo-obrys{background:transparent;border-color:rgba(255,255,255,.75);color:#fff}
 .stranka-uvod .kontakt .fakty{border-top-color:rgba(255,255,255,.7)}
 .stranka-uvod .kontakt .fakty>div{border-bottom-color:rgba(255,255,255,.24)}
-.stranka-uvod .kontakt .siet{color:#fff}
-@media (hover:hover) and (pointer:fine){.stranka-uvod .kontakt .siet:hover{background:rgba(255,255,255,.14);color:#fff}}
+.stranka-uvod .kontakt .siet{color:#fff;--cip-ciara:rgba(255,255,255,.4);--cip-ikona:#fff;--cip-plocha:#fff;--cip-ikona-aktivna:var(--modra)}
 .stranka-uvod .kontakt .mapa-karta{--tlmeny:#5d5d58;color:var(--grafit);border-color:var(--vapno)}
 .stranka-uvod .kontakt .mapa-karta .tlacidlo-obrys{border-color:var(--grafit);color:var(--grafit)}
 .stranka-uvod .kontakt .mapa-karta :focus-visible{outline-color:var(--modra)}
@@ -309,17 +365,28 @@ picture{display:contents}
 .pohlad-znak path{fill:var(--grafit)}
 .pohlad-znak text{font:600 10.5px var(--pismo);fill:var(--grafit);text-anchor:middle}
 
-/* Sociálne siete ako ikony vlasovou čiarou z jednej sady (Facebook, LinkedIn, Instagram; kontakt na úvode, stránka
-   Kontakt, päta): rám 22 px v strede cieľa dotyku 44 až 48 px, hover len s myšou (podklad a ikona o 2 px vyššie),
-   focus-visible obrys vo farbe ikony; na modrom kontakte úvodu biele */
-.siete{display:flex;flex-wrap:wrap;gap:var(--m-8)}
-.siet{display:inline-grid;place-items:center;width:44px;height:44px;color:var(--modra);border-radius:2px;transition:background-color .2s var(--krivka),color .2s var(--krivka)}
-.siet svg{display:block;transition:transform .25s var(--krivka)}
-.siet:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+/* Sociálne siete (Facebook, LinkedIn, Instagram; Kontakt na úvode, stránka Kontakt, záver podstránok, päta). krasa-8
+   (brána 3: glyf 22 px s čiarou 1,5 bez podkladu bol drobný a osamotený, Andrej: „nech to je pekné naozaj“): štvorcový
+   čip 48 px s vlasovou čiarou (na papieri farba čiar webu, v modrom bloku biela 40 %), glyf 24 px zjednodušený podľa
+   oficiálnych značiek (build.py SVG_FACEBOOK, SVG_LINKEDIN, SVG_INSTAGRAM). V Kontakte hneď pod tlačidlami, od 1024 px
+   s názvom siete 15 px za čipom, na mobile a tablete len čipy; v päte čipy 44 px. Hover (len myš) a focus-visible:
+   na papieri modrý podklad a biela ikona, v modrom bloku biely podklad a modrá ikona; prechod 160 ms, pri obmedzenom
+   pohybe bez prechodu. Prístupné meno nesie aria-label odkazu, viditeľný názov je jeho začiatok. */
+.siete{display:flex;flex-wrap:wrap;align-items:center;gap:var(--m-8) var(--m-24)}
+.siet{display:inline-flex;align-items:center;gap:var(--m-12);min-height:48px;color:var(--grafit);text-decoration:none;--cip-ciara:var(--beton);--cip-ikona:var(--modra);--cip-plocha:var(--modra);--cip-ikona-aktivna:#fff}
+.siet-cip{display:grid;place-items:center;flex:none;width:48px;height:48px;border:1px solid var(--cip-ciara);border-radius:2px;color:var(--cip-ikona);transition:background-color 160ms var(--krivka),border-color 160ms var(--krivka),color 160ms var(--krivka)}
+.siet svg{display:block;width:24px;height:24px}
+.siet-meno{display:none;font-size:15px;line-height:1.3;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:.3em;transition:text-decoration-color 160ms var(--krivka)}
+.siet:focus-visible{outline-offset:2px}
+.siet:focus-visible .siet-cip{background:var(--cip-plocha);border-color:var(--cip-plocha);color:var(--cip-ikona-aktivna)}
 @media (hover:hover) and (pointer:fine){
-  .siet:hover{background:var(--modra-plocha);color:var(--modra-tmava)}
-  .siet:hover svg{transform:translateY(-2px)}
+  .siet:hover .siet-cip{background:var(--cip-plocha);border-color:var(--cip-plocha);color:var(--cip-ikona-aktivna)}
+  .siet:hover .siet-meno{text-decoration-color:currentColor}
 }
+.kontakt-siete{margin-top:var(--m-24);gap:var(--m-12)}
+.pata-siete{margin-top:var(--m-16);gap:var(--m-8)}
+.pata-siete .siet{min-height:44px}
+.pata-siete .siet-cip{width:44px;height:44px}
 
 /* Kóta (ukážka): vlasová čiara so šikmými koncami, údaj v Mono v strede preruší čiaru */
 /* margin-inline: šikmé konce (14 px pod 45°) siahajú 5 px za okraj, bez neho kóta presahuje stĺpec (overenie kolo 1) */
@@ -395,16 +462,20 @@ img[data-src],img.nacitava{opacity:0}
 .fakty dd{margin:0;padding-right:var(--m-12);font-variant-numeric:tabular-nums}
 .fakty dd a{color:var(--modra)}
 
-/* Kontakt (Konzultácia a kontakt v ukážke): vľavo výzva a údaje, vpravo karta s blokom z banneru namiesto mapy */
-.kontakt{background:var(--vapno-2);--tlmeny:#5d5d58}
+/* Kontakt (Konzultácia a kontakt v ukážke): vľavo výzva, tlačidlá a siete, vpravo karta s blokom z banneru namiesto
+   mapy, pod oboma fakturačné údaje (krasa-8, brána 3: karta pripnutá s top 24 px zachádzala pod hlavičku 64 až 84 px
+   a pod ňou ostávalo 200 až 380 px prázdnej plochy; teraz nie je pripnutá a blok je kompaktný ako vzor) */
+/* odsadenie Kontaktu 64 až 120 px na každej stránke ako modrý blok úvodu (doladenie-1, nález drobné: na podstránkach
+   rytmus sekcie 158 px pri 1440 px); na /kontakt/ hneď pod hlavou stránky menej (dva nadpisy za sebou, 165 px plochy) */
+.kontakt{background:var(--vapno-2);--tlmeny:#5d5d58;padding-block:clamp(var(--m-64),7vw,120px)}
+.hlava-kontakt+.kontakt{padding-top:clamp(var(--m-32),3vw,var(--m-48))}
 .kontakt-mriezka{row-gap:40px}
-/* poradie v DOM: výzva a tlačidlá, vizitka s telefónom a e-mailom, fakturačné údaje (na mobile pod sebou) */
+/* poradie v DOM: výzva, tlačidlá a siete, vizitka s telefónom a e-mailom, fakturačné údaje (na mobile pod sebou) */
 .kontakt-text,.kontakt-mapa,.kontakt-udaje{grid-column:1/-1}
 .kontakt-akcie{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
 .kontakt-h{margin-top:0;font-size:16px;font-weight:500;line-height:1.4;padding-bottom:8px}
 .kontakt-fakty{max-width:34em}
 .kontakt-fakty dd{font-size:16px}
-.kontakt-pozn{margin-top:14px;margin-left:-10px}
 .mapa-karta{margin:0;background:var(--vapno);border:1px solid var(--beton)}
 /* vizitka a jej spodok s tlačidlom Navigovať s rovnakým vnútorným okrajem --karta-okraj: logo a tlačidlo majú jednu
    ľavú hranu (pri 390 px boli 37 a 33 px, linka bmb-presnost) */
@@ -418,25 +489,30 @@ img[data-src],img.nacitava{opacity:0}
 .vizitka-meno{font-size:clamp(1.3rem,1.8vw,1.6rem);letter-spacing:-.02em;font-weight:450;padding-top:0}
 .vizitka-k{color:var(--tlmeny);font-size:15px}
 .vizitka a{color:var(--modra);text-underline-offset:.25em}
-/* telefón a e-mail vizitky: cieľ dotyku 44 px (oprava-2, predtým 21 až 22 px), záporný okraj drží výšku riadka */
+/* telefón a e-mail vizitky: cieľ dotyku 44 px (oprava-2, predtým 21 až 22 px), záporný okraj drží výšku riadka;
+   telefón písmom webu s tabuľkovými číslicami (trieda cisla), nie v Mono (krasa-8, brána 3: pôsobil roztrhane) */
 .vizitka-riadky a{display:inline-flex;align-items:center;min-height:44px;margin-block:-8px}
-.vizitka a.cisla{font-family:var(--mono);font-size:16px}
 
-/* Päta (ukážka) */
-.pata{border-top:1px solid var(--grafit);padding:48px 0 calc(48px + 76px + env(safe-area-inset-bottom));font-size:15px;background:var(--vapno)}
+/* Päta (ukážka). Pod ňou rezerva na spodnú lištu len bez JS, keď lišta stojí stále; so skriptom sa lišta pri Kontakte
+   a päte skryje (data-vyzva-dole), takže pod pätou ostáva len 48 px (doladenie-1: na mobile 124 px prázdneho pásu) */
+.pata{border-top:1px solid var(--grafit);padding:48px 0 calc(48px + env(safe-area-inset-bottom));font-size:15px;background:var(--vapno)}
+@media (max-width:767px){html:not(.js) .pata{padding-bottom:calc(48px + 76px + env(safe-area-inset-bottom))}}
 .pata-mriezka{row-gap:20px}
 .pata-mriezka>*{grid-column:1/-1}
 .pata-znak img{width:40px;height:40px}
 .pata-veta{margin-top:10px}
-.pata-siete{margin:6px 0 0 -10px}
 .pata .male{color:var(--tlmeny);max-width:62em;font-size:14px}
 .pata-odkazy{display:flex;flex-wrap:wrap;gap:0 24px}
 .pata-odkazy a{display:inline-flex;align-items:center;min-height:44px;color:var(--modra)}
 .pata-arling{color:var(--tlmeny);text-decoration-color:var(--beton)}
 
-/* Spodná lišta na mobile: vyjde, keď tlačidlo v úvode odíde z obrazu; bez skriptu stojí stále (noscript) */
-.lista{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:1.25fr 1fr;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--vapno);border-top:1px solid var(--grafit);transform:translateY(calc(100% + 2px));visibility:hidden;transition:transform .32s var(--krivka),visibility 0s linear .32s}
+/* Spodná lišta na mobile: vyjde, keď tlačidlo v úvode odíde z obrazu; bez skriptu stojí stále (noscript). Tlačidlá na
+   hranách obsahu stránky (okraj ako .obsah) a rovnako široké s medzerou 8 px ako tie isté tlačidlá v Kontakte
+   (doladenie-2, nález drobné: okraj 12 px proti 16 px obsahu a pomer 1,25 : 1) */
+.lista{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--m-8);padding:10px var(--okraj) calc(10px + env(safe-area-inset-bottom));background:var(--vapno);border-top:1px solid var(--grafit);transform:translateY(calc(100% + 2px));visibility:hidden;transition:transform .32s var(--krivka),visibility 0s linear .32s}
 .lista.vidno{transform:none;visibility:visible;transition:transform .32s var(--krivka),visibility 0s}
+/* pri otvorenom menu (panel na celú výšku okna) lišta odíde, nekreslí sa cez spodok panelu */
+.hlava:has(.menu-m[open])~.lista{transform:translateY(calc(100% + 2px));visibility:hidden}
 .lista .tlacidlo{width:100%;min-height:50px;padding:0 12px}
 .lista .tlacidlo-obrys{background:var(--vapno)}
 
@@ -518,6 +594,9 @@ img[data-src],img.nacitava{opacity:0}
 .m-rok:first-child b{left:0;transform:none}
 .m-rok:last-child b{left:auto;right:0;transform:none}
 .mierka-pozn{display:block;margin-top:26px;font-size:13px;line-height:1.4;color:var(--tlmeny)}
+/* mobil: časová os s popisom až od 640 px (doladenie-1, nález drobné: pri 390 x 844 tvorili prvú obrazovku len
+   filtre a os, prvá karta začínala na 691 px); roky ostávajú vo výbere Roky */
+@media (max-width:639px){.casova-mierka{display:none}}
 
 /* Filter realizácií: druh ako rad prepínačov (stlačený v modrej s bielym textom, počet v Mono), roky, miesto, zoradenie */
 .filtre{margin-top:32px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px 32px;padding-top:20px;border-top:1px solid var(--beton)}
@@ -531,12 +610,18 @@ img[data-src],img.nacitava{opacity:0}
 .vyber{display:grid;gap:4px;font-size:13px;color:var(--tlmeny)}
 .vyber select{min-height:44px;padding:0 10px;border:1px solid var(--grafit);border-radius:2px;background:var(--vapno);color:var(--grafit);font:400 15px/1.2 var(--pismo);cursor:pointer}
 .filtre-stav{min-height:1.5em;margin:-12px 0 12px;font-size:14px;color:var(--tlmeny);font-variant-numeric:tabular-nums}
+/* filter a riadok stavu len so skriptom: trieda js z vloženého skriptu v hlave platí už pri prvom vykreslení, takže
+   ich miesto je v rozložení hneď a zoznam pod nimi pri pomalej sieti neskočí (doladenie-1, nález vážne: s atribútom
+   hidden ich odkryl až app.js, časová os a karty sa posunuli o 236 px, CLS 0,155 pri 390 px); bez JS ich niet a
+   zoznam ukazuje všetky karty */
+html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 .prazdne{padding:40px 0;display:grid;gap:16px;justify-items:start}
 /* postupné načítanie zoznamu: tlačidlo Zobraziť ďalšie pod kartami, počet zvyšných v Mono (app.js, bez JS skryté) */
 .viac-obal{display:flex;justify-content:center;margin-top:56px;padding-top:32px;border-top:1px solid var(--beton)}
-/* Zoznam realizácií a noviniek končí rytmom sekcie ako ostatné časti; predtým sa tlačidlo Zobraziť ďalšie (aj posledné
-   karty) dotýkalo časti Kontakt (Andrej 23. 11. 2026: „aj to tlačidlo sa dotýka“). */
-.obsah.zoznam{padding-bottom:var(--rytmus)}
+/* Zoznam realizácií a noviniek končí odsadením 48 až 96 px; predtým sa tlačidlo Zobraziť ďalšie (aj posledné karty)
+   dotýkalo časti Kontakt (Andrej 23. 11. 2026: „aj to tlačidlo sa dotýka“). Doladenie-1 (nález drobné: rytmus sekcie
+   a odsadenie Kontaktu dali pri 1440 px 317 px prázdnej plochy medzi tlačidlom a nadpisom Kontakt): menšie odsadenie. */
+.obsah.zoznam{padding-bottom:clamp(var(--m-48),5vw,var(--m-96))}
 .viac-pocet{font:400 14px/1 var(--mono);font-variant-numeric:tabular-nums}
 @media (max-width:479px){.viac-obal .tlacidlo{width:100%}}
 
@@ -554,12 +639,8 @@ img[data-src],img.nacitava{opacity:0}
 /* novinka bez použiteľnej fotky: logo firmy v ráme 4 : 5 (nie cudzia fotka) */
 .projekt-svetly .projekt-znak{display:grid;place-items:center;border:1px solid var(--beton)}
 .projekt-foto .karta-znak{width:32%;height:auto;object-fit:contain}
-/* karta s malým zdrojom (build.py img_karty, brána bmb-presnost pokus 1, nález 1): celá fotka 4 : 3 alebo 3 : 4
-   v strede rámu 4 : 5 na podklade, od okraja rámu aspoň 24 px a široká najviac 360 CSS px (trieda cap-N menej), aby
-   prehliadač pri hustote 2 nezväčšoval zdroj viac než 1,2-krát; rám, kóta, nadpis a údaje karty ostávajú v riadkoch */
-.projekt-foto img.foto-cela{position:absolute;inset:0;margin:auto;width:min(100% - 2 * var(--m-24),var(--cap,360px));height:auto;aspect-ratio:4/3;object-fit:cover;outline:1px solid rgba(30,31,31,.14);outline-offset:-1px}
-.projekt-foto img.foto-cela.na-vysku{aspect-ratio:3/4}
-.cap-160{--cap:160px}.cap-168{--cap:168px}.cap-176{--cap:176px}.cap-184{--cap:184px}.cap-192{--cap:192px}.cap-200{--cap:200px}.cap-208{--cap:208px}.cap-216{--cap:216px}.cap-224{--cap:224px}.cap-232{--cap:232px}.cap-240{--cap:240px}.cap-248{--cap:248px}.cap-256{--cap:256px}.cap-264{--cap:264px}.cap-272{--cap:272px}.cap-280{--cap:280px}.cap-288{--cap:288px}.cap-296{--cap:296px}.cap-304{--cap:304px}.cap-312{--cap:312px}.cap-320{--cap:320px}.cap-328{--cap:328px}.cap-336{--cap:336px}.cap-344{--cap:344px}.cap-352{--cap:352px}
+/* karta s malým zdrojom (build.py img_karty): od doladenia-1 tiež výrez 4 : 5 cez celý rám ako ostatné karty (celá
+   fotka 4 : 3 v strede rámu na rozmazanej kópii pôsobila v mriežke ako pokazená alebo ešte sa načítavajúca fotka) */
 @media (hover:hover) and (pointer:fine){
   .projekt-svetly .dlazdica-nazov a:hover,.projekt-svetly .novinka-nazov a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
   .projekt-svetly:hover .projekt-foto img:not(.karta-znak){transform:scale(1.03)}
@@ -581,7 +662,9 @@ img[data-src],img.nacitava{opacity:0}
 .sluzba-obal .sluzba-bok{grid-column:1/-1;margin-top:0;align-self:start;gap:24px;align-content:start}
 .doklad-h{font-size:15px;font-weight:500;margin-bottom:10px}
 .bok-tlacidlo .tlacidlo{width:100%}
-.bok-tlacidlo .cisla{font-family:var(--mono);font-weight:400;font-size:15px}
+/* číslo v tlačidle písmom webu s tabuľkovými číslicami (trieda cisla) ako vo vizitke, nie v Mono (doladenie-1: to isté
+   číslo bolo na webe raz v Sans a raz v Mono so širokými medzerami) */
+.bok-tlacidlo .cisla{font-weight:400}
 .bok-odkaz .odkaz-sipka{min-height:44px}
 .sluzba-doslova .sluzba-ikona{margin-bottom:var(--m-24)}
 .sluzba-doslova .sluzba-ikona+.cinnost-uvod{margin-top:0}
@@ -600,7 +683,8 @@ img[data-src],img.nacitava{opacity:0}
 .detail-text .tlmene{margin-top:14px}
 
 /* Galéria: prvá fotka veľká (8 z 12 stĺpcov a dva riadky), ostatné 3 : 2; číslo fotky v Mono; štítok Vizualizácia */
-.galeria-sekcia{padding-top:clamp(40px,6vw,88px)}
+/* spodok galérie 48 až 96 px, nie rytmus sekcie (doladenie-1: Lumière pri 1440 px 238 px od fotky po čiaru susedov) */
+.galeria-sekcia{padding-top:clamp(40px,6vw,88px);padding-bottom:clamp(var(--m-48),5vw,var(--m-96))}
 .galeria-hlava{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;border-bottom:1px solid var(--grafit);padding-bottom:16px;margin-bottom:var(--medzera)}
 .galeria-hlava .nadpis{font-size:clamp(2rem,3.6vw,3.4rem)}
 .galeria{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--medzera)}
@@ -616,8 +700,11 @@ img[data-src],img.nacitava{opacity:0}
 @media (hover:hover) and (pointer:fine){.galeria-odkaz:hover img{transform:scale(1.03)}}
 
 /* V médiách (ZMENY-KOLO-1.md 5.7): hlava ako galéria (nadtitulok v modrej, nadpis s tým podstatným, čiara), vľavo
-   veľký výrez tabuľky z časopisu (7 z 12 stĺpcov, nie miniatúra, celý bez orezu), vpravo vlastný text, odkazy von
-   a malá galéria fotiek strán 4 : 3 s lightboxom. Mobil: všetko pod sebou, tabuľka na celú šírku, strany po dvoch. */
+   výrez tabuľky z časopisu (celý bez orezu, plná veľkosť v lightboxe), vpravo vlastný text, odkazy von a malá galéria
+   fotiek strán 4 : 3 s lightboxom. Výrez má 5 z 12 stĺpcov, od 1536 px 4 z 12, na tablete 5 z 8 (krasa-8, brána 3: so
+   7 stĺpcami mal pri 1440 px 765 x 720 px a písmená 30 až 40 px, prevalcoval stránku; teraz 540 px pri 1440 px, 571 px
+   pri 1920 px, riadok STAVEBNÝ DOZOR BM Building ostáva čitateľný); text od čiary stĺpca za jedným voľným stĺpcom.
+   Mobil: všetko pod sebou, tabuľka na celú šírku, strany po dvoch. */
 .media-sekcia{padding-block:clamp(40px,6vw,88px) 0}
 /* blok len s odkazmi (Devínske lúky): menší nadpis, zoznam bez dvojitej čiary pod hlavou */
 .media-male .media-hlava .nadpis{font-size:clamp(1.4rem,2vw,1.9rem)}
@@ -645,10 +732,18 @@ img[data-src],img.nacitava{opacity:0}
 .media-strana .media-odkaz img{position:absolute;inset:0;height:100%;object-fit:cover;transition:transform .6s var(--krivka)}
 .media-bez-tabulky .media-text{max-width:46em}
 @media (hover:hover) and (pointer:fine){.media-strana .media-odkaz:hover img{transform:scale(1.03)}}
+@media (min-width:768px){
+  .media-tabulka{grid-column:1/6}
+}
 @media (min-width:1024px){
-  .media-tabulka{grid-column:1/8}
-  .media-text{grid-column:8/-1;padding-left:var(--medzera)}
-  .media-bez-tabulky .media-text{grid-column:1/9;padding-left:0}
+  .media-text{grid-column:7/-1}
+  .media-bez-tabulky .media-text{grid-column:1/9}
+}
+/* od 1536 px text tiež 6 stĺpcov (6 až 11): so 7 stĺpcami by fotky strán pri 1920 px mali 496 px, väčšie než výrez
+   tabuľky, a ich mäkkosť z LinkedInu by bola vidno */
+@media (min-width:1536px){
+  .media-tabulka{grid-column:1/5}
+  .media-text{grid-column:6/12}
 }
 
 /* Susedia (Novšia, Staršia): čiara hore so šikmou značkou ako kóta */
@@ -688,6 +783,11 @@ img[data-src],img.nacitava{opacity:0}
 
 @media (max-width:767px){
   .omrvinky a{min-height:48px}
+  /* detail realizácie (a novinky): posledná položka omrviniek je celý dlhý názov stavby, ten istý ako H1 tesne pod
+     ňou (krasa-8, brána 3: Lumière na dvoch riadkoch nad rovnakým H1). Na mobile ju vidno len čítačke (skrytá vizuálne,
+     span s aria-current="page" ostáva), viditeľné ostane Úvod / Realizácie bez lomky na konci. */
+  .hlava-detail .omrvinky li:last-child{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .hlava-detail .omrvinky li:nth-last-child(2)::after{content:none}
   .filtre{gap:14px}
   /* druhy ako mriežka 2 x 2: všetky štyri voľby sú vidno (oprava-2: vodorovne posúvací rad skryl Rodinné domy
      a Iné za okrajom pri 360 a 390 px bez nápovedy) */
@@ -782,7 +882,7 @@ img[data-src],img.nacitava{opacity:0}
    a videne, IntersectionObserver raz). Prelínanie fotiek slidera 1,2 s riadi app.js. Titulná fotka detailu sa
    odkryje. Pás prác pripnutý cez časovú os posunu. Len transform, opacity a clip-path, bez posunu rozloženia.
    Pri obmedzenom pohybe blok neplatí a blok reduce nižšie drží konečný stav; bez JS je všetko viditeľné (skrytie
-   pred vstupom platí len s triedou js, ktorú SKRIPT_JS zruší, keď app.js nepribehne). */
+   pred vstupom platí len s triedou js, ktorú SKRIPT_JS zruší pri DOMContentLoaded, keď app.js nepribehol). */
 @media (prefers-reduced-motion:no-preference){
   /* plynulý posun pri odkazoch na tej istej stránke (menu Činnosť, Preskočiť na obsah): človek vidí, že ostal na
      stránke (Andrej 23. 11. 2026: „nech to je smooth scroll viac ako skok“); pri obmedzenom pohybe skok ako doteraz.
@@ -824,6 +924,12 @@ img[data-src],img.nacitava{opacity:0}
     /* detail realizácie a novinky: fotka sa odkryje hneď */
     .detail-foto .pohlad-ramec img{animation-delay:80ms}
     .detail-foto figcaption{animation-delay:440ms}
+    /* vysoké okno: blok O firme nemá vlastný box (display: contents), jeho pohyb preberú nadpis a odseky */
+    .firma-text>*{animation:inherit}
+  }
+  /* nižšie okno (do 1079 px): blok O firme je jeden box a pohne sa celý, nadpis a odseky nie znova */
+  @media (min-width:1024px) and (max-height:1079px){
+    .firma-text>*{animation:none}
   }
   @keyframes zjavit{from{opacity:0}to{opacity:1}}
   @keyframes zjavit-posun{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}
@@ -834,8 +940,11 @@ img[data-src],img.nacitava{opacity:0}
 /* Obmedzený pohyb: bez prechodov; prvky úvodu a sekcie hneď v konečnom stave (žiadna animácia, plná nepriehľadnosť,
    bez posunu a orezu), číslice kót bez pretáčania */
 @media (prefers-reduced-motion:reduce){
-  .tlacidlo,.tlacidlo svg,.odkaz-sipka svg,.siet,.siet svg,.filter,.lista,.lightbox-tl,.otazka summary::before,.otazka summary::after,.projekt-foto img,.dlazdica-foto img,.galeria-odkaz img,.snimka,.slider-popis,.slider-tl,.hlava,.vstup{transition:none}
+  .tlacidlo,.tlacidlo svg,.odkaz-sipka svg,.siet,.siet-cip,.siet-meno,.filter,.lista,.lightbox-tl,.otazka summary::before,.otazka summary::after,.projekt-foto img,.dlazdica-foto img,.galeria-odkaz img,.snimka,.slider-popis,.slider-tl,.hlava,.vstup{transition:none}
   .snimka-0 img,.uvod-nadtitulok,.uvod-h1,.firma-text,.firma-fakty .udaj,.firma-zdroj,.uvod-akcie,.slider-popisy,.slider-ovladanie,.vstup{animation:none;opacity:1;transform:none;clip-path:none}
+  /* aktívna fotka a popis slidera (dve triedy) bez prechodu: inak by .slider-popis.je prebilo .slider-popis vyššie
+     a popis by sa prelínal 0,3 s s oneskorením 0,3 s (doladenie-1) */
+  .snimka.je,.slider-popis.je{transition:none}
   .stlpec{transition:none}
   .projekt{flex:none;min-width:0}
 }
@@ -849,7 +958,17 @@ img[data-src],img.nacitava{opacity:0}
   .tlacidlo-male{min-height:48px}
   .uvod-akcie{margin-top:var(--m-16);gap:var(--m-8)}
   .uvod-akcie .tlacidlo{flex:1 1 0;padding:0 14px}
-  .siet{width:48px;height:48px}
+  /* Zavolať a Napísať e-mail v Kontakte rovnako široké na celý riadok (krasa-8, brána 3: rôzna šírka, riadok nevyplnený) */
+  .kontakt-akcie{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--m-8)}
+  .kontakt-akcie .tlacidlo{padding:0 12px}
+  /* fakturačné údaje v dvoch stĺpcoch, štítok nad hodnotou, dlhé hodnoty (Sídlo, Zápis: build.py trieda fakt-siroky)
+     cez oba stĺpce; čiary buniek jedného riadka na sebe (doladenie-2, nález drobné: osem riadkov štítok vedľa hodnoty
+     malo pri 390 px 565 px a modrý Kontakt 1,65 obrazovky) */
+  .kontakt-fakty{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row dense;column-gap:var(--m-16)}
+  .kontakt-fakty>div{display:block;padding:var(--m-8) 0 var(--m-12)}
+  .kontakt-fakty>.fakt-siroky{grid-column:1/-1}
+  .kontakt-fakty dt{font-size:13px;line-height:1.5}
+  .kontakt-fakty dd{margin-top:2px;padding-right:0;font-size:15px;line-height:1.45}
 }
 @media (max-width:389px){
   .hlava .znak-logo{height:30px}
@@ -867,17 +986,30 @@ img[data-src],img.nacitava{opacity:0}
   /* tablet: fotka s H1 cez celú šírku, pod ňou odseky, údaje 2 x 2 a tlačidlá */
   .uvod-mriezka{grid-template-areas:"slider slider slider slider slider slider slider slider" "udaje udaje udaje udaje udaje udaje udaje udaje" "text text text text text text text text"}
   .uvod.bez-slidera .uvod-mriezka{grid-template-areas:"hlava hlava hlava hlava hlava hlava hlava hlava" "text text text text text text text text" "udaje udaje udaje udaje udaje udaje udaje udaje"}
-  .cinnost-body-dlhe{columns:2;column-gap:var(--m-48)}
+  /* dva stĺpce zoznamu, každý polovica textu, medzi nimi medzera mriežky: druhý stĺpec začína na čiare stĺpca
+     (tablet 5. z 8, počítač 9. z 12, kde text Činnosti začína na 5. čiare) */
+  .cinnost-body-dlhe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera)}
+  .cinnost-body-dlhe[class*="riadky-"]{grid-auto-flow:column}
   .sluzby-hlava{grid-column:1/7}
   .atelier-text{grid-column:5/-1}
-  /* vizitka vpravo cez oba riadky a pripnutá, kým vľavo idú fakturačné údaje (nie prázdna plocha pod ňou) */
+  /* Kontakt (krasa-8, brána 3): vľavo nadpis, výzva, tlačidlá a siete, vpravo vizitka v tom istom riadku (nie
+     pripnutá: s top 24 px zachádzala pod pripnutú hlavičku 64 až 84 px a horných 40 až 60 px karty bolo odrezaných),
+     fakturačné údaje pod oboma cez celú šírku, takže pod kartou neostáva prázdna plocha */
   .kontakt-text{grid-column:1/5;grid-row:1}
-  .kontakt-udaje{grid-column:1/5;grid-row:2}
-  .kontakt-mapa{grid-column:5/-1;grid-row:1/span 2;align-self:start;position:sticky;top:24px}
+  .kontakt-mapa{grid-column:5/-1;grid-row:1;align-self:start}
+  .kontakt-udaje{grid-column:1/-1;grid-row:2}
+  .kontakt-fakty{max-width:none}
+  /* riadok sietí na spodku ľavého stĺpca v osi s tlačidlom Navigovať vo vizitke (doladenie-2, nález drobné: pod sieťami
+     ostávala vedľa vyššej vizitky prázdna modrá plocha 119 až 157 px); stĺpec má výšku riadka mriežky, siete idú
+     nadol cez margin-top auto, pod tlačidlami ostane vždy aspoň 24 px. Spodok: 1 px rám karty + 24 px spodok karty +
+     2 px (Navigovať 52 px, čip 48 px), stredy oboch na jednej čiare */
+  .kontakt-text{display:flex;flex-direction:column;padding-bottom:calc(var(--m-24) + 3px)}
+  .kontakt-akcie{margin-bottom:var(--m-24)}
+  .kontakt-siete{margin-top:auto}
   /* horná čiara karty na hornej hrane verzálky nadpisu sekcie, nie na hrane jeho škatule: Geist pri line-height 1
-     má verzálku 0,145 em pod škatuľou ((1 - 1,3) / 2 + 1,005 - 0,71), veľkosť ako .nadpis (pred 4 až 11 px zo
-     snímky, nález 1 brány pokus 3, linka bmb-presnost) */
-  .kontakt-mapa{margin-top:calc(.145 * clamp(2.4rem,5.2vw,5rem))}
+     má verzálku 0,145 em pod škatuľou ((1 - 1,3) / 2 + 1,005 - 0,71), veľkosť ako .nadpis cez --nadpis (pred 4 až
+     11 px zo snímky, nález 1 brány pokus 3, linka bmb-presnost) */
+  .kontakt-mapa{margin-top:calc(.145 * var(--nadpis))}
   .lista{display:none}
   .pata{padding-bottom:48px}
   .pata-mriezka>.pata-zaver{grid-column:1/5}
@@ -892,31 +1024,57 @@ img[data-src],img.nacitava{opacity:0}
   .lightbox-zavriet{top:12px}
 }
 
-/* Počítač: slider vľavo (7 z 12 stĺpcov a presah k ľavému okraju okna) cez všetky riadky, na výšku okna pod hlavičkou
-   (bez 48 px, nech je vidno, že stránka pokračuje), najviac 58 % šírky okna: vysoké okno (1255 x 1260) by inak dalo
-   rám na výšku a fotka na výšku (RD Ahoj) by ukázala celú výšku aj s cestou a kanálom; keď je pravý stĺpec vyšší,
-   fotka narastie s ním. Vpravo v strede výšky nadtitulok, H1, odseky, údaje s ikonami, zdroj a tlačidlá v rytme
-   mriežky (24, 32, 12, 24 px). Štítok stavby vľavo dole na fotke, ovládanie vpravo dole, oboje tmavé a malé. */
+/* Počítač: slider vľavo (7 z 12 stĺpcov a presah k ľavému okraju okna) cez všetky riadky hrdinu, na výšku okna pod
+   hlavičkou až po spodok okna (krasa-8: pás 24 až 48 px pod fotkou bol prázdny), najviac 75 % šírky okna (1280 x 1024
+   ešte po spodok): vysoké úzke okno (1255 x 1260) by inak dalo rám príliš na výšku; keď je pravý stĺpec vyšší, fotka
+   narastie s ním. Vpravo v strede
+   výšky nadtitulok, H1, prvý odsek O firme, údaje s ikonami, zdroj a tlačidlá. Všetko vpravo začína presne na čiare
+   8. stĺpca mriežky (krasa-8, brána 3: text bol 23 px vpravo od čiary): žiadny vnútorný okraj vľavo. Štítok stavby
+   vľavo dole na fotke, ovládanie vpravo dole, oboje tmavé a malé.
+   Vysoké okno (od 1080 px, napr. 1920 x 1080): v hrdinovi je prvý odsek O firme, druhý (konateľ a zápis) ide pod
+   fotku (krasa-8, brána 3: s oboma odsekmi bol pravý stĺpec plný na 947 z 995 px). Blok O firme (div.firma-text) tu
+   nemá vlastný box (display: contents), jeho odseky sú priamo v mriežke hrdinu: prvý v oblasti text pod H1, druhý
+   v oblasti onad pod sliderom od čiary 8. stĺpca, teda priamo pod pravým stĺpcom ako pokračovanie toho istého textu
+   (doladenie-2, nález drobné: riadok so štítkom O firme a jedinou vetou cez celú šírku pôsobil ako osirelý zvyšok);
+   nadpis O firme je vo vysokom okne len pre čítačku. Prah 1080 px: pravý stĺpec s prvým odsekom má v Chrome 786 až
+   878 px (najvyšší pri 1584 až 1768 px šírky, kde je H1 takmer 64 px a odsek má 5 riadkov), s riadkami 48 px nad a pod
+   ním a hlavičkou 84 px potrebuje okno najviac 1058 px; 1080 px nechá rezervu 22 px na iné prehliadače a zalomenie
+   a 1920 x 1080 ostáva vysoké okno (doladenie-2, nález vážne: pri 961 až 1058 px výšky stĺpec natiahol fotku pod
+   spodok okna a odrezal štítok, ovládanie aj tlačidlá). Nižšie okná (do 1079 px) majú celý blok pod hrdinom. */
 @media (min-width:1024px){
   :root{--stlpce:12;--hore:84px}
+  /* nadpisy sekcií na počítači 34 až 56 px, menšie než H1 úvodu pri každom okne merania (1024 x 768 až 2560 x 1440,
+     aj pri H1 obmedzenom na 6 % výšky okna: 1280 x 720 43,2 proti 42,2 px, 1366 x 768 46,1 proti 45,1 px) */
+  :root{--nadpis:clamp(2rem,3.3vw,3.5rem)}
   .ciary-vnutro span:nth-child(n+9){display:block}
   .hlava .znak-logo{height:48px}
-  .uvod-mriezka{grid-template-areas:"slider slider slider slider slider slider slider . . . . ." "slider slider slider slider slider slider slider hlava hlava hlava hlava hlava" "slider slider slider slider slider slider slider text text text text text" "slider slider slider slider slider slider slider udaje udaje udaje udaje udaje" "slider slider slider slider slider slider slider . . . . .";grid-template-rows:minmax(var(--m-24),1fr) auto auto auto minmax(var(--m-24),1fr)}
+  .uvod-mriezka{grid-template-areas:"slider slider slider slider slider slider slider . . . . ." "slider slider slider slider slider slider slider hlava hlava hlava hlava hlava" "slider slider slider slider slider slider slider text text text text text" "slider slider slider slider slider slider slider udaje udaje udaje udaje udaje" "slider slider slider slider slider slider slider . . . . ." "onad onad onad onad onad onad onad onad onad onad onad onad";grid-template-rows:minmax(var(--m-48),1fr) auto auto auto minmax(var(--m-48),1fr) auto}
   .uvod.bez-slidera .uvod-mriezka{grid-template-areas:"hlava hlava hlava hlava hlava hlava hlava udaje udaje udaje udaje udaje" "text text text text text text text udaje udaje udaje udaje udaje";grid-template-rows:auto 1fr}
-  .firma-hlava{grid-area:hlava;padding-left:var(--medzera)}
-  .firma-text{margin-top:var(--m-24);padding-left:var(--medzera)}
-  .firma-udaje{margin-top:var(--m-32);padding-left:var(--medzera)}
+  .firma-hlava{grid-area:hlava}
+  .firma-udaje{margin-top:var(--m-32)}
   .uvod.bez-slidera .firma-udaje{margin-top:0}
+  .firma-text{display:contents}
+  .firma-text>p{grid-area:text;margin-top:var(--m-24);max-width:36em}
+  .firma-text>p+p{grid-area:onad;align-self:start;margin:var(--m-32) 0 0 calc((100% + var(--medzera)) * 7 / 12);color:var(--grafit);text-wrap:pretty}
+  /* hrdina bez slidera (záloha bez fotiek): blok O firme ako jeden celok pod H1 */
+  .uvod.bez-slidera .firma-text{display:block;grid-area:text}
+  .uvod.bez-slidera .firma-text>*{grid-area:auto;margin:var(--m-12) 0 0;padding:0;border:0}
   .slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2))}
-  .snimky{aspect-ratio:auto;flex:1 1 auto;min-height:clamp(480px,calc(100vh - var(--hore) - var(--m-48)),58vw);min-height:clamp(480px,calc(100svh - var(--hore) - var(--m-48)),58vw)}
-  /* údaje: 2 x 2 s vlasovými čiarami (vzor: rad údajov s ikonami), ikona a popis v riadku, hodnota pod popisom */
-  .firma-fakty{gap:0 var(--medzera);border-top:1px solid var(--beton)}
-  .udaj,.udaj-siroky{grid-column:auto;padding:12px 0 13px;background:none;border:0;border-bottom:1px solid var(--beton);border-radius:0}
+  .snimky{aspect-ratio:auto;flex:1 1 auto;min-height:clamp(480px,calc(100vh - var(--hore)),75vw);min-height:clamp(480px,calc(100svh - var(--hore)),75vw)}
+  /* údaje: 2 x 2 s vlasovými čiarami (vzor: rad údajov s ikonami), ikona a popis v riadku, hodnota pod popisom; päť
+     stĺpcov pravej časti mriežky: Sídlo a Konateľ 2 stĺpce (adresa ulica a PSČ s mestom pod sebou), Na trhu
+     a Oprávnenia 3 stĺpce (odkaz Oprávnenia najviac na dva riadky), druhý stĺpec údajov začína na čiare 10. stĺpca */
+  .firma-fakty{grid-template-columns:repeat(5,minmax(0,1fr));gap:0 var(--medzera);border-top:1px solid var(--beton)}
+  .udaj,.udaj-siroky{grid-column:span 3;padding:12px 0 13px;background:none;border:0;border-bottom:1px solid var(--beton);border-radius:0}
+  .firma-fakty>.udaj:nth-child(odd){grid-column:span 2}
+  .firma-fakty.firma-media>.udaj{grid-column:1/-1}
   .udaj dd{margin:4px 0 0 34px;font-size:15px;line-height:1.4}
-  /* blok O firme vo vysokom okne vpravo pod H1: nadtitulok len pre čítačku (H1 hneď nad ním hovorí to isté) */
-  .firma-text-nad{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-  .slider-popisy{top:auto;right:auto;left:var(--m-16);bottom:var(--m-16);align-items:end;max-width:calc(100% - 290px)}
-  .slider-popis{padding:10px 14px 11px;font-size:15px}
+  /* štítok najviac po 24 px pred ovládaním: 16 px okraj + 261 px ovládanie + 16 px okraj + 24 px medzera (doladenie-1,
+     nález vážne: pri 1024 až 1320 px sa dlhý popis s ovládaním prekrýval o 3 px a oba boxy splynuli do tvaru L) */
+  .slider-popisy{top:auto;right:auto;left:var(--m-16);bottom:var(--m-16);align-items:end;max-width:calc(100% - 317px)}
+  /* v užšom štítku (1024 až 1365 px) bez osamelého posledného slova („ulica“); pretty, nie balance: štítok má šírku
+     podľa obsahu a vyvážené kratšie riadky by v ňom nechali prázdny pruh vpravo */
+  .slider-popis{padding:10px 14px 11px;font-size:15px;text-wrap:pretty}
   .slider-spodok{padding:0}
   .slider-ovladanie{position:absolute;z-index:4;right:var(--m-16);bottom:var(--m-16);flex:none;gap:2px;padding:4px 4px 4px 12px;background:var(--na-foto)}
   .slider-pocet{flex:none;width:96px;margin:0 6px 0 5px;color:#fff;background-image:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.45))}
@@ -925,14 +1083,15 @@ img[data-src],img.nacitava{opacity:0}
   .slider-cislo{color:#fff}
   .slider-tl{width:44px;height:44px;color:#fff}
   .slider-tl:focus-visible{outline-color:#fff;outline-offset:-3px}
-  /* technický list: hlava vľavo (4 z 12) pripnutá pod hlavičkou webu, kým vedľa ide text služby; text vpravo (8 z 12) */
-  .cinnost-karta,.zakon-list{grid-template-columns:minmax(0,4fr) minmax(0,8fr);column-gap:calc(var(--medzera) * 2)}
-  .cinnost-hlava{align-self:start;position:sticky;top:calc(var(--hore) + var(--m-24))}
+  /* technický list na mriežke 12 stĺpcov pozadia (krasa-8, brána 3: text bol 23 px vpravo od čiary): hlava vľavo
+     v stĺpcoch 1 až 4 pripnutá pod hlavičkou webu, kým vedľa ide text služby; text, otázky zo zákona a veta SKSI od
+     čiary 5. stĺpca; dlhé zoznamy v dvoch stĺpcoch po 4 stĺpce mriežky (druhý od čiary 9. stĺpca) */
+  .cinnost-karta,.zakon-list{grid-template-columns:repeat(var(--stlpce),minmax(0,1fr));column-gap:var(--medzera)}
+  .cinnost-hlava{grid-column:1/5;align-self:start;position:sticky;top:calc(var(--hore) + var(--m-24));margin-bottom:var(--m-24)}
+  .cinnost-text,.zakon-list .otazky{grid-column:5/-1}
   .cinnost-fakty{grid-template-columns:minmax(0,1fr);margin-top:var(--m-8)}
-  .cinnost-sksi{margin-left:calc((100% - var(--medzera) * 2) / 3 + var(--medzera) * 2)}
-  .zakon-hlava{align-self:start}
-  /* dlhé zoznamy v dvoch stĺpcoch (rozhodnutie Fable: dva stĺpce s dobrým riadkovaním aj na širokom počítači) */
-  .cinnost-body-dlhe{columns:2;column-gap:var(--m-48)}
+  .cinnost-sksi{margin-left:calc((100% + var(--medzera)) / 3)}
+  .zakon-hlava{grid-column:1/5;align-self:start}
   .sluzby-hlava{grid-column:1/7;grid-row:1;align-self:end}
   .cennik{grid-row:2}
   .cennik-pozn{grid-row:3}
@@ -941,8 +1100,21 @@ img[data-src],img.nacitava{opacity:0}
   .cena{grid-column:3;grid-row:1}
   .kalkulacka{grid-column:8/-1;grid-row:1;align-self:end;margin-top:0}
   .atelier-text{grid-column:8/-1}
-  .kontakt-text,.kontakt-udaje{grid-column:1/6}
+  /* Kontakt: text so sieťami (s názvami) v stĺpcoch 1 až 6, karta od čiary 7. stĺpca; fakturačné údaje v dvoch stĺpcoch
+     po 6 stĺpcov mriežky so spoločnými riadkami (čiary oboch stĺpcov na sebe, druhý od čiary 7. stĺpca pod kartou),
+     poradie po stĺpcoch ako v DOM; počet riadkov dá build.py triedou kontakt-riadky-N */
+  .kontakt-text{grid-column:1/7}
   .kontakt-mapa{grid-column:7/-1}
+  .kontakt-mriezka{row-gap:var(--m-48)}
+  .kontakt-fakty{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;column-gap:var(--medzera)}
+  .kontakt-riadky-1{grid-template-rows:repeat(1,auto)}
+  .kontakt-riadky-2{grid-template-rows:repeat(2,auto)}
+  .kontakt-riadky-3{grid-template-rows:repeat(3,auto)}
+  .kontakt-riadky-4{grid-template-rows:repeat(4,auto)}
+  .kontakt-riadky-5{grid-template-rows:repeat(5,auto)}
+  .kontakt-riadky-6{grid-template-rows:repeat(6,auto)}
+  .kontakt .siet-meno{display:inline}
+  .kontakt-siete{gap:var(--m-8) var(--m-24)}
   .pata-mriezka>.pata-zaver{grid-column:1/7}
   .pata-mriezka>.male{grid-column:8/-1}
   .lista{display:none}
@@ -951,6 +1123,27 @@ img[data-src],img.nacitava{opacity:0}
   .menu-d{display:block}
   .menu-m{display:none}
 }
+/* široké okno: vizitka Kontaktu na 5 stĺpcov od čiary 8. stĺpca (doladenie-1, nález drobné: pri 1920 px mala 6 stĺpcov
+   a vpravo ostávalo 542 px prázdnej karty s dlhými čiarami) */
+@media (min-width:1680px){
+  .kontakt-mapa{grid-column:8/-1}
+}
+/* úzky počítač (1024 až 1099 px, napr. tablet na šírku): stĺpec údajov má 2 z 12 stĺpcov, asi 144 px; hodnota ide
+   pod ikonu bez odsadenia, aby sa meno konateľa nelámalo a odkaz Oprávnenia mal najviac dva riadky (krasa-8) */
+@media (min-width:1024px) and (max-width:1099px){
+  .udaj dd{margin-left:0}
+  /* štítok stavby na fotke: kratší názov (nastavenia uvod_slider nazov_mobil) aj tu, nielen do 1023 px; s celým
+     názvom mal štítok Okánikovej 5 riadkov (118 px) a Lumière, Na Križovatkách a Ventúrska 4 riadky (doladenie-2,
+     nález drobné: tmavý blok zakryl ľavý spodok fotky); riadok miesta a rokov vyvážený */
+  .slider-nazov{display:none}
+  .slider-nazov-kratky{display:inline}
+  .slider-udaje{text-wrap:balance}
+  /* o 16 px širší text štítku (medzera k ovládaniu 12 px namiesto 24 px, bočný okraj 12 px): riadok miesta a rokov
+     Okánikovej (250,5 px), Ventúrskej (248,3 px) a názov Na Križovatkách (241,8 px) sa zmestia do jedného riadka
+     (pri 1024 px 254,8 px textu, predtým 238,8), štítok má najviac 3 riadky */
+  .slider-popisy{max-width:calc(100% - 305px)}
+  .slider-popis{padding-inline:12px}
+}
 /* Nižšie okná notebookov (1366 × 768, 1440 × 790): nižšia hlavička a menšie logo */
 @media (min-width:1024px) and (max-height:820px){
   :root{--hore:64px}
@@ -958,21 +1151,41 @@ img[data-src],img.nacitava{opacity:0}
 }
 /* Hrdina na prvú obrazovku aj na notebookoch (overenie-1, nález blokuje: pri 1280 × 720 až 1536 × 864 boli štítok
    stavby, ovládanie slidera a tlačidlá pod okrajom okna, lebo pravý stĺpec naťahoval fotku). Pri okne nižšom ako
-   961 px ide blok O firme pod hrdinu, vpravo ostane nadtitulok, H1, údaje, zdroj a tlačidlá podľa 3A.2. H1 je navyše
-   najviac 6 % výšky okna. Blok O firme (oprava-2, nález vážne: dva odseky rozhodené pod fotkou a pod pravým stĺpcom
+   1080 px (doladenie-2: predtým 961 px, pri 961 až 1058 px sa stĺpec s odsekom nezmestil, pozri vysoké okno vyššie)
+   ide blok O firme pod hrdinu, vpravo ostane nadtitulok, H1, údaje, zdroj a tlačidlá podľa 3A.2. H1 je do 960 px
+   výšky navyše najviac 6 % výšky okna (blok nižšie). Blok O firme (oprava-2, nález vážne: dva odseky rozhodené pod fotkou a pod pravým stĺpcom
    pôsobili ako osirelé popisky a prvý riadok trčal odrezaný na spodku okna): jeden celok cez celú šírku ako riadok
-   technického listu Činnosti pod ním (4 a 8 dielov, tie isté hrany): vlasová čiara, vľavo nadtitulok O firme, vpravo
-   oba odseky väčším písmom a rovnakou farbou; začína 48 px pod fotkou, teda pod okrajom prvej obrazovky. */
-@media (min-width:1024px) and (max-height:960px){
+   technického listu Činnosti pod ním, na tej istej mriežke 12 stĺpcov ako pozadie (krasa-8): vlasová čiara, vľavo
+   nadtitulok O firme v stĺpcoch 1 až 4, oba odseky od čiary 5. stĺpca väčším písmom a rovnakou farbou; začína 48 px
+   pod fotkou, teda pod okrajom prvej obrazovky. Pravidlá vysokého okna pre nadpis a odseky (oblasti text a onad) tu
+   blok vracia do vlastnej mriežky. */
+@media (min-width:1024px) and (max-height:1079px){
   .uvod-mriezka{grid-template-areas:"slider slider slider slider slider slider slider . . . . ." "slider slider slider slider slider slider slider hlava hlava hlava hlava hlava" "slider slider slider slider slider slider slider udaje udaje udaje udaje udaje" "slider slider slider slider slider slider slider . . . . ." "text text text text text text text text text text text text";grid-template-rows:minmax(var(--m-16),1fr) auto auto minmax(var(--m-16),1fr) auto}
-  .uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}
   .firma-udaje{margin-top:var(--m-24)}
-  .firma-text{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);column-gap:calc(var(--medzera) * 2);align-content:start;margin-top:var(--m-48);padding:var(--m-32) 0 0;border-top:1px solid var(--beton)}
-  .firma-text-nad{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal;grid-column:1;grid-row:1/span 2;align-self:start}
-  .firma-text p{grid-column:2;max-width:40em;font-size:clamp(19px,1.45vw,22px);line-height:1.5;letter-spacing:-.01em}
-  .firma-text p+p{margin-top:var(--m-12);padding-left:0;color:var(--grafit)}
+  .firma-text{display:grid;grid-area:text;grid-template-columns:repeat(var(--stlpce),minmax(0,1fr));column-gap:var(--medzera);align-content:start;margin-top:var(--m-48);padding:var(--m-32) 0 0;border-top:1px solid var(--beton)}
+  .firma-text-nad{grid-area:auto;grid-column:1/5;grid-row:1/span 2;align-self:start;margin:0;padding:0;border:0}
+  .firma-text>p,.firma-text>p+p{grid-area:auto;grid-column:5/-1;margin:0;padding:0;border:0;max-width:40em;font-size:clamp(19px,1.45vw,22px);line-height:1.5;letter-spacing:-.01em;color:var(--grafit)}
+  /* druhý odsek v tej istej miere ako prvý (pretty, nie balance: doladenie-1, pri 1366 a 1440 px bol vyvážený na 477
+     a 422 px pod prvým odsekom širokým 835 px, dve rôzne miery pod sebou) */
+  .firma-text>p+p{margin-top:var(--m-12);text-wrap:pretty}
 }
-/* najnižšie okná (1280 × 720, 1366 × 768, 1024 × 768): hustejšie údaje a medzery, fotka o 24 px nižšia než okno */
+/* H1 najviac 6 % výšky okna len do 960 px (overenie-1: notebooky 1280 × 720 až 1536 × 864, H1 by inak odtlačilo
+   tlačidlá pod okno); pri 961 až 1079 px ostáva H1 v plnej veľkosti ako doteraz vo vysokom okne (Andrej: H1 veľké;
+   doladenie-2: stĺpec bez odseku má pri plnom H1 najviac 703 px a zmestí sa s rezervou aspoň 142 px) */
+@media (min-width:1024px) and (max-height:960px){
+  .uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}
+}
+/* vysoké okno (od 1080 px, napr. 1920 x 1080): pod hrdinom je len druhý odsek O firme (jedna veta), pod ním bola po
+   nadpis Činnosť prázdna plocha 152 px (doladenie-1); hrdina bez spodného odsadenia a Činnosť s menším horným, kotva
+   #cinnost pristane rovnako 24 px nad nadpisom. Nadpis O firme len pre čítačku: prvý odsek je úvodník pod H1 a druhý
+   jeho pokračovanie pod pravým stĺpcom (doladenie-2), štítok by bol druhým modrým riadkom pod kľúčovými slovami. */
+@media (min-width:1024px) and (min-height:1080px){
+  .uvod{padding-bottom:0}
+  .cinnost-sekcia{padding-top:clamp(56px,4vw,72px);scroll-margin-top:calc(var(--m-24) - clamp(56px,4vw,72px))}
+  .firma-text-nad{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
+/* najnižšie okná (1280 × 720, 1366 × 768, 1024 × 768): hustejšie údaje a medzery; fotka siaha po spodok okna ako
+   vo vyšších oknách (krasa-8: predtým o 24 px nižšia a pás pod ňou prázdny) */
 @media (min-width:1024px) and (max-height:820px){
   .uvod-h1{margin-top:var(--m-12)}
   .firma-udaje{margin-top:var(--m-16)}
@@ -981,7 +1194,6 @@ img[data-src],img.nacitava{opacity:0}
   .firma-zdroj{margin-top:var(--m-8)}
   .firma-media{margin-top:var(--m-8)}
   .uvod-akcie{margin-top:var(--m-16)}
-  .snimky{min-height:clamp(480px,calc(100svh - var(--hore) - var(--m-24)),58vw)}
 }
 @media (hover:hover) and (pointer:fine) and (min-width:1024px){.slider-tl:hover{background:rgba(255,255,255,.16)}}
 
