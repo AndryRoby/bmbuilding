@@ -996,7 +996,9 @@ class TestZnacka(unittest.TestCase):
         # ako na obrázku, inak by prehliadač fotku stiahol dvakrát
         prva = re.search(r'<li class="snimka snimka-0 je"[^>]*>(.*?)</li>', s, re.S).group(1)
         sizes0 = re.search(r'<img [^>]*sizes="([^"]+)"', prva).group(1)
-        self.assertTrue(sizes0.startswith('(min-width: 1024px) and (max-height: 820px) max('), sizes0)
+        # (od 2561 px najprv položky slidera bez presahu, oprava po overení širokého rozloženia)
+        self.assertTrue(sizes0.startswith('(min-width: 2561px) and (max-height: 820px) max(1390px, '), sizes0)
+        self.assertIn('(min-width: 1024px) and (max-height: 820px) max(', sizes0)
         self.assertIn(f'imagesizes="{sizes0}" fetchpriority="high"', obr[0])
         self.assertNotIn('-54.', obr[0])
         # preload len Geist latinka a diakritika; Geist Mono bez preloadu (PLAN-1-1.md časť 8 bod 3, LCP na mobile)
@@ -1428,8 +1430,10 @@ class TestStranky(unittest.TestCase):
         self.assertNotIn('.firma-udaje{align-self:end', self.css)
         for sel in ('.slider{grid-area:slider}', '.firma-udaje{grid-area:udaje;', '.firma-text{grid-area:text;', '.firma-hlava{grid-area:hlava}'):
             self.assertIn(sel, self.css)
-        # H1 veľký: podiel šírky stĺpca, najviac 4rem (64 px), výška slidera na počítači podľa okna pod hlavičkou
-        self.assertIn('.uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,4rem);', self.css)
+        # H1 veľký: podiel šírky stĺpca, najviac --h1-strop (4rem = 64 px; od 1921 px rastie s oknom, úsek ŠIROKÉ OKNO,
+        # test_siroke_okno_css), výška slidera na počítači podľa okna pod hlavičkou
+        self.assertIn('.uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,var(--h1-strop));', self.css)
+        self.assertIn(':root{--h1-strop:4rem}', self.css)
         # výška fotky: okno pod hlavičkou až po spodok okna (krasa-8), najviac 75 % šírky okna (vysoké úzke okno
         # 1255 x 1260 nedá rám príliš na výšku)
         self.assertIn('min-height:clamp(480px,calc(100svh - var(--hore)),75vw)', self.css)
@@ -1448,7 +1452,7 @@ class TestStranky(unittest.TestCase):
         self.assertNotIn('.uvod-h1{', nizke)
         self.assertEqual(''.join(css_bloky(re.sub(r'/\*.*?\*/', '', self.css, flags=re.S),
                                            '@media (min-width:1024px) and (max-height:960px)')).strip(),
-                         '.uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}')
+                         '.uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,var(--h1-strop)),6svh)}')
         # oprava-2 (nález vážne): blok O firme pod hrdinom ako jeden celok, vlasová čiara, viditeľný nadtitulok vľavo,
         # oba odseky vpravo rovnakou farbou, nie rozhodené pod fotku a pod stĺpec; krasa-8: na mriežke 12 stĺpcov
         # pozadia (nadtitulok stĺpce 1 až 4, odseky od čiary 5. stĺpca), nie 4 a 8 dielov s dvojitou medzerou
@@ -1824,13 +1828,20 @@ class TestStranky(unittest.TestCase):
         medzi stĺpcami). Poradie po stĺpcoch ako v pôvodnom zozname (najprv celý ľavý stĺpec, čítačka číta to isté
         poradie podľa DOM); počet riadkov dá build triedou riadky-N (polovica bodov nahor)."""
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
-        self.assertNotIn('columns:2', css)
+        # CSS columns len v širokom okne (od 1921 px) pre kartu bez zoznamu (odseky bez čiar, test_siroke_okno_css),
+        # nikdy pre zoznam
+        siroke = ''.join(css_bloky(css, '@media (min-width:1921px)'))
+        self.assertNotIn('columns:2', css.replace(siroke, ''))
+        self.assertEqual([x.strip() for x in re.findall(r'([^{}]*)\{columns:2', siroke)],
+                         ['.cinnost-karta>.cinnost-text:not(:has(>ul)):has(>p+p)'])
         self.assertNotIn('break-inside', css.split('.cinnost-body li{', 1)[1].split('}', 1)[0])
         tablet = ''.join(css_bloky(css, '@media (min-width:768px)'))
         self.assertIn('.cinnost-body-dlhe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera)}', tablet)
         self.assertIn('.cinnost-body-dlhe[class*="riadky-"]{grid-auto-flow:column}', tablet)
+        # počet riadkov pre každý zoznam s triedou riadky-N (dlhé zoznamy na úvode aj zoznam stránky služby, ktorý je
+        # mriežkou až od 1921 px); mimo mriežky grid-template-rows nič nerobí
         for n in range(3, build.RIADKY_ZOZNAMU_MAX + 1):
-            self.assertIn(f'.cinnost-body-dlhe.riadky-{n}{{grid-template-rows:repeat({n},auto)}}', css)
+            self.assertIn(f'.cinnost-body.riadky-{n}{{grid-template-rows:repeat({n},auto)}}', css)
         self.assertNotIn(f'riadky-{build.RIADKY_ZOZNAMU_MAX + 1}{{', css)
         # mobil: jeden stĺpec (mriežka až od 768 px)
         self.assertNotIn('.cinnost-body-dlhe{display:grid', css_bez_blokov(css))
@@ -1843,12 +1854,18 @@ class TestStranky(unittest.TestCase):
             self.assertIsNotNone(ul, n)
             self.assertEqual([html.unescape(re.sub(r'<[^>]+>', '', li)).replace(' ', ' ')
                               for li in re.findall(r'<li>(.*?)</li>', ul.group(1))], body)
-        # stránky služieb majú zoznamy v jednom stĺpci, bez tried riadky-N (fakturačné údaje v Kontakte majú od
-        # krasa-8, agent Kontakt, vlastnú triedu kontakt-riadky-N, tá sa zoznamov netýka)
-        for slug in ('stavebny-dozor', 'stavbyveduci'):
+        # stránky služieb majú do 1920 px zoznamy v jednom stĺpci: bez triedy cinnost-body-dlhe (mriežka od 768 px),
+        # dlhý zoznam má len triedu riadky-N pre dva stĺpce od 1921 px (overenie širokého rozloženia, nález drobné);
+        # jednobodový zoznam Stavbyvedúceho bez triedy (fakturačné údaje v Kontakte majú od krasa-8, agent Kontakt,
+        # vlastnú triedu kontakt-riadky-N, tá sa zoznamov netýka)
+        for slug, triedy in (('stavebny-dozor', ['cinnost-body riadky-10']), ('stavbyveduci', ['cinnost-body', 'cinnost-body riadky-4'])):
             telo = self.info(f'{slug}/')['telo']
-            self.assertIn('<ul class="cinnost-body">', telo, slug)
-            self.assertNotRegex(telo, r'class="cinnost-body[^"]*riadky-', slug)
+            self.assertEqual(re.findall(r'<ul class="(cinnost-body[^"]*)">', telo), triedy, slug)
+            self.assertNotIn('cinnost-body-dlhe', telo, slug)
+        sluzba = self.w.doslovny_text('skuska', {'body': [f'bod {i}' for i in range(5)]}, stlpce=False, riadky=True)
+        self.assertIn('<ul class="cinnost-body riadky-3">', sluzba)
+        self.assertIn('<ul class="cinnost-body">', self.w.doslovny_text('skuska', {'body': ['a', 'b', 'c', 'd']}, stlpce=False, riadky=True))
+        self.assertIn('<ul class="cinnost-body">', self.w.doslovny_text('skuska', {'body': [f'bod {i}' for i in range(5)]}, stlpce=False))
         # zoznam nad maximum tried ostane bez triedy (body idú po riadkoch, nie každý bod do nového stĺpca)
         dlhy = self.w.doslovny_text('skuska', {'body': [f'bod {i}' for i in range(2 * build.RIADKY_ZOZNAMU_MAX + 2)]})
         self.assertIn('<ul class="cinnost-body cinnost-body-dlhe">', dlhy)
@@ -1913,18 +1930,26 @@ class TestStranky(unittest.TestCase):
             self.assertNotIn('.snimky{', ''.join(css_bloky(css, blok)), blok)
         # sizes slidera ráta s výškou poľa: 100vh mínus hlavička 84 px, pri výške okna do 820 px 64 px (fotka 4 : 3)
         s43 = build.sizes_slidera(4, 3)
-        self.assertIn('(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, 50vw + 137px), 133.33vh - 85px, 640px)', s43)
-        self.assertIn('(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, 50vw + 137px), min(133.33vh - 112px, 100vw))', s43)
-        self.assertIn('(min-width: 1024px) max(min(57.7vw, 50vw + 137px), min(133.33vh - 112px, 100vw), 1307px)', s43)
+        self.assertIn('(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), 133.33vh - 85px, 640px)', s43)
+        self.assertIn('(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(133.33vh - 112px, 100vw))', s43)
+        self.assertIn('(min-width: 1024px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(133.33vh - 112px, 100vw), 1307px)', s43)
         uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
-        self.assertIn('imagesizes="(min-width: 1024px) and (max-height: 820px) max(', uvod)
+        # od 2561 px slider bez presahu (pole 1390 px, test_siroke_okno_sizes), potom položky počítača ako predtým
+        self.assertIn('imagesizes="(min-width: 2561px) and (max-height: 820px) max(1390px, ', uvod)
+        self.assertIn('(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, ', uvod)
 
     # okná merania krasa-8 (Fotky slidera): šírka, výška a hustota pixelov; pole slidera zmerané v Chrome 25. 11. 2026
-    # (D:/Temp/.../krasa-8/fotky/meranie-pred.json, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/OPRAVA-FOTKY.md)
+    # (D:/Temp/.../krasa-8/fotky/meranie-pred.json, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/OPRAVA-FOTKY.md);
+    # široké okná (od 1921 px obsah min(vw - 160, 2400) px, SIROKE.md) premerané po zmene 25. 11. 2026
+    # (krasa-8/siroke-wf/stavba/skripty/sweep.mjs): pri 2560 x 1440 predtým 1416,7 px, teraz 1470 px; od 2561 px slider
+    # bez presahu, pole 1390 px (oprava po overení, krasa-8/siroke-wf/oprava/skripty/hrdina.mjs bez posuvníka, predtým
+    # pri 3440 x 1440 1910 px, pri 3840 x 2160 2110 px)
     OKNA_SLIDERA = ((1280, 720, 1), (1366, 768, 1), (1440, 900, 1), (1440, 900, 2), (1536, 864, 1.25), (1920, 1080, 1),
-                    (2560, 1440, 1), (768, 1024, 2), (390, 844, 3), (360, 780, 3))
+                    (2048, 1152, 1), (2560, 1440, 1), (2752, 1152, 1.25), (3440, 1440, 1), (768, 1024, 2), (390, 844, 3),
+                    (360, 780, 3))
     POLE_CHROME = {(1280, 720): (729.8, 656.0), (1366, 768): (778.8, 704.0), (1440, 900): (821.0, 816.0),
-                   (1536, 864): (876.0, 780.0), (1920, 1080): (1096.7, 996.0), (2560, 1440): (1416.7, 1356.0),
+                   (1536, 864): (876.0, 780.0), (1920, 1080): (1096.7, 996.0), (2048, 1152): (1171.3, 1068.0),
+                   (2560, 1440): (1470.0, 1356.0), (3440, 1440): (1390.0, 1356.0),
                    (768, 1024): (768.0, 768.0), (390, 844): (390.0, 487.5), (360, 780): (360.0, 450.0)}
     # ďalšie okná počítača (krasa-8/fotky/pole-okna*.json, doladenie-2 meraj.mjs pole 25. 11. 2026 po zmene prahu): od
     # 1080 px výšky okna rozhoduje pri úzkych oknách pravý stĺpec hrdinu s odsekom O firme (882 až 974 px), napr. iPad
@@ -1934,7 +1959,11 @@ class TestStranky(unittest.TestCase):
                           (1200, 970): (684.2, 886.0), (1280, 970): (729.8, 886.0), (1440, 970): (821.0, 886.0),
                           (1600, 970): (912.9, 886.0), (1728, 1000): (987.3, 916.0), (1760, 970): (1006.0, 886.0),
                           (1920, 970): (1096.7, 886.0), (1255, 1260): (715.5, 941.3), (1280, 1024): (729.8, 940.0),
-                          (1920, 1200): (1096.7, 1116.0), (2560, 1080): (1416.7, 996.0), (3840, 2160): (2056.7, 2076.0),
+                          (1920, 1200): (1096.7, 1116.0), (2560, 1080): (1470.0, 996.0), (3840, 2160): (1390.0, 2076.0),
+                          (1921, 1080): (1097.3, 996.0), (2000, 1080): (1143.3, 996.0), (2304, 1296): (1320.7, 1212.0),
+                          (2560, 1000): (1470.0, 916.0), (2880, 1620): (1390.0, 1536.0), (3440, 1080): (1390.0, 996.0),
+                          (2561, 1440): (1390.0, 1356.0), (2561, 1080): (1390.0, 996.0), (2600, 1080): (1390.0, 996.0),
+                          (2752, 1152): (1390.0, 1068.0), (3000, 1080): (1390.0, 996.0),
                           (1920, 976): (1096.7, 892.0), (1680, 980): (959.3, 896.0), (1536, 961): (876.0, 877.0),
                           (1440, 961): (821.0, 877.0), (1648, 1079): (940.7, 995.0), (1648, 1080): (940.7, 996.0),
                           (1728, 1080): (987.3, 996.0), (1728, 1117): (987.3, 1033.0)}
@@ -1946,17 +1975,21 @@ class TestStranky(unittest.TestCase):
         menší než fotka po object-fit: cover v poli, ktoré zmeral Chrome, o viac než 0,5 px pri žiadnom okne a pri
         oknách merania nie je väčší o viac než 2 % (pri ďalších oknách, kde rozhoduje pravý stĺpec hrdinu, o 12 %)."""
         self.assertEqual(build.sizes_slidera(2400, 1350),
-                         '(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, 50vw + 137px), 177.78vh - 114px, 853px), '
-                         '(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, 50vw + 137px), min(177.78vh - 149px, 133.33vw)), '
-                         '(min-width: 1024px) max(min(57.7vw, 50vw + 137px), min(177.78vh - 149px, 133.33vw), 1742px), '
+                         '(min-width: 2561px) and (max-height: 820px) max(1390px, 177.78vh - 114px, 853px), '
+                         '(min-width: 2561px) max(1390px, min(177.78vh - 149px, 133.33vw)), '
+                         '(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), 177.78vh - 114px, 853px), '
+                         '(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(177.78vh - 149px, 133.33vw)), '
+                         '(min-width: 1024px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(177.78vh - 149px, 133.33vw), 1742px), '
                          '(min-width: 640px) 177.78vw, 222.22vw')
         # fotka na výšku: na tablete a mobile šírka okna (cover ju kreslí na šírku poľa)
         self.assertTrue(build.sizes_slidera(1800, 2400).endswith('(min-width: 640px) 100vw, 100vw'))
         # RD Ahoj 01 s orez_dole 0,17: obrázok je o 1 / 0,83 vyšší než pole
         self.assertEqual(build.sizes_slidera(2000, 2657, 0.17),
-                         '(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, 50vw + 137px), 90.69vh - 58px, 435px), '
-                         '(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, 50vw + 137px), min(90.69vh - 76px, 68.02vw)), '
-                         '(min-width: 1024px) max(min(57.7vw, 50vw + 137px), min(90.69vh - 76px, 68.02vw), 889px), '
+                         '(min-width: 2561px) and (max-height: 820px) max(1390px, 90.69vh - 58px, 435px), '
+                         '(min-width: 2561px) max(1390px, min(90.69vh - 76px, 68.02vw)), '
+                         '(min-width: 1024px) and (max-height: 820px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), 90.69vh - 58px, 435px), '
+                         '(min-width: 1024px) and (max-height: 1079px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(90.69vh - 76px, 68.02vw)), '
+                         '(min-width: 1024px) max(min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px), min(90.69vh - 76px, 68.02vw), 889px), '
                          '(min-width: 640px) 100vw, 113.36vw')
         # rozloženie v styl.css, z ktorého vzorec vychádza (pri zmene treba zmeniť aj sizes_slidera)
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
@@ -1967,6 +2000,10 @@ class TestStranky(unittest.TestCase):
         pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
         self.assertIn(':root{--stlpce:12;--hore:84px}', pc)
         self.assertIn('.slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2));margin-left:calc(-1 * max(var(--okraj), (100cqw - var(--sirka)) / 2))}', pc)
+        # od 2561 px bez presahu (SLIDER_BEZ_PRESAHU, pole 7 stĺpcov obsahu 2400 px)
+        self.assertEqual([[r.strip() for r in b.split('\n') if r.strip()] for b in
+                          css_bloky(css, f'@media (min-width:{build.SLIDER_BEZ_PRESAHU}px)')], [['.slider{margin-left:0}']])
+        self.assertEqual(build.SLIDER_POLE_BEZ_PRESAHU, 1390)
         self.assertIn('"slider slider slider slider slider slider slider . . . . ."', pc)
         self.assertIn(':root{--hore:64px}', ''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:820px)')))
         self.assertIn('.snimky,.firma-hlava{aspect-ratio:1/1}', ''.join(css_bloky(css, '@media (min-width:640px) and (max-width:1023px)')))
@@ -2432,9 +2469,12 @@ class TestStranky(unittest.TestCase):
 
     # pravý stĺpec hrdinu vo vysokom okne (nadtitulok až tlačidlá, s prvým odsekom O firme) podľa šírky okna v CSS px,
     # zmeraný v Chrome 25. 11. 2026 (doladenie-2, meraj.mjs sweep: okno 1400 px na výšku, každých 8 px šírky 1024 až
-    # 2560 px; najvyšší 878 px pri 1648 px, kde je H1 takmer 64 px a odsek má 5 riadkov)
+    # 1920 px; najvyšší 878 px pri 1648 px, kde je H1 takmer 64 px a odsek má 5 riadkov). Do 1920 px výška okna stĺpec
+    # nemení. Od 1921 px (široké okno, SIROKE.md) rastie H1 s oknom až po 7svh, stĺpec je preto zmeraný pri výške 1080 px,
+    # kde je voči oknu najvyšší (siroke-wf/stavba/skripty/sweep.mjs: 873,8 px od 2176 px; predtým 826 px pri 2560 px)
     STLPEC_VYSOKE = {1024: 809, 1200: 786, 1280: 798, 1368: 812, 1440: 824, 1536: 850, 1600: 866, 1648: 878,
-                     1680: 866, 1728: 876, 1768: 876, 1800: 846, 1920: 826, 2560: 826}
+                     1680: 866, 1728: 876, 1768: 876, 1800: 846, 1920: 826, 2048: 852.4, 2176: 873.8, 2560: 873.8,
+                     3440: 873.8}
     # doladenie-3, Chrome po oprave (meraj.mjs prva, posun hore, slider pozastavený): okno -> (spodok fotky pod
     # spodkom okna px, najmenšia rezerva tlačidiel, štítka a ovládania nad spodkom okna px). Pred opravou napr.
     # 1366 x 610 (27,5; -11,5), 1600 x 600 (37,6; -21,6), 1600 x 560 (67,6; -51,6), 1600 x 648 (1,5; 14,5).
@@ -2465,7 +2505,9 @@ class TestStranky(unittest.TestCase):
         a min-height:1080px) aj v sizes slidera (build.SLIDER_VYSOKE_OKNO). Stĺpec s riadkami 48 px nad a pod ním
         a hlavičkou 84 px sa pri každej zmeranej šírke zmestí s rezervou aspoň 20 px (najviac 1058 px). Prehliadač
         po oprave (doladenie-2/meraj.mjs vysoke a sweep, výšky 961 až 1400 px pri šírke 1024 až 2560 px): spodok fotky
-        na spodku okna, štítok, ovládanie aj tlačidlá v okne; 1920 x 1080 a 2560 x 1440 bez zmeny."""
+        na spodku okna, štítok, ovládanie aj tlačidlá v okne; 1920 x 1080 a 2560 x 1440 bez zmeny. Široké okno (od
+        1921 px, SIROKE.md): H1 rastie s oknom najviac po 7svh, stĺpec pri prahu 1080 px najviac 873,8 px, s riadkami
+        a hlavičkou 1053,8 px (rezerva 26,2 px), test_siroke_okno_prva_obrazovka."""
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
         self.assertEqual(build.SLIDER_VYSOKE_OKNO, 1079)
         # prahy výšky okna na počítači: 660 (ešte hustejšie údaje, doladenie-3), 820 (hustejšie údaje), 960 (len H1
@@ -2473,7 +2515,7 @@ class TestStranky(unittest.TestCase):
         prahy = sorted({int(x) for x in re.findall(r'@media \(min-width:1024px\) and \(max-height:(\d+)px\)', css)})
         self.assertEqual(prahy, [660, 820, 960, build.SLIDER_VYSOKE_OKNO])
         self.assertEqual(''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:960px)')).strip(),
-                         '.uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}')
+                         '.uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,var(--h1-strop)),6svh)}')
         self.assertEqual(re.findall(r'@media \(min-width:1024px\) and \(min-height:(\d+)px\)', css),
                          [str(build.SLIDER_VYSOKE_OKNO + 1)])
         self.assertNotIn('(min-height:961px)', css)
@@ -3039,8 +3081,18 @@ console.log(JSON.stringify(v));
         self.assertIn('.media-tabulka{grid-column:1/5}', siroke)
         self.assertIn('.media-text{grid-column:6/12}', siroke)
         self.assertNotIn('.media-tabulka{grid-column:1/8}', css)
-        self.assertEqual(build.SIZES_MEDIA_TABULKA, '(min-width:1536px) min(30vw, 580px), (min-width:1024px) 38vw, '
+        # od 1921 px (široké okno) 3 stĺpce mriežky širšieho obsahu (pri 2560 px 582 px ako 571 px pri 1920 px), do
+        # 1920 px ten istý sizes ako predtým
+        self.assertEqual(build.SIZES_MEDIA_TABULKA, '(min-width:1921px) min(25vw - 58px, 582px), '
+                                                    '(min-width:1536px) min(30vw, 580px), (min-width:1024px) 38vw, '
                                                     '(min-width:768px) 58vw, calc(100vw - 32px)')
+        siroke_okno = ''.join(css_bloky(css, '@media (min-width:1921px)'))
+        self.assertIn('.media-tabulka{grid-column:1/4}', siroke_okno)
+        # text po pravý okraj obsahu ako čiara pod nadpisom sekcie, fotky strán na 6 z 8 stĺpcov textu (po 3 stĺpce,
+        # SIZES_MEDIA_STRANA), overenie širokého rozloženia, nález drobné: pri 5/11 ostával vpravo prázdny pás 404 px
+        self.assertIn('.media-text{grid-column:5/-1}', siroke_okno)
+        self.assertIn('.media-strany{max-width:calc((100% + var(--medzera)) * 6 / 8 - var(--medzera))}', siroke_okno)
+        self.assertNotIn('.media-strany{max-width', css.replace(siroke_okno, ''))
         lum = 'filmovy-klub-lumiere-spitalska-bratislava'
         tab = self.info(f'realizacie/{lum}/')['telo'].split('<figure class="media-tabulka">', 1)[1].split('</figure>', 1)[0]
         # lightbox s plnou veľkosťou: odkaz na najväčší súbor výrezu
@@ -4463,6 +4515,270 @@ console.log(JSON.stringify(v));
         nav = re.search(r'<nav class="omrvinky" aria-label="Omrvinky"><ol>(.*?)</ol></nav>', s).group(1)
         self.assertNotIn('/', re.sub(r'<[^>]+>', '', nav))
 
+    # ŠIROKÉ OKNO (styl.css úsek ŠIROKÉ OKNO; Andrej 25. 11. 2026 pri monitore 2560 px: „ešte mi vadí to hluché miesto
+    # vpravo, premysli to, ako stavbyvedúcemu mu to bude divné“). Chrome 25. 11. 2026 po zmene (krasa-8/siroke-wf/stavba,
+    # skripty/sweep.mjs, okno bez posuvníka, obmedzený pohyb): okno -> (šírka obsahu, okraj obsahu vľavo aj vpravo,
+    # H1 úvodu px). Pred zmenou mal obsah od 1888 px okna vždy 1760 px (pri 2560 px okraje 400 px, pri 3440 px 840 px)
+    # a H1 najviac 64 px. Záznam: ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/SIROKE.md
+    SIROKE_CHROME = {(1024, 768): (944.1, 39.9, 37.617), (1440, 900): (1327.7, 56.2, 52.897), (1920, 1080): (1760, 80, 64),
+                     (1921, 1080): (1761, 80, 64.05), (2000, 1080): (1840, 80, 68), (2048, 1152): (1888, 80, 70.4),
+                     (2200, 1080): (2040, 80, 75.6), (2304, 1296): (2144, 80, 83.2), (2560, 1000): (2400, 80, 70),
+                     (2560, 1080): (2400, 80, 75.6), (2560, 1440): (2400, 80, 96), (2560, 1600): (2400, 80, 96),
+                     (2600, 1080): (2400, 100, 75.6), (2880, 1620): (2400, 240, 96.628), (3440, 1080): (2400, 520, 75.6),
+                     (3440, 1440): (2400, 520, 96.628), (3840, 2160): (2400, 720, 96.628)}
+    # pravý stĺpec hrdinu vo vysokom okne (s prvým odsekom O firme) pri výške okna 1080 px (prah vysokého okna), Chrome
+    # po zmene (sweep.mjs): od 1921 px rastie H1 s oknom až po 7svh (75,6 px pri 1080 px), stĺpec potom 873,8 px pri
+    # každej širšej šírke; vyššie okno má H1 najviac 7svh, takže rezerva rastie (pri 1080 px najmenšia, 26,2 px)
+    STLPEC_VYSOKE_SIROKE = {1921: 825.8, 1936: 829, 2000: 842.4, 2048: 852.4, 2112: 865.6, 2176: 873.8, 2200: 873.8,
+                            2560: 873.8, 3000: 873.8, 3440: 873.8}
+    # šírky obrázkov, ktoré Chrome kreslí bez posuvníka pri 2048 x 1152 a 2560 x 1440 (overenie širokého rozloženia,
+    # krasa-8/siroke-wf/testy/sizes_chrome.mjs, sizes-chrome.json, najmenší rámik každého druhu na všetkých stránkach):
+    # karta 4 : 5, titulná fotka detailu 3 : 2, bunka galérie, galéria do 3 fotiek, prvá veľká fotka galérie, výrez
+    # tabuľky ASB (obrázok vnútri rámika 1 px) a fotka strany ASB. Po oprave V médiách (text 5/-1, strany na 6 z 8
+    # stĺpcov) má strana tú istú šírku (oprava/oblast/meranie-po.json: 454 a 582 px).
+    SIZES_CHROME = {'SIZES_KARTA': {2048: 454.4, 2560: 582.4}, 'SIZES_DETAIL': {2048: 1091.3, 2560: 1390.0},
+                    'SIZES_GALERIA': {2048: 613.3, 2560: 784.0}, 'SIZES_GALERIA_MALO': {2048: 932.0, 2560: 1188.0},
+                    'SIZES_GALERIA_PRVA': {2048: 1250.7, 2560: 1592.0}, 'SIZES_MEDIA_TABULKA': {2048: 452.0, 2560: 580.0},
+                    'SIZES_MEDIA_STRANA': {2048: 454.0, 2560: 582.0}}
+
+    @classmethod
+    def h1_css(cls):
+        """Koeficienty H1 úvodu zo styl.css (overenie širokého rozloženia, nález drobné: vzorec nemá byť len kópiou
+        v teste): clamp(Arem, Bcqi, var(--h1-strop)), line-height, --h1-strop do 1920 px (Crem) a od 1921 px
+        max(Drem, min(Evw - Fpx, Gsvh)), pri výške okna do 960 px navyše najviac Hsvh."""
+        css = re.sub(r'/\*.*?\*/', '', (KOREN / 'sablona' / 'styl.css').read_text(encoding='utf-8'), flags=re.S)
+        h1 = re.search(r'\.uvod-h1\{[^}]*font-size:clamp\(([\d.]+)rem,([\d.]+)cqi,var\(--h1-strop\)\);line-height:([\d.]+);',
+                       css_bez_blokov(css))
+        zaklad = re.search(r':root\{--h1-strop:([\d.]+)rem\}', css_bez_blokov(css))
+        siroke = re.search(r'--h1-strop:max\(([\d.]+)rem,min\(([\d.]+)vw - ([\d.]+)px,([\d.]+)svh\)\)',
+                           ''.join(css_bloky(css, '@media (min-width:1921px)')))
+        nizke = re.search(r'\.uvod-h1\{font-size:min\(clamp\([\d.]+rem,[\d.]+cqi,var\(--h1-strop\)\),([\d.]+)svh\)\}',
+                          ''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:960px)')))
+        for m in (h1, zaklad, siroke, nizke):
+            assert m is not None, 'pravidlo H1 úvodu v styl.css sa zmenilo'
+        f = lambda x: float(x)
+        return {'min_px': 16 * f(h1.group(1)), 'cqi': f(h1.group(2)) / 100, 'riadok': f(h1.group(3)),
+                'strop_px': 16 * f(zaklad.group(1)), 'siroke_min_px': 16 * f(siroke.group(1)), 'siroke_vw': f(siroke.group(2)) / 100,
+                'siroke_px': f(siroke.group(3)), 'siroke_svh': f(siroke.group(4)) / 100, 'nizke_svh': f(nizke.group(1)) / 100}
+
+    @classmethod
+    def h1_uvodu_px(cls, vw, vh):
+        """H1 úvodu na počítači (od 1024 px, okno bez posuvníka) podľa koeficientov zo styl.css (h1_css): clamp(1.75rem,
+        9.8cqi, --h1-strop), cqi je hlava v 5 z 12 stĺpcov mriežky; --h1-strop 4rem, od 1921 px max(4rem, min(5vw - 32px,
+        7svh)); pri výške okna do 960 px navyše najviac 6svh."""
+        k = cls.h1_css()
+        obsah = build.sirka_obsahu_px(vw)
+        medzera = min(24.0, max(12.0, 0.016 * vw))
+        hlava = 5 * (obsah - 11 * medzera) / 12 + 4 * medzera
+        strop = k['strop_px'] if vw < build.SIROKE_OKNO else max(k['siroke_min_px'], min(k['siroke_vw'] * vw - k['siroke_px'], k['siroke_svh'] * vh))
+        h1 = max(k['min_px'], min(k['cqi'] * hlava, strop))
+        return min(h1, k['nizke_svh'] * vh) if vh <= 960 else h1
+
+    def test_siroke_okno_css(self):
+        """Široké okno (od 1921 px, jeden blok @media (min-width:1921px) na konci štýlu): obsah min(100vw - 160px,
+        2400px) namiesto 1760 px, strop H1 max(4rem, min(5vw - 32px, 7svh)), titulná fotka detailu bez stropu 1000 px,
+        vizitka Kontaktu na 4 stĺpce, výrez tabuľky V médiách na 3 stĺpce s textom od 5. stĺpca po pravý okraj a fotkami
+        strán na 6 z 8 stĺpcov textu, karta Činnosti bez zoznamov v dvoch stĺpcoch bez delenia odsekov a stránka služby
+        s dlhým zoznamom (trieda riadky-N) so zoznamom v dvoch stĺpcoch so spoločnými riadkami, krátkym zoznamom na šírku
+        stĺpca zoznamu a boxom s dokladom na 4 stĺpce. Od 2561 px (obsah na strope) slider bez presahu k okraju okna,
+        jediný ďalší prah. Do 1920 px platia tie isté hodnoty ako predtým (--sirka 1760 px, --h1-strop 4rem). Mriežka,
+        vlasové čiary a hlavička idú cez tú istú --sirka, slider k ľavej hrane okna cez 100cqw (posuvník)."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        bloky = css_bloky(css, '@media (min-width:1921px)')
+        self.assertEqual(len(bloky), 1)
+        self.assertEqual([r.strip() for r in bloky[0].split('\n') if r.strip()], [
+            ':root{--sirka:min(100vw - 160px,2400px);--h1-strop:max(4rem,min(5vw - 32px,7svh))}',
+            '.detail .detail-foto{max-width:none}',
+            '.kontakt-mapa{grid-column:9/-1}',
+            '.media-tabulka{grid-column:1/4}',
+            '.media-text{grid-column:5/-1}',
+            '.media-strany{max-width:calc((100% + var(--medzera)) * 6 / 8 - var(--medzera))}',
+            '.cinnost-karta>.cinnost-text:not(:has(>ul)):has(>p+p){columns:2;column-gap:var(--medzera)}',
+            '.cinnost-karta>.cinnost-text:not(:has(>ul))>p{break-inside:avoid}',
+            '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .sluzba-hlavne{grid-column:1/9}',
+            '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .sluzba-bok{grid-column:9/-1}',
+            '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body[class*="riadky-"]{display:grid;'
+            'grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera);grid-auto-flow:column;max-width:none}',
+            '.sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body:not([class*="riadky-"])'
+            '{max-width:calc((100% - var(--medzera)) / 2)}'])
+        self.assertEqual(css.count('1921px'), 1)
+        self.assertNotIn('1920px', css)
+        # ultraširoké okno: jediný ďalší prah, len slider bez presahu, za blokom širokého okna
+        ultra = css_bloky(css, '@media (min-width:2561px)')
+        self.assertEqual([[r.strip() for r in b.split('\n') if r.strip()] for b in ultra], [['.slider{margin-left:0}']])
+        self.assertEqual(css.count('2561px'), 1)
+        self.assertNotIn('2560px', css)
+        self.assertGreater(css.index('@media (min-width:2561px){'), css.index('@media (min-width:1921px){'))
+        self.assertEqual(build.SLIDER_BEZ_PRESAHU, 2561)
+        self.assertIn('--sirka:1760px;', css)
+        self.assertIn(':root{--h1-strop:4rem}', css)
+        self.assertNotIn('9.8cqi,4rem', css)
+        # blok je za všetkými blokmi počítača (rovnaká špecificita, prepíše ich)
+        zaciatok = css.index('@media (min-width:1921px){')
+        for blok in ('@media (min-width:1024px)', '@media (min-width:1536px)', '@media (min-width:1680px)'):
+            self.assertGreater(zaciatok, css.rindex(blok), blok)
+        for kus in ('.obsah{width:min(var(--sirka),100% - 2*var(--okraj));margin-inline:auto}',
+                    '.ciary-vnutro{height:100%;width:min(var(--sirka),100% - 2*var(--okraj));',
+                    'margin-left:calc(-1 * max(var(--okraj), (100cqw - var(--sirka)) / 2))'):
+            self.assertIn(kus, css)
+        # karta Činnosti v dvoch stĺpcoch je len 1. Stavebný manažment (odseky bez zoznamu), ostatné majú zoznamy
+        cin = self.info('')['telo'].split('<section class="sekcia cinnost-sekcia"', 1)[1].split('</section>', 1)[0]
+        texty = [k.split('<div class="cinnost-text">', 1)[1] for k in cin.split('<article class="cinnost-karta"')[1:]]
+        self.assertEqual(len(texty), 3)
+        stlpce = [('<ul' not in t.split('</article>', 1)[0] and t.split('</article>', 1)[0].count('<p>') >= 2) for t in texty]
+        self.assertEqual(stlpce, [True, False, False])
+        # stránka služby: dlhý zoznam (riadky-N) má Stavebný dozor a Stavbyvedúci, Stavebný manažment je bez zoznamu
+        # (selektor :has ho vynechá, karta tam ostáva na 5 stĺpcoch)
+        for slug, dlhy in (('stavebny-dozor', True), ('stavbyveduci', True), ('stavebny-manazment', False)):
+            obal = self.info(f'{slug}/')['telo'].split('<div class="obsah mriezka sluzba-obal">', 1)[1].split('</aside>', 1)[0]
+            self.assertEqual(bool(re.search(r'<ul class="cinnost-body riadky-\d+">', obal)), dlhy, slug)
+
+    def test_siroke_okno_obsah_a_h1_ako_chrome(self):
+        """Šírka obsahu (build.sirka_obsahu_px) a H1 úvodu podľa vzorca zo styl.css sedia s Chrome (SIROKE_CHROME, okná
+        1024 x 768 až 3840 x 2160) do 0,1 px: obsah pri 1920 a 1921 px spojitý (1760 a 1761 px), od 1921 px okraj 80 px,
+        strop 2400 px (pri 3440 px okraje 520 px); H1 64 px pri 1920, 70,4 pri 2048 x 1152, 96 pri 2560 x 1440 a 75,6
+        pri 2560 x 1080. Konštanty build.py (OBSAH_MAX, OKRAJ_SIROKY, OBSAH_SIROKY_MAX, SIROKE_OKNO) sú tie isté ako
+        hodnoty v styl.css (overenie širokého rozloženia, nález drobné: cyklus nad vzorcom z implementácie by zmenu len
+        v štýle neodhalil)."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        zaklad = re.search(r'--sirka:([\d.]+)px;', css_bez_blokov(css))
+        siroke = re.search(r':root\{--sirka:min\(100vw - ([\d.]+)px,([\d.]+)px\);',
+                           ''.join(css_bloky(css, f'@media (min-width:{build.SIROKE_OKNO}px)')))
+        self.assertIsNotNone(zaklad)
+        self.assertIsNotNone(siroke)
+        self.assertEqual(float(zaklad.group(1)), build.OBSAH_MAX)
+        self.assertEqual(float(siroke.group(1)), 2 * build.OKRAJ_SIROKY)
+        self.assertEqual(float(siroke.group(2)), build.OBSAH_SIROKY_MAX)
+        for (vw, vh), (obsah, okraj, h1) in self.SIROKE_CHROME.items():
+            self.assertAlmostEqual(build.sirka_obsahu_px(vw), obsah, delta=0.1, msg=(vw, vh))
+            self.assertAlmostEqual((vw - build.sirka_obsahu_px(vw)) / 2, okraj, delta=0.1, msg=(vw, vh))
+            self.assertAlmostEqual(self.h1_uvodu_px(vw, vh), h1, delta=0.01, msg=(vw, vh))
+        # od prahu obsah podľa hodnôt zo styl.css (nie z build.py), do prahu ako pred zmenou
+        dva_okraje, strop_css = float(siroke.group(1)), float(siroke.group(2))
+        for vw in range(1024, 4000):
+            okraj = min(64.0, max(16.0, 0.039 * vw))
+            css_sirka = float(zaklad.group(1)) if vw < build.SIROKE_OKNO else min(vw - dva_okraje, strop_css)
+            self.assertEqual(build.sirka_obsahu_px(vw), min(css_sirka, vw - 2 * okraj), vw)
+        # H1 do 1920 px najviac 64 px (ako pred zmenou), od 1921 px nikdy menšie než pri 1920 px
+        for vh in (768, 900, 1080, 1440):
+            self.assertLessEqual(self.h1_uvodu_px(1920, vh), 64)
+            self.assertGreaterEqual(self.h1_uvodu_px(1921, vh), self.h1_uvodu_px(1920, vh))
+
+    def test_siroke_okno_prva_obrazovka(self):
+        """Prvá obrazovka platí ako pred zmenou aj pri širokom okne. Chrome po zmene (sweep.mjs, 858 okien: šírky 1024 až
+        3440 px po 64 px, výšky 600 až 1440 px po 40 px a navyše 2560 x 1080, 2560 x 1000, 3440 x 1440, 3840 x 2160,
+        1921 až 3000 x 1080; bez posuvníka aj s klasickým posuvníkom 17 px): fotka slidera po spodok okna (okrem
+        známeho stropu 75vw v úzkych vysokých oknách), štítok stavby, ovládanie slidera aj tlačidlá Zavolať a Napísať
+        e-mail celé v okne, slider na ľavej hrane okna, štítok 16 px od nej, okraje obsahu súmerné, bez vodorovného
+        posunu; chyba 0 (pred zmenou tiež 0). Od 2561 px slider bez presahu (oprava po overení, hrdina.mjs pri 2561 až
+        3840 px: fotka začína na čiare loga, pravý okraj za údajmi rovnaký ako ľavý). Vzorcom so štýlom zo styl.css
+        (h1_css): pravý stĺpec vo vysokom okne pri prahu 1080 px (STLPEC_VYSOKE_SIROKE, zmerané s H1 75,6 px) sa
+        zmestí s riadkami 48 px a hlavičkou 84 px s rezervou aspoň 20 px a sizes slidera ráta s poľom aspoň takým
+        vysokým (SLIDER_STLPEC); vyššie okno má H1 najviac 7svh, takže rezerva rastie."""
+        k = self.h1_css()
+        for w, stlpec in self.STLPEC_VYSOKE_SIROKE.items():
+            potreba = stlpec + 2 * 48 + build.SLIDER_HLAVICKA
+            self.assertLessEqual(potreba + 20, build.SLIDER_VYSOKE_OKNO + 1, w)
+            self.assertGreaterEqual(build.SLIDER_STLPEC, stlpec + 2 * 48, w)
+            # H1 pri prahu zo styl.css nie je väčšie než pri meraní stĺpca (75,6 px); väčší strop výškou by stĺpec
+            # pri 1080 px natiahol (prepočet nižšie)
+            self.assertLessEqual(self.h1_uvodu_px(w, 1080), 75.6 + 1e-6, w)
+        # od 2561 px (slider bez presahu) je pole vo vysokom okne aspoň 1080 - 84 px, viac než SLIDER_STLPEC, takže
+        # sizes_slidera tam stĺpec nepotrebuje
+        self.assertGreater(build.SLIDER_VYSOKE_OKNO + 1 - build.SLIDER_HLAVICKA, build.SLIDER_STLPEC)
+        # stĺpec bez H1 (nadtitulok, odsek, údaje, zdroj, tlačidlá) pri 2560 x 1080: zmeraný stĺpec - 4 riadky H1
+        h1_prah = self.h1_uvodu_px(2560, 1080)
+        bez_h1 = self.STLPEC_VYSOKE_SIROKE[2560] - 4 * k['riadok'] * h1_prah
+        # vysoké okno od 1080 px s H1 zo styl.css: rezerva najmenšia pri 1080 px a nikdy pod 20 px
+        for vh in range(1080, 2200, 20):
+            for vw in (2560, 3440):
+                h1 = self.h1_uvodu_px(vw, vh)
+                self.assertGreaterEqual(vh - (bez_h1 + 4 * k['riadok'] * h1 + 2 * 48 + build.SLIDER_HLAVICKA), 20, (vw, vh))
+        # pri vyššom H1 (5vw - 32px bez stropu výškou, 96 px pri 2560 px) by sa stĺpec pri 2560 x 1080 nezmestil: preto 7svh
+        h1_bez_stropu = min(k['cqi'] * (5 * (2400 - 11 * 24) / 12 + 4 * 24), k['siroke_vw'] * 2560 - k['siroke_px'])
+        self.assertLess(1080 - (bez_h1 + 4 * k['riadok'] * h1_bez_stropu + 2 * 48 + build.SLIDER_HLAVICKA), 0)
+
+    def test_siroke_okno_sizes(self):
+        """sizes obrázkov (build.py) majú pre široké okno vlastnú prvú položku (min-width: 1921px), ostatné položky sú
+        tie isté ako pred zmenou, takže prehliadač pri okne do 1920 px vyberá ten istý súbor (Chrome: currentSrc pri
+        1920 x 1080, 1440 x 900 pri hustote 2 a 390 x 844 pri hustote 3 bez zmeny, SIROKE.md). Vzorec širokého okna je
+        šírka obrázka v n stĺpcoch mriežky obsahu min(vw - 160, 2400) px s medzerou 24 px (n x C / 12 - (12 - n) x 2),
+        nikdy menšia a najviac o 1 px väčšia pri každej šírke okna 1921 až 3840 px, a sedí so šírkou, ktorú Chrome
+        kreslí pri 2048 a 2560 px (SIZES_CHROME, -0,5 až +2,5 px). Slider: reťazec sizes_slidera vyhodnotený pri
+        každom okne dáva to isté ako sizes_slidera_px; šírka poľa do 1920 px tá istá ako predtým, od 1921 do 2560 px
+        horný odhad poľa (7 stĺpcov a presah k ľavému okraju okna) najviac o 0,5 px a od 2561 px presne 7 stĺpcov
+        obsahu bez presahu (1390 px)."""
+        stare = {'SIZES_KARTA': '(min-width: 1024px) min(23vw, 425px), (min-width: 640px) 31vw, (min-width: 480px) 47vw, '
+                                'calc(100vw - 32px)',
+                 'SIZES_DETAIL': '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)',
+                 'SIZES_HRDINA': '(min-width:1024px) min(56vw, 1000px), (min-width:768px) 92vw, calc(100vw - 32px)',
+                 'SIZES_GALERIA_PRVA': '(min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)',
+                 'SIZES_GALERIA_MALO': '(min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)',
+                 'SIZES_GALERIA': '(min-width:640px) min(30vw, 570px), 46vw',
+                 'SIZES_MEDIA_TABULKA': '(min-width:1536px) min(30vw, 580px), (min-width:1024px) 38vw, (min-width:768px) 58vw, '
+                                        'calc(100vw - 32px)',
+                 'SIZES_MEDIA_STRANA': '(min-width:1024px) min(22vw, 430px), calc(50vw - 24px)'}
+        stlpce = {'SIZES_KARTA': 3, 'SIZES_DETAIL': 7, 'SIZES_HRDINA': 7, 'SIZES_GALERIA_PRVA': 8, 'SIZES_GALERIA_MALO': 6,
+                  'SIZES_GALERIA': 4, 'SIZES_MEDIA_TABULKA': 3, 'SIZES_MEDIA_STRANA': 3}
+        for meno, n in stlpce.items():
+            casti = build._casti_sizes(getattr(build, meno))
+            self.assertEqual(', '.join(casti[1:]), stare[meno], meno)
+            m = re.fullmatch(r'\(min-width: ?1921px\) min\(([\d.]+)vw - ([\d.]+)px, (\d+)px\)', casti[0])
+            self.assertTrue(m, (meno, casti[0]))
+            a, b, c = float(m.group(1)), float(m.group(2)), float(m.group(3))
+            for vw in range(1921, 3841):
+                obsah = build.sirka_obsahu_px(vw)
+                obraz = n * obsah / 12 - (12 - n) * 2
+                sizes = min(a * vw / 100 - b, c)
+                self.assertGreaterEqual(sizes, obraz - 0.01, (meno, vw))
+                self.assertLessEqual(sizes, obraz + 1.0, (meno, vw))
+        # celý sizes vyhodnotený ako v prehliadači voči šírke, ktorú Chrome kreslí
+        for meno, okna in self.SIZES_CHROME.items():
+            for vw, chrome in okna.items():
+                sizes = vyhodnot_sizes(getattr(build, meno), vw, vw * 9 / 16)
+                self.assertGreaterEqual(sizes, chrome - 0.5, (meno, vw))
+                self.assertLessEqual(sizes, chrome + 2.5, (meno, vw))
+        # slider: reťazec a jeho prepis v Pythone pri oknách 1024 až 3840 px a výškach okolo prahov 820, 1079 a 1080 px
+        for w, h, orez in ((4, 3, 0.0), (2400, 1350, 0.0), (2000, 2657, 0.17), (1, 10, 0.0)):
+            s = build.sizes_slidera(w, h, orez)
+            for vw in list(range(1024, 3841, 37)) + [1920, 1921, 2560, 2561, 3440, 3840]:
+                for vh in (600, 820, 821, 900, 1079, 1080, 1440, 2160):
+                    self.assertAlmostEqual(vyhodnot_sizes(s, vw, vh), build.sizes_slidera_px(w, h, orez, vw, vh), delta=0.01,
+                                           msg=(w, h, orez, vw, vh))
+        # šírka poľa zo sizes (fotka 1 : 10, výška poľa nerozhoduje) voči rozloženiu v styl.css (pole_slidera_px)
+        for vw in range(1024, 3841):
+            sirka = build.sizes_slidera_px(1, 10, 0.0, vw, 900)
+            pole = build.pole_slidera_px(vw, 900)[0]
+            if vw <= 1920:
+                self.assertEqual(sirka, min(0.577 * vw, 0.5 * vw + 137), vw)
+            elif vw < build.SLIDER_BEZ_PRESAHU:
+                self.assertGreaterEqual(sirka, pole - 0.01, vw)
+                self.assertLessEqual(sirka, pole + 0.5, vw)
+            else:
+                self.assertEqual(sirka, build.SLIDER_POLE_BEZ_PRESAHU, vw)
+                self.assertAlmostEqual(pole, build.SLIDER_POLE_BEZ_PRESAHU, delta=1e-9, msg=vw)
+        # stránky používajú tieto sizes: galéria do 3 fotiek (galeria-malo) má vlastný, prvá veľká a mriežka svoj
+        malo = self.info('realizacie/bytovy-dom-haanova-bratislava/')['telo']
+        self.assertIn('<ul class="galeria galeria-malo" data-galeria>', malo)
+        img = re.search(r'<ul class="galeria galeria-malo" data-galeria>.*?<img [^>]*>', malo, re.S).group(0)
+        self.assertIn('sizes="' + build.SIZES_GALERIA_MALO.split(',')[0], img.replace('calc(', ''))
+        prva = self.info('realizacie/digitalizacne-pracovisko-sfu-spitalska-bratislava/')['telo']
+        li = re.search(r'<li class="galeria-polozka prva">(.*?)</li>', prva, re.S).group(1)
+        self.assertIn('(min-width:1921px) ', li)
+        self.assertIn('66.67vw - 114px', li)
+        # sizes slidera v HTML úvodu (11 fotiek, AVIF prvej a preload): od 2561 px nezávisí od šírky okna (pole bez
+        # presahu, pred opravou pri 3440 px 1910 px, keď pole siahalo po ľavý okraj okna), fotka užšia než pole dostane
+        # presne 1390 px
+        uvod = (self.ostry / 'index.html').read_text(encoding='utf-8')
+        slider = [html.unescape(s) for s in re.findall(r' (?:image)?sizes="([^"]+)"', uvod) if 'max(min(57.7vw' in s]
+        self.assertEqual(len(slider), 13)
+        for s in slider:
+            self.assertTrue(s.startswith('(min-width: 2561px) and (max-height: 820px) max(1390px, '), s)
+            for vh in (800, 1080, 1440):
+                self.assertEqual(vyhodnot_sizes(s, 3440, vh), vyhodnot_sizes(s, 2561, vh), (s, vh))
+                self.assertGreaterEqual(vyhodnot_sizes(s, 3440, vh), build.SLIDER_POLE_BEZ_PRESAHU)
+        self.assertIn(build.SLIDER_POLE_BEZ_PRESAHU, {vyhodnot_sizes(s, 3440, 1080) for s in slider})
+
 
 # ---------------------------------------------------------------------------------------------------------------
 class TestDocasnyObsah(unittest.TestCase):
@@ -5850,6 +6166,26 @@ def css_bez_blokov(css):
             hlbka += {'{': 1, '}': -1}.get(css[k], 0)
             k += 1
         i = k
+
+def vyhodnot_sizes(sizes, vw, vh):
+    """Dĺžka v CSS px, ktorú prehliadač vezme z atribútu sizes pri okne vw x vh: prvá položka, ktorej podmienka
+    ((min|max)-(width|height) v px, spojené and) platí; dĺžka z čísel s vw, vh a px, calc, min a max (overenie
+    širokého rozloženia, nález drobné: test sizes slidera nemá byť len kópiou vzorca)."""
+    for kus in build._casti_sizes(sizes):
+        m = re.fullmatch(r'((?:\((?:min|max)-(?:width|height): ?[\d.]+px\)(?: and )?)*)\s*(.+)', kus)
+        podmienky, dlzka = m.group(1), m.group(2)
+        plati = all((vw if os == 'width' else vh) >= float(x) if druh == 'min' else (vw if os == 'width' else vh) <= float(x)
+                    for druh, os, x in re.findall(r'\((min|max)-(width|height): ?([\d.]+)px\)', podmienky))
+        if not plati:
+            continue
+        vyraz = dlzka.replace('calc(', '(')
+        vyraz = re.sub(r'([\d.]+)vw', lambda z: f'({z.group(1)}*{vw}/100)', vyraz)
+        vyraz = re.sub(r'([\d.]+)vh', lambda z: f'({z.group(1)}*{vh}/100)', vyraz)
+        vyraz = re.sub(r'([\d.]+)px', r'\1', vyraz)
+        if not re.fullmatch(r'[\d.+\-*/(), minax]+', vyraz):
+            raise ValueError(dlzka)
+        return eval(vyraz, {'__builtins__': {}}, {'min': min, 'max': max})
+    raise ValueError(sizes)
 
 
 def deklaracie(css, selektor):

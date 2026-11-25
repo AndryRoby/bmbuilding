@@ -137,6 +137,8 @@ main,.pata{position:relative;z-index:1}
    časti, pod ňou odseky a údaje ako kartičky. Jeden DOM (hlava, slider, text, údaje), oblasti mriežky podľa šírky.
    Veľkosť H1 je podiel šírky stĺpca (cqi), takže „stavebno-manažérska“ je vždy v jednom riadku a veta má štyri riadky. */
 :root{--papier:#fafaf8;--na-foto:#1a1b1b}
+/* strop H1 úvodu: 64 px do 1920 px, od 1921 px rastie s oknom a je najviac 7 % výšky okna (úsek ŠIROKÉ OKNO) */
+:root{--h1-strop:4rem}
 .uvod{padding:0 0 clamp(var(--m-16),2.5vw,var(--m-48))}
 /* mobil a tablet: fotka s H1, hneď pod ňou údaje a tlačidlá (vzory 15 a 16: kartičky hneď pod fotkou), potom blok
    O firme (oprava-2, nález vážne: odstavec medzi fotkou a údajmi odtlačil údaje aj Zavolať z prvej obrazovky) */
@@ -155,7 +157,7 @@ main,.pata{position:relative;z-index:1}
 .uvod-nadtitulok::before{content:"";flex:none;width:24px;height:1px;background:currentColor;align-self:flex-start;margin-top:calc(.725em - .5px)}
 @container (max-width:500px){.uvod-nadtitulok-miesto{display:none}}
 /* 9,8 % šírky stĺpca: „stavebno-manažérska“ (9,76 em v Geist) zaberie najviac 96 % riadka; max-width drží 4 riadky */
-.uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,4rem);line-height:1.04;letter-spacing:-.04em;font-weight:420;max-width:10.4em;text-wrap:wrap}
+.uvod-h1{margin-top:var(--m-16);font-size:clamp(1.75rem,9.8cqi,var(--h1-strop));line-height:1.04;letter-spacing:-.04em;font-weight:420;max-width:10.4em;text-wrap:wrap}
 /* dva odseky O firme pod H1 (texty.json uvod.o_firme_hrdina): prvý ako úvodník, druhý (konateľ a zápis) tlmený */
 .firma-text p{max-width:34em;font-size:clamp(16px,1.12vw,19px);line-height:1.55;text-wrap:pretty}
 .firma-text p+p{margin-top:var(--m-12);color:var(--tlmeny)}
@@ -307,17 +309,18 @@ html:not(.js) .slider-ovladanie{display:none}
 /* dlhé zoznamy v dvoch stĺpcoch ako mriežka (od 768 px): oba stĺpce majú spoločné riadky, takže čiary medzi bodmi
    ležia v oboch stĺpcoch na sebe; poradie čítania ostáva po stĺpcoch ako v pôvodnom zozname (najprv celý ľavý stĺpec,
    potom pravý, rovnako číta čítačka podľa DOM). Počet riadkov dá build.py triedou riadky-N (polovica bodov nahor),
-   bez triedy idú body po riadkoch. */
-.cinnost-body-dlhe.riadky-3{grid-template-rows:repeat(3,auto)}
-.cinnost-body-dlhe.riadky-4{grid-template-rows:repeat(4,auto)}
-.cinnost-body-dlhe.riadky-5{grid-template-rows:repeat(5,auto)}
-.cinnost-body-dlhe.riadky-6{grid-template-rows:repeat(6,auto)}
-.cinnost-body-dlhe.riadky-7{grid-template-rows:repeat(7,auto)}
-.cinnost-body-dlhe.riadky-8{grid-template-rows:repeat(8,auto)}
-.cinnost-body-dlhe.riadky-9{grid-template-rows:repeat(9,auto)}
-.cinnost-body-dlhe.riadky-10{grid-template-rows:repeat(10,auto)}
-.cinnost-body-dlhe.riadky-11{grid-template-rows:repeat(11,auto)}
-.cinnost-body-dlhe.riadky-12{grid-template-rows:repeat(12,auto)}
+   bez triedy idú body po riadkoch. Dlhý zoznam stránky služby má len triedu riadky-N (bez cinnost-body-dlhe): do
+   1920 px ostáva v jednom stĺpci, mriežkou je až od 1921 px (úsek ŠIROKÉ OKNO). */
+.cinnost-body.riadky-3{grid-template-rows:repeat(3,auto)}
+.cinnost-body.riadky-4{grid-template-rows:repeat(4,auto)}
+.cinnost-body.riadky-5{grid-template-rows:repeat(5,auto)}
+.cinnost-body.riadky-6{grid-template-rows:repeat(6,auto)}
+.cinnost-body.riadky-7{grid-template-rows:repeat(7,auto)}
+.cinnost-body.riadky-8{grid-template-rows:repeat(8,auto)}
+.cinnost-body.riadky-9{grid-template-rows:repeat(9,auto)}
+.cinnost-body.riadky-10{grid-template-rows:repeat(10,auto)}
+.cinnost-body.riadky-11{grid-template-rows:repeat(11,auto)}
+.cinnost-body.riadky-12{grid-template-rows:repeat(12,auto)}
 /* body Činnosti na úvode majú tú istú značku ako na stránkach služieb a odrážky starého webu, bez čísel 01, 02
    (overenie-1, nález drobné: text je doslovný, rovnaký zoznam nemá vyzerať na úvode a na podstránke inak) */
 /* pod listom: veta o osvedčeniach SKSI a riadok listu so zákonom (ikona §, nadpis vľavo, otázky vpravo) */
@@ -709,6 +712,8 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
    fotiek strán 4 : 3 s lightboxom. Výrez má 5 z 12 stĺpcov, od 1536 px 4 z 12, na tablete 5 z 8 (krasa-8, brána 3: so
    7 stĺpcami mal pri 1440 px 765 x 720 px a písmená 30 až 40 px, prevalcoval stránku; teraz 540 px pri 1440 px, 571 px
    pri 1920 px, riadok STAVEBNÝ DOZOR BM Building ostáva čitateľný); text od čiary stĺpca za jedným voľným stĺpcom.
+   Od 1921 px výrez 3 z 12 stĺpcov a text od 5. stĺpca po pravý okraj, fotky strán na 6 stĺpcov (úsek ŠIROKÉ OKNO,
+   pri 2560 px výrez aj strana 582 px).
    Mobil: všetko pod sebou, tabuľka na celú šírku, strany po dvoch. */
 .media-sekcia{padding-block:clamp(40px,6vw,88px) 0}
 /* blok len s odkazmi (Devínske lúky): menší nadpis, zoznam bez dvojitej čiary pod hlavou */
@@ -863,7 +868,7 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .sluzba-obal{padding-bottom:clamp(var(--m-48),5vw,76px)}
   .sluzba-obal~.sekcia-karty,.sluzba-obal~.otazky-sekcia{padding-block:clamp(var(--m-48),5vw,76px)}
   /* najviac 1000 CSS px ako v sizes (SIZES_DETAIL): pri 1920 px má 7 stĺpcov 1016,7 px a prehliadač by súbor 2000 px
-     zväčšoval 1,02-krát (brána bmb-presnost pokus 1, nález 5) */
+     zväčšoval 1,02-krát (brána bmb-presnost pokus 1, nález 5); od 1921 px bez stropu (úsek ŠIROKÉ OKNO) */
   .detail .detail-foto{grid-column:1/8;max-width:1000px}
   .detail .detail-text{grid-column:9/-1}
   /* čiara kóty vpravo na úrovni hornej hrany fotky vľavo: kóta je 16 px vysoká s čiarou v polovici (linka bmb-presnost) */
@@ -1163,7 +1168,7 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .menu-m{display:none}
 }
 /* široké okno: vizitka Kontaktu na 5 stĺpcov od čiary 8. stĺpca (doladenie-1, nález drobné: pri 1920 px mala 6 stĺpcov
-   a vpravo ostávalo 542 px prázdnej karty s dlhými čiarami) */
+   a vpravo ostávalo 542 px prázdnej karty s dlhými čiarami); od 1921 px 4 stĺpce (úsek ŠIROKÉ OKNO) */
 @media (min-width:1680px){
   .kontakt-mapa{grid-column:8/-1}
 }
@@ -1212,7 +1217,7 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
    tlačidlá pod okno); pri 961 až 1079 px ostáva H1 v plnej veľkosti ako doteraz vo vysokom okne (Andrej: H1 veľké;
    doladenie-2: stĺpec bez odseku má pri plnom H1 najviac 703 px a zmestí sa s rezervou aspoň 142 px) */
 @media (min-width:1024px) and (max-height:960px){
-  .uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}
+  .uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,var(--h1-strop)),6svh)}
 }
 /* vysoké okno (od 1080 px, napr. 1920 x 1080): pod hrdinom je len druhý odsek O firme (jedna veta), pod ním bola po
    nadpis Činnosť prázdna plocha 152 px (doladenie-1); hrdina bez spodného odsadenia a Činnosť s menším horným, kotva
@@ -1250,6 +1255,66 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .firma-zdroj{margin-top:var(--m-4)}
   .firma-media{margin-top:var(--m-4)}
   .uvod-akcie{margin-top:var(--m-12)}
+}
+/* ================================================================ ŠIROKÉ OKNO (od 1921 px)
+   Andrej 25. 11. 2026 pri monitore 2560 px: „ešte mi vadí to hluché miesto vpravo, premysli to, ako stavbyvedúcemu
+   mu to bude divné“. Obsah mal strop 1760 px: fotka slidera siahala po ľavý okraj okna, pravý stĺpec s H1 končil na
+   2160 px a vpravo ostávalo 400 px prázdneho papiera, H1 len 64 px. Od 1921 px obsah rastie s oknom s okrajom 80 px
+   (100vw - 160px; posuvník 17 px je v 100vw, s ním je okraj na oboch stranách 71,5 px ako dnes pri 1920 px), strop
+   2400 px (okno 2560 px). Mriežka, vlasové čiary, hlavička aj všetky sekcie ostávajú na jednej mriežke cez --sirka;
+   slider ostáva na ľavej hrane okna (odsadenie zo 100cqw a --sirka). Pri 2560 x 1440 vyzerá hrdina ako pri 1440 px,
+   len väčší. Do 1920 px sa nič nemení. Merania: ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/SIROKE.md */
+@media (min-width:1921px){
+  /* H1 úvodu rastie so šírkou (64 px pri 1920, 96 px pri 2560 px; 9,8 % stĺpca drží „stavebno-manažérska“ v riadku
+     aj nad 2560 px) a je najviac 7 % výšky okna: vo vysokom okne (od 1080 px) je v pravom stĺpci aj prvý odsek
+     O firme a pri 2560 x 1080 by stĺpec s H1 96 px natiahol fotku 59 px pod spodok okna (štítok, ovládanie aj
+     tlačidlá pod oknom); pri výške do 960 px platí ďalej 6svh */
+  :root{--sirka:min(100vw - 160px,2400px);--h1-strop:max(4rem,min(5vw - 32px,7svh))}
+  /* titulná fotka detailu cez celých 7 stĺpcov (strop 1000 px patril k obsahu 1760 px, pri 2560 px by medzi fotkou
+     a textom ostalo 390 px), SIZES_DETAIL v build.py ráta s tou istou šírkou */
+  .detail .detail-foto{max-width:none}
+  /* vizitka Kontaktu na 4 stĺpce od čiary 9. stĺpca (s 5 stĺpcami by mala pri 2560 px 986 px a riadky vizitky by boli
+     z troch štvrtín prázdne, ten istý nález ako 6 stĺpcov pri 1920 px v doladení 1); pri 2560 px 784 px */
+  .kontakt-mapa{grid-column:9/-1}
+  /* V médiách: výrez tabuľky z časopisu na 3 stĺpce (pri 2560 px 582 px ako 571 px pri 1920 px, písmená tabuľky
+     ostanú také ako do 1920 px; so 4 stĺpcami by mal 784 px a písmená asi 40 px, ten istý nález ako 765 px pri
+     1440 px v bráne 3), text od čiary 5. stĺpca za jedným voľným stĺpcom po pravý okraj obsahu: vlasové čiary odkazov
+     končia tam, kde čiara pod nadpisom sekcie (pri 5/11 ostával vpravo pri celom bloku prázdny pás 404 px pri 2560 px,
+     overenie širokého rozloženia, nález drobné), odseky majú svoju mieru 30 a 34 em. Fotky strán z LinkedInu ostávajú
+     na 6 z 8 stĺpcov textu, po 3 stĺpce, takže nie sú väčšie než výrez (pri 2560 px obe 582 px); SIZES_MEDIA_TABULKA
+     a SIZES_MEDIA_STRANA v build.py */
+  .media-tabulka{grid-column:1/4}
+  .media-text{grid-column:5/-1}
+  .media-strany{max-width:calc((100% + var(--medzera)) * 6 / 8 - var(--medzera))}
+  /* Činnosť: karta bez zoznamov (text len z odsekov, aspoň dvoch: 1. Stavebný manažment, štyri odseky) tečie v dvoch
+     stĺpcoch po 4 stĺpce mriežky, druhý od čiary 9. stĺpca ako dlhé zoznamy ostatných kariet; text doslova, HTML bez
+     zmeny, poradie čítania prvý stĺpec zhora nadol, potom druhý (pri 2560 px by v jednom stĺpci ostal vpravo prázdny
+     pás asi 900 px). Odsek sa medzi stĺpcami nedelí (pri vyvážení stĺpcov sa veta „… tak, aby sme | včas odhalili …“
+     lámala do druhého stĺpca); výšku karty aj tak určuje hlava vľavo. Karty so zoznamami ostávajú, ako sú. Prehliadač
+     bez :has nechá jeden stĺpec. */
+  .cinnost-karta>.cinnost-text:not(:has(>ul)):has(>p+p){columns:2;column-gap:var(--medzera)}
+  .cinnost-karta>.cinnost-text:not(:has(>ul))>p{break-inside:avoid}
+  /* stránka služby s dlhým zoznamom (Stavebný dozor 19 bodov, Stavbyvedúci 7; trieda riadky-N z build.py): pri
+     2560 px mal zoznam mieru 44 em (asi 750 px), box s dokladom 5 stĺpcov (986 px, riadky z troch štvrtín prázdne)
+     a medzi nimi ostávalo 666 px prázdnej plochy (overenie širokého rozloženia, nález drobné). Text služby ide cez
+     8 stĺpcov a dlhý zoznam v dvoch stĺpcoch so spoločnými riadkami ako dlhé zoznamy Činnosti na úvode (čiary medzi
+     bodmi ležia v oboch stĺpcoch na sebe, poradie čítania po stĺpcoch), krátky zoznam (jeden bod Stavbyvedúceho) na
+     šírku jedného stĺpca zoznamu, box s dokladom na 4 stĺpce ako vizitka Kontaktu (pri 2560 px 784 px). Stavebný
+     manažment (bez zoznamu) ostáva, ako je. Prehliadač bez :has nechá rozloženie do 1920 px. */
+  .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .sluzba-hlavne{grid-column:1/9}
+  .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .sluzba-bok{grid-column:9/-1}
+  .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body[class*="riadky-"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--medzera);grid-auto-flow:column;max-width:none}
+  .sluzba-obal:has(.cinnost-body[class*="riadky-"]) .cinnost-body:not([class*="riadky-"]){max-width:calc((100% - var(--medzera)) / 2)}
+}
+/* ultraširoké okno (od 2561 px, monitory 21 : 9 a 4K): obsah je na strope 2400 px a okraje rastú s oknom (pri 3440 px
+   511,5 px s posuvníkom). Slider s presahom po ľavú hranu okna by vpravo nechal prázdny pás 167 až 712 px (2752 až
+   3840 px), teda to isté hluché miesto, ktoré Andrej videl pri 2560 px (overenie širokého rozloženia, nález vážne).
+   Od 2561 px preto slider začína na čiare 1. stĺpca obsahu a hrdina je jeden blok v osi s rovnakými okrajmi vľavo aj
+   vpravo: logo nad ľavou hranou fotky, Zavolať nad pravou hranou údajov, štítok 16 px od hrany fotky. Do 2560 px bez
+   zmeny (fotka po ľavú hranu okna, okraj 80 px). Pole slidera má potom 7 stĺpcov obsahu, 1390 px (build.py
+   SLIDER_BEZ_PRESAHU a sizes_slidera). */
+@media (min-width:2561px){
+  .slider{margin-left:0}
 }
 @media (hover:hover) and (pointer:fine) and (min-width:1024px){.slider-tl:hover{background:rgba(255,255,255,.16)}}
 

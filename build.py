@@ -1213,25 +1213,55 @@ def png_bajty(im):
 
 # ---------------------------------------------------------------- HTML
 
-# sizes podľa rozloženia v styl.css (mriežka 4, 8 a 12 stĺpcov ako v ukážke, obsah najviac 1760 px):
+# sizes podľa rozloženia v styl.css (mriežka 4, 8 a 12 stĺpcov ako v ukážke): obsah najviac 1760 px do 1920 px okna,
+# od 1921 px (úsek ŠIROKÉ OKNO, Andrej 25. 11. 2026: „hluché miesto vpravo“ pri 2560 px) rastie s oknom s okrajom
+# 80 px, min(100vw - 160px, 2400px). Každý sizes má pre široké okno vlastnú prvú položku (min-width: 1921px), ostatné
+# položky sú tie isté ako do 1920 px, takže pri užšom okne prehliadač vyberá rovnaký súbor ako predtým. Vzorce
+# širokého okna sú horný odhad (posuvník 17 px ubere z obsahu 0 px, z okrajov 8,5 px): obsah C = vw - 160, stĺpec
+# (C - 11 x 24) / 12, n stĺpcov n x C / 12 - (12 - n) x 2 px. Merania hustoty pred a po:
+# ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/SIROKE.md
+SIROKE_OKNO = 1921
+OBSAH_MAX = 1760
+OBSAH_SIROKY_MAX = 2400
+OKRAJ_SIROKY = 80
+
+
+def sirka_obsahu_px(vw):
+    """Šírka obsahu (.obsah, mriežka 12 stĺpcov) v CSS px pri okne vw bez posuvníka podľa styl.css: --sirka 1760 px,
+    od 1921 px min(100vw - 160px, 2400px); najviac okno mínus dva okraje clamp(16px, 3.9vw, 64px)."""
+    okraj = min(64.0, max(16.0, 0.039 * vw))
+    sirka = float(OBSAH_MAX) if vw < SIROKE_OKNO else min(vw - 2.0 * OKRAJ_SIROKY, float(OBSAH_SIROKY_MAX))
+    return min(sirka, vw - 2 * okraj)
+
+
 # karty zoznamu 4 v rade od 1024 px, 3 od 640 px, pod tým riadok s náhľadom 38 % šírky; pás 30 vw; fotka úvodu
 # 7 z 12 stĺpcov; galéria 3 v rade (prvá cez 2), na mobile 2 v rade
 # svetlá karta 4 : 5 v mriežke (zoznam realizácií, služby, novinky; Stavba 2): 1 stĺpec do 479 px, 2 od 480, 3 od 640,
-# 4 od 1024 px (obsah najviac 1760 px: (1760 - 3 x 24) / 4 = 422)
-SIZES_KARTA = ('(min-width: 1024px) min(23vw, 425px), (min-width: 640px) 31vw, (min-width: 480px) 47vw, '
-               'calc(100vw - 32px)')
-# fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px, inak celá šírka
-SIZES_DETAIL = '(min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
+# 4 od 1024 px (obsah 1760 px: (1760 - 3 x 24) / 4 = 422; od 1921 px (C - 72) / 4 = 25vw - 58px, pri 2560 px 582)
+SIZES_KARTA = ('(min-width: 1921px) min(25vw - 58px, 582px), (min-width: 1024px) min(23vw, 425px), '
+               '(min-width: 640px) 31vw, (min-width: 480px) 47vw, calc(100vw - 32px)')
+# fotka v dvojstrane detailu realizácie a novinky: 7 z 12 stĺpcov od 1024 px (do 1920 px najviac 1000 px, styl.css
+# max-width), od 1921 px celých 7 stĺpcov bez stropu: 7 x C / 12 - 10 = 58.34vw - 103px, pri 2560 px 1390 px
+SIZES_DETAIL = '(min-width: 1921px) min(58.34vw - 103px, 1390px), (min-width: 1024px) min(56vw, 1000px), calc(100vw - 32px)'
 # slider úvodu (3A.2): pole od 1024 px má 7 z 12 stĺpcov s presahom k ľavému okraju okna a výšku okna pod hlavičkou
 # (krasa-8: 100vh mínus hlavička 84 px, pri výške okna do 820 px 64 px; najmenej 480 px, najviac 75vw), od 640 px rám
 # 1 : 1 a mobil 4 : 5 na celú šírku okna. Šírka poľa je vw / 2 + obsah / 12 - 5 / 12 medzery mriežky, zmerané v Chrome
-# 729,8 px pri 1280, 778,8 pri 1366, 821 pri 1440, 876 pri 1536, 1096,7 pri 1920 a 1416,7 pri 2560 px; zhora ju drží
-# min(57.7vw, 50vw + 137px) (nad 1888 px má obsah 1760 px). object-fit: cover kreslí fotku širšiu než pole cez celú
-# výšku poľa, takže fotka je široká max(šírka poľa, výška poľa x pomer fotky) a sizes ráta build pre každú fotku
-# z jej pomeru (sizes_slidera). krasa-8, agent Fotky slidera (brána 3: jeden sizes pre všetky fotky rátal s 4 : 3,
+# 729,8 px pri 1280, 778,8 pri 1366, 821 pri 1440, 876 pri 1536 a 1096,7 pri 1920 px, od 1921 px (obsah vw - 160)
+# 7 x vw / 12 - 23,3: 1171,3 pri 2048 a 1470 pri 2560 px. Zhora ju drží min(57.7vw, max(50vw + 137px, 58.34vw -
+# 23.4px), 50vw + 190px): do 1920 px je max(...) vždy 50vw + 137px, teda ten istý výraz ako predtým (nad 1888 px má
+# obsah 1760 px), 50vw + 190px drží odhad pri 2559 a 2560 px. Od 2561 px (SLIDER_BEZ_PRESAHU, styl.css) je obsah na
+# strope 2400 px a slider začína na čiare 1. stĺpca obsahu bez presahu (overenie širokého rozloženia, nález vážne:
+# pri 3440 px ostával vpravo prázdny pás 511,5 px), pole má 7 stĺpcov obsahu, 1390 px (SLIDER_POLE_BEZ_PRESAHU),
+# a sizes má pre to vlastné položky (min-width: 2561px) pred ostatnými. object-fit: cover kreslí fotku širšiu než
+# pole cez celú výšku poľa, takže fotka je široká max(šírka poľa, výška poľa x pomer fotky) a sizes ráta build pre
+# každú fotku z jej pomeru (sizes_slidera). krasa-8, agent Fotky slidera (brána 3: jeden sizes pre všetky fotky rátal s 4 : 3,
 # fotky 16 : 9 mali pri 1366 x 768 hustotu 0,77, pri 1920 x 1080 0,81, fotky na výšku brali zbytočne veľký súbor):
 # ops/weby-na-mieru/klienti/bmbuilding/kolo-1/brana-3/OPRAVA-FOTKY.md
-SLIDER_SIRKA_POLA = 'min(57.7vw, 50vw + 137px)'
+SLIDER_SIRKA_POLA = 'min(57.7vw, max(50vw + 137px, 58.34vw - 23.4px), 50vw + 190px)'
+# od tejto šírky okna slider bez presahu k ľavému okraju okna (styl.css @media (min-width:2561px)); pole 7 stĺpcov
+# obsahu 2400 px s medzerou mriežky 24 px: 7 x 2400 / 12 - 5 x 24 / 12 = 1390 px
+SLIDER_BEZ_PRESAHU = 2561
+SLIDER_POLE_BEZ_PRESAHU = round(7 * OBSAH_SIROKY_MAX / 12 - 5 * 24 / 12)
 # výška poľa: hlavička nad 820 px výšky okna a pod ňou (styl.css --hore), najmenšia výška a strop vo vw
 SLIDER_HLAVICKA = 84
 SLIDER_HLAVICKA_NIZKE = 64
@@ -1279,22 +1309,32 @@ def sizes_slidera(w, h, orez=0.0):
     šírka poľa. Výška poľa podľa výšky okna: do 820 px 100vh - 64 px (najmenej 480 px), do 1079 px 100vh - 84 px
     (najviac 75vw), od 1080 px navyše najmenej SLIDER_STLPEC (pravý stĺpec s odsekom O firme). Násobky na stotiny
     a px na celé (od fotky po cover sa líši najviac o 0,5 px, šírka poľa je horný odhad), takže prehliadač vyberie
-    súbor aspoň taký široký, ako je fotka na obrazovke."""
+    súbor aspoň taký široký, ako je fotka na obrazovke. Od SLIDER_BEZ_PRESAHU (2561 px) majú prednosť dve položky
+    s pevnou šírkou poľa SLIDER_POLE_BEZ_PRESAHU (slider bez presahu, 1390 px): nízke okno ako na počítači a jedna
+    pre ostatné výšky, lebo od 821 px výšky okna je pole vysoké 100vh - 84 px (najviac 75vw, pri tejto šírke aspoň
+    1920 px) a od 1080 px už aspoň 996 px, viac než pravý stĺpec SLIDER_STLPEC, ktorý tu preto nerozhoduje."""
     vh, h64, h84, v480, vw75, stlpec, tablet, mobil = _nasobky_slidera(w, h, orez)
+    bez, pole = SLIDER_BEZ_PRESAHU, SLIDER_POLE_BEZ_PRESAHU
+    bez_nizke = f'(min-width: {bez}px) and (max-height: {SLIDER_NIZKE_OKNO}px) max({pole}px, {vh:g}vh - {h64}px, {v480}px)'
+    bez_ostatne = f'(min-width: {bez}px) max({pole}px, min({vh:g}vh - {h84}px, {vw75:g}vw))'
     nizke = (f'(min-width: 1024px) and (max-height: {SLIDER_NIZKE_OKNO}px) max({SLIDER_SIRKA_POLA}, '
              f'{vh:g}vh - {h64}px, {v480}px)')
     stredne = (f'(min-width: 1024px) and (max-height: {SLIDER_VYSOKE_OKNO}px) max({SLIDER_SIRKA_POLA}, '
                f'min({vh:g}vh - {h84}px, {vw75:g}vw))')
     vysoke = f'(min-width: 1024px) max({SLIDER_SIRKA_POLA}, min({vh:g}vh - {h84}px, {vw75:g}vw), {stlpec}px)'
-    return ', '.join((nizke, stredne, vysoke, f'(min-width: 640px) {tablet:g}vw', f'{mobil:g}vw'))
+    return ', '.join((bez_nizke, bez_ostatne, nizke, stredne, vysoke, f'(min-width: 640px) {tablet:g}vw', f'{mobil:g}vw'))
 
 
 def sizes_slidera_px(w, h, orez, vw, vh):
     """Dĺžka, ktorú prehliadač vypočíta zo sizes_slidera pri okne vw x vh CSS px (tie isté čísla ako v reťazci),
     pre testy a merania."""
     kvh, h64, h84, v480, vw75, stlpec, tablet, mobil = _nasobky_slidera(w, h, orez)
+    if vw >= SLIDER_BEZ_PRESAHU:
+        if vh <= SLIDER_NIZKE_OKNO:
+            return max(SLIDER_POLE_BEZ_PRESAHU, kvh * vh / 100 - h64, v480)
+        return max(SLIDER_POLE_BEZ_PRESAHU, min(kvh * vh / 100 - h84, vw75 * vw / 100))
     if vw >= 1024:
-        sirka = min(0.577 * vw, 0.5 * vw + 137)
+        sirka = min(0.577 * vw, max(0.5 * vw + 137, 0.5834 * vw - 23.4), 0.5 * vw + 190)
         if vh <= SLIDER_NIZKE_OKNO:
             return max(sirka, kvh * vh / 100 - h64, v480)
         vyska = min(kvh * vh / 100 - h84, vw75 * vw / 100)
@@ -1304,15 +1344,17 @@ def sizes_slidera_px(w, h, orez, vw, vh):
 
 def pole_slidera_px(vw, vh):
     """Pole slidera (šírka, výška) v CSS px podľa rozloženia v styl.css pri okne vw x vh bez posuvníka: od 1024 px
-    šírka vw / 2 + obsah / 12 - 5 / 12 medzery mriežky a výška clamp(480px, 100vh - hlavička, 75vw), tablet 1 : 1,
-    mobil 4 : 5 na celú šírku okna. Od 1080 px výšky okna je pole navyše najmenej také vysoké ako pravý stĺpec
-    hrdinu (882 až 974 px, SLIDER_STLPEC), to tu nie je: rozhoduje pri úzkych vysokých oknách (1024 x 1366)."""
+    šírka 7 z 12 stĺpcov obsahu (7 x obsah / 12 - 5 / 12 medzery mriežky, obsah sirka_obsahu_px: 1760 px, od 1921 px
+    vw - 160 px, najviac 2400 px) a presah k ľavému okraju okna (vw - obsah) / 2, spolu vw / 2 + obsah / 12 - 5 / 12
+    medzery; od SLIDER_BEZ_PRESAHU (2561 px) bez presahu, 1390 px. Výška clamp(480px, 100vh - hlavička, 75vw),
+    tablet 1 : 1, mobil 4 : 5 na celú šírku okna. Od 1080 px výšky okna je pole navyše najmenej také vysoké ako pravý
+    stĺpec hrdinu (SLIDER_STLPEC), to tu nie je: rozhoduje pri úzkych vysokých oknách (1024 x 1366)."""
     if vw >= 1024:
-        okraj = min(64.0, max(16.0, 0.039 * vw))
         medzera = min(24.0, max(12.0, 0.016 * vw))
-        obsah = min(1760.0, vw - 2 * okraj)
+        obsah = sirka_obsahu_px(vw)
         hore = SLIDER_HLAVICKA_NIZKE if vh <= SLIDER_NIZKE_OKNO else SLIDER_HLAVICKA
-        return vw / 2 + obsah / 12 - 5 * medzera / 12, max(float(SLIDER_MIN_VYSKA), min(vh - hore, SLIDER_MAX_VYSKA_VW * vw / 100))
+        presah = 0.0 if vw >= SLIDER_BEZ_PRESAHU else (vw - obsah) / 2
+        return presah + 7 * obsah / 12 - 5 * medzera / 12, max(float(SLIDER_MIN_VYSKA), min(vh - hore, SLIDER_MAX_VYSKA_VW * vw / 100))
     return float(vw), vw * (SLIDER_RAM_TABLET if vw >= 640 else SLIDER_RAM_MOBIL)
 
 
@@ -1329,9 +1371,16 @@ SLIDER_MAX_SIRKA = 4000
 DRUHY_KARTY = (('Polyfunkčný objekt', r'polyfunkčn'), ('Rezidencia', r'rezidenci'), ('Bytové domy', r'bytové domy'),
                ('Bytový dom', r'bytov'), ('Dvojdom', r'dvojdom'), ('Vila', r'\bvil[ay]\b'),
                ('Rodinný dom', r'(^|\s)RD\b|rodinn'))
-SIZES_HRDINA = '(min-width:1024px) min(56vw, 1000px), (min-width:768px) 92vw, calc(100vw - 32px)'
-SIZES_GALERIA_PRVA = '(min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)'
-SIZES_GALERIA = '(min-width:640px) min(30vw, 570px), 46vw'
+# pohľad A cez 7 z 12 stĺpcov (rovnako ako SIZES_DETAIL; teraz bez použitia, úvod má slider)
+SIZES_HRDINA = ('(min-width:1921px) min(58.34vw - 103px, 1390px), (min-width:1024px) min(56vw, 1000px), '
+                '(min-width:768px) 92vw, calc(100vw - 32px)')
+# galéria (bunka 4 z 12 stĺpcov, 3 v rade): prvá veľká cez 2 bunky (8 stĺpcov, od 1921 px 2 x C / 3 - 8 =
+# 66.67vw - 114px, pri 2560 px 1592 px), bunka mriežky od 1921 px C / 3 - 16 = 33.34vw - 69px (pri 2560 px 784 px),
+# galéria do 3 fotiek (galeria-malo) 2 v rade, od 1921 px C / 2 - 12 = 50vw - 92px (pri 2560 px 1188 px); do 1920 px
+# má galeria-malo ten istý sizes ako prvá veľká
+SIZES_GALERIA_PRVA = '(min-width:1921px) min(66.67vw - 114px, 1592px), (min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)'
+SIZES_GALERIA_MALO = '(min-width:1921px) min(50vw - 92px, 1188px), (min-width:1024px) min(62vw, 1150px), calc(100vw - 32px)'
+SIZES_GALERIA = '(min-width:1921px) min(33.34vw - 69px, 784px), (min-width:640px) min(30vw, 570px), 46vw'
 # rám pohľadu A detailu a bunka galérie majú pomer 3 : 2 (styl.css aspect-ratio:3/2; zmerané v
 # ops/weby-na-mieru/klienti/bmbuilding/presnost/meranie/fotky-pred.md: 358 x 239, 765 x 510, 1017 x 678 a 427 x 285
 # CSS px); object-fit: cover fotky širšej než rám ukáže len časť jej šírky (sizes_pre_cover)
@@ -1377,20 +1426,25 @@ def sizes_pre_cover(sizes, w, h, ram=POMER_RAMU_COVER):
         out.append(f'{media}calc(({vnutro}) * {k:g})' if ' ' in vnutro.strip() and not vnutro.startswith(('min(', 'max('))
                    else f'{media}calc({vnutro} * {k:g})')
     return ', '.join(out)
-# najväčšie bunky galérie v CSS px (styl.css: --sirka 1760 px, medzera 24 px, bunka 3 : 2): mriežka 3 stĺpce,
-# galeria-malo 2 stĺpce, prvá veľká 2 stĺpce a 2 riadky. Fotka, ktorú by object-fit:cover v takej bunke zväčšil nad
-# 1,25 násobok súboru, je v galérii „malá“: bez srcset a s object-fit:scale-down, nikdy väčšia než súbor
-# (oprava po bráne, bod 1: vizualizácie UFO 320 x 179 px; rovnaké pravidlo ako lightbox v app.js a OG)
+# najväčšie bunky galérie v CSS px pri obsahu 1760 px (okno do 1920 px; styl.css: --sirka 1760 px, medzera 24 px,
+# bunka 3 : 2): mriežka 3 stĺpce, galeria-malo 2 stĺpce, prvá veľká 2 stĺpce a 2 riadky. Fotka, ktorú by
+# object-fit:cover v takej bunke zväčšil nad 1,25 násobok súboru, je v galérii „malá“: bez srcset a s
+# object-fit:scale-down, nikdy väčšia než súbor (oprava po bráne, bod 1: vizualizácie UFO 320 x 179 px; rovnaké pravidlo
+# ako lightbox v app.js a OG). Od 1921 px bunky rastú s obsahom (pri 2560 px 784 x 523, 1188 x 792 a 1592 x 1069 px);
+# prah ostáva pri 1760 px, aby sa rozloženie galérie do 1920 px nezmenilo: malá fotka sa ani na širokom okne
+# nezväčší (scale-down), ostatné berú zo srcset súbor podľa sizes, najviac plnú šírku predlohy (SIROKE.md)
 GALERIA_BUNKY = {'mriezka': (571, 381), 'malo': (868, 579), 'prva': (1165, 784)}
 ZVACSENIE_MAX = 1.25
 SIZES_PRED_PO = '(min-width:768px) 46vw, calc(100vw - 32px)'
 # blok V médiách na stránke realizácie (ZMENY-KOLO-1.md 5.7): výrez tabuľky (krasa-8, brána 3: pri 1440 px 765 x
 # 720 px, prevalcoval stránku) 5 z 12 stĺpcov od 1024 px (1440 px: 540 px), od 1536 px 4 z 12 (1920 px: 571 px),
 # na tablete 5 z 8, na mobile celá šírka; plná veľkosť v lightboxe. Fotky strán po dvoch v pravom stĺpci (6 z 12
-# stĺpcov: pri 1440 px 314 px, pri 1920 px 422 px, teda asi 22vw).
-SIZES_MEDIA_TABULKA = ('(min-width:1536px) min(30vw, 580px), (min-width:1024px) 38vw, (min-width:768px) 58vw, '
-                       'calc(100vw - 32px)')
-SIZES_MEDIA_STRANA = '(min-width:1024px) min(22vw, 430px), calc(50vw - 24px)'
+# stĺpcov: pri 1440 px 314 px, pri 1920 px 422 px, teda asi 22vw). Od 1921 px (styl.css úsek ŠIROKÉ OKNO) výrez
+# 3 stĺpce C / 4 - 18 = 25vw - 58px (pri 2560 px 582 px, písmená tabuľky ako pri 1920 px) a text 6 stĺpcov od čiary
+# 5. stĺpca, fotka strany (C / 2 - 36) / 2 = 25vw - 58px (pri 2560 px 582 px, nie väčšia než výrez).
+SIZES_MEDIA_TABULKA = ('(min-width:1921px) min(25vw - 58px, 582px), (min-width:1536px) min(30vw, 580px), '
+                       '(min-width:1024px) 38vw, (min-width:768px) 58vw, calc(100vw - 32px)')
+SIZES_MEDIA_STRANA = '(min-width:1921px) min(25vw - 58px, 582px), (min-width:1024px) min(22vw, 430px), calc(50vw - 24px)'
 
 
 def nacitaj_pravidla():
@@ -2919,11 +2973,13 @@ class Web:
         varuj(f'texty.json: {meno} nie je zoznam, vynechané')
         return []
 
-    def doslovny_text(self, kluc, c, stlpce=True, uvodna=False):
+    def doslovny_text(self, kluc, c, stlpce=True, uvodna=False, riadky=False):
         """HTML jednej časti doslovného textu starého webu (texty.json cinnost_doslova, ZMENY-KOLO-1.md časť 4): odseky,
         potom úvodná veta a body, druhá úvodná veta a body, v tomto poradí a slovo od slova. Jeden zdroj pre Činnosť na
         úvode aj hlavný text stránky služby. stlpce: zoznam s viac ako štyrmi bodmi na počítači v dvoch stĺpcoch (CSS
-        cinnost-body-dlhe). uvodna: prvý odsek väčším písmom (stránka služby)."""
+        cinnost-body-dlhe). uvodna: prvý odsek väčším písmom (stránka služby). riadky (stránka služby, stlpce=False):
+        zoznam s viac ako štyrmi bodmi dostane len triedu riadky-N, do 1920 px ostáva v jednom stĺpci a v dvoch
+        stĺpcoch so spoločnými riadkami je až od 1921 px (styl.css úsek ŠIROKÉ OKNO)."""
         odseky = self.zoznam_textov(c.get('odseky'), f'cinnost_doslova.{kluc}.odseky')
         trieda = ' class="uvodna"'
         telo = ''.join(f'<p{trieda if uvodna and i == 0 else ""}>{T(jeden_riadok(o))}</p>' for i, o in enumerate(odseky))
@@ -2935,9 +2991,10 @@ class Web:
                 # dva stĺpce so spoločnými riadkami (krasa-8): v ľavom stĺpci polovica bodov nahor, trieda riadky-N
                 # (styl.css má N od 3 do RIADKY_ZOZNAMU_MAX); dlhší zoznam ide v stĺpcoch po riadkoch, bez triedy
                 dlhe = ''
-                if stlpce and len(body) > 4:
-                    riadky = (len(body) + 1) // 2
-                    dlhe = ' cinnost-body-dlhe' + (f' riadky-{riadky}' if riadky <= RIADKY_ZOZNAMU_MAX else '')
+                if (stlpce or riadky) and len(body) > 4:
+                    n = (len(body) + 1) // 2
+                    pocet = f' riadky-{n}' if n <= RIADKY_ZOZNAMU_MAX else ''
+                    dlhe = ' cinnost-body-dlhe' + pocet if stlpce else pocet
                 telo += f'<ul class="cinnost-body{dlhe}">' + ''.join(f'<li>{T(x)}</li>' for x in body) + '</ul>'
         return telo
 
@@ -3260,7 +3317,7 @@ class Web:
             else:
                 ikona = IKONY_CINNOSTI.get(k, '')
                 text = ((f'<span class="cinnost-ikona sluzba-ikona" aria-hidden="true">{ikona}</span>' if ikona else '')
-                        + self.doslovny_text(kluc_d, cast, stlpce=False, uvodna=True))
+                        + self.doslovny_text(kluc_d, cast, stlpce=False, uvodna=True, riadky=True))
             # doklady v boku sú h2: bok je v DOM pred prvým h2 stránky, h3 by bol skok úrovne po h1
             doklady = self.doklady(pre, t['opravnenie'], nadpis='h2')
             bok = ''
@@ -3490,7 +3547,7 @@ class Web:
             # dáta lightboxu (lb_data, Stavba 1): alt nesie číslo podľa poradia v galérii (to isté ukáže počítadlo),
             # data-galeria = slug, vizualizácia so štítkom na náhľade, v lightboxe aj v alt texte; pri náhľade so
             # srcset (nie malá fotka) berie app.js srcset a zdroj AVIF lightboxu z náhľadu (lb_data nahlad)
-            sizes = SIZES_GALERIA_PRVA if prva or malo else SIZES_GALERIA
+            sizes = SIZES_GALERIA_PRVA if prva else SIZES_GALERIA_MALO if malo else SIZES_GALERIA
             mala = not prva and not self.nezvacsena(f, GALERIA_BUNKY['malo' if malo else 'mriezka'])
             plna, alt, atributy = self.lb_data(pre, r, f, i, len(fotky), nazov, popis_udaje, r.get('slug', ''),
                                                nahlad=not mala)
