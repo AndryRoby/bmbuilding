@@ -666,6 +666,11 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
    číslo bolo na webe raz v Sans a raz v Mono so širokými medzerami) */
 .bok-tlacidlo .cisla{font-weight:400}
 .bok-odkaz .odkaz-sipka{min-height:44px}
+/* najužšie okno (do 359 px): číslo v tlačidle Zavolať v boku služby sa zalomí pod slovo; s nezalomeným číslom bolo
+   tlačidlo (251,8 px) širšie ako vnútro boxu (246 px) a box bol nesúmerný (kontrola 3 v prehliadači, nález drobné) */
+@media (max-width:359px){
+  .bok-tlacidlo .tlacidlo{flex-wrap:wrap;row-gap:2px;padding-block:10px}
+}
 .sluzba-doslova .sluzba-ikona{margin-bottom:var(--m-24)}
 .sluzba-doslova .sluzba-ikona+.cinnost-uvod{margin-top:0}
 .sluzba-doslova .uvodna{max-width:26em}
@@ -778,6 +783,19 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
 .register .nadpis-maly{font-size:clamp(1.2rem,1.5vw,1.45rem);font-weight:500;letter-spacing:-.02em}
 .register .cena{font-size:15px;white-space:normal;text-align:left}
 .register .cena a{color:var(--modra)}
+/* do 639 px nadpis Obchodný register cez celý riadok a zdroj pod textom ako v hrdinovi (doladenie-3, overenie 3 nález
+   vážne: stĺpec auto si vzal šírku celej vety zdroja, asi 245 px, nadpisu ostalo pri 320 px 20 px a písmená išli pod
+   seba, pri 360 px Obcho|dný registe|r; od 640 px nadpis a zdroj vedľa seba ako doteraz) */
+@media (max-width:639px){
+  .register .sluzba{grid-template-columns:minmax(0,1fr)}
+  .register .cena{grid-column:1;grid-row:auto}
+}
+/* najužšie okno (320 px): štítok nad hodnotou v tabuľkách údajov (doklad SKSI v boku služby, údaje detailu, doklady
+   na Oprávneniach); vedľa štítka 7,5 em mala hodnota v boku služby 90 px a lámalo sa stavbyvedú|ci, v detaile
+   Cakovandpartner|s, a www.bytyrosnicka.s|k (doladenie-3, overenie 3 nález drobné); od 360 px vedľa seba ako doteraz */
+@media (max-width:359px){
+  .fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}
+}
 .chyba{padding-bottom:var(--rytmus)}
 .chyba .uvod-akcie{margin-top:0}
 
@@ -813,10 +831,14 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .galeria-malo{grid-template-columns:repeat(2,minmax(0,1fr))}
   .doklady{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+/* tablet (768 až 1023 px): text služby cez celú šírku a box s dokladom SKSI pod ním na 5 z 8 stĺpcov, ľavou hranou na
+   čiare textu (doladenie-3, overenie 3 nález vážne: vedľa textu mal box pri 768 px len 258 px, tabuľka v ňom ostala
+   široká 252 px, obsah vytŕčal cez rámik o 18 px a slová sa lámali uprostred: stavebnýc|h, Osvedčeni|e, 5. 11. 200|3;
+   pri 768 px má box teraz 437 px, pri 1023 px 583 px). Od 1024 px vedľa seba ako doteraz (1/7 a 8/-1). */
 @media (min-width:768px){
   .hlava-bok{grid-column:1/-1}
-  .sluzba-obal .sluzba-hlavne{grid-column:1/6}
-  .sluzba-obal .sluzba-bok{grid-column:6/-1}
+  .sluzba-obal .sluzba-hlavne{grid-column:1/-1}
+  .sluzba-obal .sluzba-bok{grid-column:1/6}
 }
 @media (min-width:1024px){
   .hlava-mriezka .nadpis-stranky{grid-column:1/9}
@@ -833,6 +855,13 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .otazky-sekcia .otazky{grid-column:7/-1}
   .sluzba-obal .sluzba-hlavne{grid-column:1/7}
   .sluzba-obal .sluzba-bok{grid-column:8/-1}
+  /* stránka služby v rytme ostatných podstránok (doladenie-3, overenie 3 nález drobný: na hranici blokov sa sčítal
+     spodný a horný rytmus, od posledného textu po nadpis ďalšej sekcie 338 až 389 px pri 1366 až 1920 px a pri
+     1728 x 1000 bolo po prvom posune asi 80 % okna prázdnych; pred Kontaktom 296 px): text služby, karty realizácií
+     a otázky zo zákona po 48 až 76 px (5vw), Kontakt so svojím odsadením 64 až 120 px; cieľ 150 až 190 px ako
+     /realizacie/ (173 px pri 1440 px). Do 1023 px bez zmeny (medzery pod 250 px). */
+  .sluzba-obal{padding-bottom:clamp(var(--m-48),5vw,76px)}
+  .sluzba-obal~.sekcia-karty,.sluzba-obal~.otazky-sekcia{padding-block:clamp(var(--m-48),5vw,76px)}
   /* najviac 1000 CSS px ako v sizes (SIZES_DETAIL): pri 1920 px má 7 stĺpcov 1016,7 px a prehliadač by súbor 2000 px
      zväčšoval 1,02-krát (brána bmb-presnost pokus 1, nález 5) */
   .detail .detail-foto{grid-column:1/8;max-width:1000px}
@@ -975,6 +1004,12 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .hlava-akcie .tlacidlo-male{padding:0 12px}
   .hlava .obsah{gap:8px}
 }
+/* najužšie okno (320 px): bankové spojenie a číslo účtu v Kontakte cez oba stĺpce (build.py KONTAKT_UCET, trieda
+   fakt-ucet; doladenie-3, overenie 3 nález drobné: bunka 136 px, číslo účtu s pevnými medzerami sa nezmestilo
+   a posledná číslica skočila na nový riadok, 9127/110|0); od 360 px vedľa seba ako doteraz */
+@media (max-width:359px){
+  .kontakt-fakty>.fakt-ucet{grid-column:1/-1}
+}
 
 /* Tablet */
 @media (min-width:768px){
@@ -1059,7 +1094,11 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   /* hrdina bez slidera (záloha bez fotiek): blok O firme ako jeden celok pod H1 */
   .uvod.bez-slidera .firma-text{display:block;grid-area:text}
   .uvod.bez-slidera .firma-text>*{grid-area:auto;margin:var(--m-12) 0 0;padding:0;border:0}
-  .slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2))}
+  /* slider po ľavú hranu okna: odsadenie .obsah zo šírky sekcie bez posuvníka (100cqw, .uvod je kontajner), nie zo
+     100vw aj s posuvníkom (kontrola 3 v prehliadači, nález drobné: vo Windows s posuvníkom 17 px od šírky 1889 px
+     začínal slider 8,5 px za ľavým okrajom a štítok bol 7,5 px od okraja namiesto 16 px); 100vw ostáva ako záloha */
+  .uvod{container-type:inline-size}
+  .slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2));margin-left:calc(-1 * max(var(--okraj), (100cqw - var(--sirka)) / 2))}
   .snimky{aspect-ratio:auto;flex:1 1 auto;min-height:clamp(480px,calc(100vh - var(--hore)),75vw);min-height:clamp(480px,calc(100svh - var(--hore)),75vw)}
   /* údaje: 2 x 2 s vlasovými čiarami (vzor: rad údajov s ikonami), ikona a popis v riadku, hodnota pod popisom; päť
      stĺpcov pravej časti mriežky: Sídlo a Konateľ 2 stĺpce (adresa ulica a PSČ s mestom pod sebou), Na trhu
@@ -1194,6 +1233,23 @@ html:not(.js) [data-filtre],html:not(.js) [data-stav]{display:none}
   .firma-zdroj{margin-top:var(--m-8)}
   .firma-media{margin-top:var(--m-8)}
   .uvod-akcie{margin-top:var(--m-16)}
+}
+/* notebook s nízkym oknom (do 660 px výšky: 1366 × 768 a 1280 × 720 s panelom záložiek má okno asi 560 až 615 px):
+   ešte hustejšie údaje a medzery, obsah ani H1 sa nemenia (doladenie-3, overenie 3 nález vážne: pri výške 600 px
+   a šírke 1024 až 1600 px boli tlačidlá Zavolať a Napísať e-mail, štítok stavby aj ovládanie slidera 19 až 22 px pod
+   spodkom okna a fotka 35 až 38 px pod ním, pri 560 px 65 až 68 px; fotka bola pod oknom až do výšky 648 px; stĺpec
+   vpravo natiahol riadok slidera). Riadky nad a pod stĺpcom najmenej 4 px (pri voľnom mieste rastú ako doteraz),
+   údaje 4 a 5 px, menšie odstupy; spolu asi 78 px. Pod 556 px výšky sa hrdina nezmestí ani tak (fotka má najmenej
+   480 px). */
+@media (min-width:1024px) and (max-height:660px){
+  .uvod-mriezka{grid-template-rows:minmax(var(--m-4),1fr) auto auto minmax(var(--m-4),1fr) auto}
+  .uvod-h1{margin-top:var(--m-8)}
+  .firma-udaje{margin-top:var(--m-8)}
+  .udaj,.udaj-siroky{padding:4px 0 5px}
+  .udaj dd{margin-top:0}
+  .firma-zdroj{margin-top:var(--m-4)}
+  .firma-media{margin-top:var(--m-4)}
+  .uvod-akcie{margin-top:var(--m-12)}
 }
 @media (hover:hover) and (pointer:fine) and (min-width:1024px){.slider-tl:hover{background:rgba(255,255,255,.16)}}
 

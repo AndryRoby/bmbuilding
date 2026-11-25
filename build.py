@@ -179,6 +179,15 @@ KOTVY_PREMENOVANE = {'/#sluzby': '/#cinnost'}
 LB_ODDELOVAC = ' · '
 # fakturačné údaje Kontaktu s dlhou hodnotou: na mobile cez oba stĺpce (styl.css .fakt-siroky, doladenie-2)
 KONTAKT_SIROKE = ('Sídlo', 'Zápis')
+# bankové spojenie a číslo účtu cez oba stĺpce len v najužšom okne (styl.css .fakt-ucet do 359 px, doladenie-3:
+# pri 320 px malo číslo účtu s pevnými medzerami 136 px a posledná číslica skočila na nový riadok, 9127/110|0)
+KONTAKT_UCET = ('Bankové spojenie', 'Číslo účtu')
+# mesiac alebo deň pri realizácii (ZMENY-KOLO-1.md 5.2: pri realizáciách len rok alebo roky): slovenský názov mesiaca
+# v ľubovoľnom páde, MM/RRRR a D. M. RRRR. Build varuje pri texte zverejnenej realizácie, ktorý ho má (overenie 3)
+MESIAC_V_TEXTE = re.compile(
+    r'\b(?:janu[áa]r\w*|febru[áa]r\w*|mar(?:ec|ci|ca)|apr[íi]l\w*|m[áa](?:j|ji|ja)|j[úu](?:n|ni|na|l|li|la)|august\w*'
+    r'|septemb\w*|okt[óo]b\w*|novemb\w*|decemb\w*)\b|\b(?:0?[1-9]|1[0-2])/(?:19|20)\d{2}\b'
+    r'|\b\d{1,2}\.\s?\d{1,2}\.\s?(?:19|20)\d{2}\b', re.I)
 
 VAROVANIA = []
 # Prísne varovania (fb-ostro A4, OPONENT.md S2): fotka slidera úvodu z nastavenia.json (uvod_slider)
@@ -1502,6 +1511,7 @@ class Web:
         self.linkedin = bezpecna_url(self.nastavenia.get('linkedin'), ['linkedin.com'])
         self.firma = nacitaj_firmu(obsah)
         self.realizacie = nacitaj_realizacie(obsah)
+        self.text_len_roky()
         # Novinky z webu preč (Andrej 24. 11. 2026 večer, ZMENY-KOLO-1.md 5.7: „pôvodne to chcel dať preč, ale chcel tam
         # dať ten časopis“): nastavenie "novinky": false v sablona/nastavenia.json. Bez noviniek sa nezostaví /novinky/
         # ani detail, nie sú v menu, v sitemap ani v odkazoch; súbory v obsah/novinky/ ostávajú (vratné, true = ako predtým)
@@ -1547,6 +1557,35 @@ class Web:
 
     def zmena(self, r):
         return max((d for d in (r['datum'], r['upravene'], self.vydanie) if d), default='')
+
+    def text_len_roky(self):
+        """Text realizácie len s rokom (overenie 3, nález vážne; ZMENY-KOLO-1.md 5.2: pri realizáciách len rok alebo
+        roky, nikde mesiac): sablona/nastavenia.json text_len_roky, slug -> [[pôvodná veta, veta len s rokom], ...].
+        Obsah sa nemení (sťahovač ho prepisuje), veta sa nahradí pri zostave, takže text, description aj JSON-LD
+        stránky ju majú len s rokom. Pôvodná veta, ktorá v texte nie je, je varovanie (obsah sa zmenil). Zverejnená
+        realizácia, ktorej text má aj potom mesiac (MESIAC_V_TEXTE), je tiež varovanie."""
+        mapa = self.nastavenia.get('text_len_roky')
+        mapa = mapa if isinstance(mapa, dict) else {}
+        podla_slugu = {r['slug']: r for r in self.realizacie}
+        for slug, dvojice in mapa.items():
+            r = podla_slugu.get(slug)
+            if r is None:
+                # skrytá (zverejnene false) alebo chýbajúca realizácia: nie je na webe, nič sa nenahrádza
+                continue
+            for d in dvojice if isinstance(dvojice, list) else [None]:
+                if not (isinstance(d, list) and len(d) == 2 and all(isinstance(x, str) and x.strip() for x in d)):
+                    varuj(f'nastavenia text_len_roky: {slug} {d!r} nie je dvojica [pôvodná veta, nová veta], vynechané')
+                    continue
+                stara, nova = (cisty(x) for x in d)
+                if stara in r['text']:
+                    r['text'] = r['text'].replace(stara, nova)
+                else:
+                    varuj(f'nastavenia text_len_roky: veta {stara!r} v texte realizácie {slug} nie je, text ostáva')
+        for r in self.realizacie:
+            m = MESIAC_V_TEXTE.search(r['text'])
+            if m:
+                varuj(f'realizácia {r["slug"]}: text má mesiac alebo deň ({m.group(0)!r}), na webe majú byť len roky '
+                      '(sablona/nastavenia.json text_len_roky)')
 
     # --- v médiách (ZMENY-KOLO-1.md 5.7, 24. 11. 2026 večer): časopis ASB pri Lumière, Archinfo pri Devínskych lúkach
     def media_fotka(self, d, meno):
@@ -2179,7 +2218,9 @@ class Web:
         # idú cez oba (trieda fakt-siroky, styl.css do 767 px; doladenie-2), na počítači nič nemení
         bunky = []
         for k, v in riadky:
-            trieda = ' class="fakt-siroky"' if k in KONTAKT_SIROKE else ''
+            # bankové spojenie a číslo účtu cez oba stĺpce len do 359 px (trieda fakt-ucet, doladenie-3)
+            trieda = (' class="fakt-siroky"' if k in KONTAKT_SIROKE
+                      else ' class="fakt-ucet"' if k in KONTAKT_UCET else '')
             bunky.append(f'<div{trieda}><dt>{T(k)}</dt><dd{CISLA if k in ("IČO", "IČ DPH", "Číslo účtu") else ""}>'
                          f'{self.adresa_dvojriadok() if k == "Sídlo" else T(v)}</dd></div>')
         dl = ''.join(bunky)
@@ -3633,11 +3674,10 @@ class Web:
                 dielo['locationCreated'] = {'@type': 'Place', 'name': r['miesto']}
             if r['text']:
                 dielo['description'] = r['text'].replace('\n', ' ')
-            # datePublished len pri príspevku (fb, sprava); dátum článku starého webu nie je dátum stavby
-            if r['datum'] and r['zdroj'] != 'web':
-                dielo['datePublished'] = r['datum']
-            if r['upravene']:
-                dielo['dateModified'] = r['upravene']
+            # bez datePublished a dateModified (overenie 3, nález vážne): pri realizáciách len rok alebo roky, nikde
+            # mesiac ani deň (ZMENY-KOLO-1.md 5.2). datum je deň príspevku na Facebooku alebo článku starého webu, nie
+            # dátum stavby (Dvojdom S: 2026-10-04 pri stavbe 2021 až 2022), upravene je deň úpravy obsahu; vyhľadávač
+            # by ich mohol ukázať pri výsledku. Roky stavby nesie text a description stránky, lastmod ostáva v sitemap.
             if self.ld_media(r):
                 dielo['subjectOf'] = self.ld_media(r)
             self.podstranka(cesta, kroky, title, desc, telo, 'realizacie/' + r['slug'], [dielo], og=og,

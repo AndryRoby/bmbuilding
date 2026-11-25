@@ -1966,7 +1966,7 @@ class TestStranky(unittest.TestCase):
             self.assertIn(kus, css)
         pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
         self.assertIn(':root{--stlpce:12;--hore:84px}', pc)
-        self.assertIn('.slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2))}', pc)
+        self.assertIn('.slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2));margin-left:calc(-1 * max(var(--okraj), (100cqw - var(--sirka)) / 2))}', pc)
         self.assertIn('"slider slider slider slider slider slider slider . . . . ."', pc)
         self.assertIn(':root{--hore:64px}', ''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:820px)')))
         self.assertIn('.snimky,.firma-hlava{aspect-ratio:1/1}', ''.join(css_bloky(css, '@media (min-width:640px) and (max-width:1023px)')))
@@ -2162,8 +2162,9 @@ class TestStranky(unittest.TestCase):
             self.assertNotIn('class="siete', sek.split('<div class="kontakt-udaje">', 1)[1])
             dl = re.search(r'<dl class="fakty kontakt-fakty kontakt-riadky-(\d+)">(.*?)</dl>', sek)
             self.assertIsNotNone(dl, cesta)
-            # bunky Sídlo a Zápis majú triedu fakt-siroky (na mobile cez oba stĺpce, doladenie-2)
-            n = len(re.findall(r'<div(?: class="fakt-siroky")?><dt>', dl.group(2)))
+            # bunky Sídlo a Zápis majú triedu fakt-siroky (na mobile cez oba stĺpce, doladenie-2), Bankové spojenie
+            # a Číslo účtu fakt-ucet (cez oba stĺpce do 359 px, doladenie-3)
+            n = len(re.findall(r'<div(?: class="fakt-(?:siroky|ucet)")?><dt>', dl.group(2)))
             self.assertEqual(n, 8, cesta)
             self.assertEqual(int(dl.group(1)), (n + 1) // 2, cesta)
             # telefón vo vizitke s tabuľkovými číslicami
@@ -2434,6 +2435,28 @@ class TestStranky(unittest.TestCase):
     # 2560 px; najvyšší 878 px pri 1648 px, kde je H1 takmer 64 px a odsek má 5 riadkov)
     STLPEC_VYSOKE = {1024: 809, 1200: 786, 1280: 798, 1368: 812, 1440: 824, 1536: 850, 1600: 866, 1648: 878,
                      1680: 866, 1728: 876, 1768: 876, 1800: 846, 1920: 826, 2560: 826}
+    # doladenie-3, Chrome po oprave (meraj.mjs prva, posun hore, slider pozastavený): okno -> (spodok fotky pod
+    # spodkom okna px, najmenšia rezerva tlačidiel, štítka a ovládania nad spodkom okna px). Pred opravou napr.
+    # 1366 x 610 (27,5; -11,5), 1600 x 600 (37,6; -21,6), 1600 x 560 (67,6; -51,6), 1600 x 648 (1,5; 14,5).
+    # Sweep 891 okien (11 šírok 1024 až 1920 px, výšky 540 až 700 px po 2 px): chyba len pri 540 až 544 px, kde
+    # nestačí ani najmenšia výška fotky 480 px s hlavičkou 64 px; 525 okien do 1400 px výšky bez chyby.
+    DOLADENIE3_NIZKE = {'1024x560': (0, 10.5), '1024x600': (0, 16), '1024x640': (0, 16), '1024x660': (0, 16),
+                        '1280x600': (0, 16), '1366x610': (0, 16), '1366x640': (0, 16), '1440x600': (0, 16),
+                        '1536x620': (0, 16), '1600x560': (0, 9.2), '1600x600': (0, 16), '1600x648': (0, 16),
+                        '1600x660': (0, 16), '1680x600': (0, 16), '1792x600': (0, 16), '1920x560': (0, 16)}
+    # doladenie-3, Chrome po oprave (meraj.mjs medzery): (stránka, hranica, okno) -> od posledného textu bloku po
+    # nadpis ďalšej sekcie px; pred opravou 302 až 389 px pri 1366 až 1920 px, pred Kontaktom 246 až 296 px
+    DOLADENIE3_MEDZERY = {
+        ('stavebny-manazment', 'karty', '1366x768'): 174, ('stavebny-manazment', 'karty', '1440x900'): 181,
+        ('stavebny-manazment', 'karty', '1920x1080'): 189, ('stavebny-manazment', 'kontakt', '1366x768'): 164,
+        ('stavebny-manazment', 'kontakt', '1440x900'): 173, ('stavebny-manazment', 'kontakt', '1920x1080'): 196,
+        ('stavebny-dozor', 'karty', '1366x768'): 138, ('stavebny-dozor', 'karty', '1440x900'): 145,
+        ('stavebny-dozor', 'karty', '1920x1080'): 153, ('stavebny-dozor', 'otazky', '1366x768'): 137,
+        ('stavebny-dozor', 'otazky', '1440x900'): 144, ('stavebny-dozor', 'otazky', '1920x1080'): 152,
+        ('stavebny-dozor', 'kontakt', '1440x900'): 173, ('stavebny-dozor', 'kontakt', '1920x1080'): 196,
+        ('stavbyveduci', 'otazky', '1366x768'): 167, ('stavbyveduci', 'otazky', '1440x900'): 181,
+        ('stavbyveduci', 'otazky', '1920x1080'): 172, ('stavbyveduci', 'kontakt', '1440x900'): 173,
+        ('stavbyveduci', 'kontakt', '1920x1080'): 196}
 
     def test_doladenie2_prah_vysokeho_okna(self):
         """Doladenie-2, nález vážne (overenie 2: pri 961 až 1058 px výšky okna stĺpec s prvým odsekom O firme natiahol
@@ -2445,10 +2468,10 @@ class TestStranky(unittest.TestCase):
         na spodku okna, štítok, ovládanie aj tlačidlá v okne; 1920 x 1080 a 2560 x 1440 bez zmeny."""
         css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
         self.assertEqual(build.SLIDER_VYSOKE_OKNO, 1079)
-        # prahy výšky okna na počítači: 820 (hustejšie údaje), 960 (len H1 najviac 6 % výšky okna, ako pred
-        # doladením 2) a SLIDER_VYSOKE_OKNO (odsek O firme v hrdinovi až od 1080 px)
+        # prahy výšky okna na počítači: 660 (ešte hustejšie údaje, doladenie-3), 820 (hustejšie údaje), 960 (len H1
+        # najviac 6 % výšky okna, ako pred doladením 2) a SLIDER_VYSOKE_OKNO (odsek O firme v hrdinovi až od 1080 px)
         prahy = sorted({int(x) for x in re.findall(r'@media \(min-width:1024px\) and \(max-height:(\d+)px\)', css)})
-        self.assertEqual(prahy, [820, 960, build.SLIDER_VYSOKE_OKNO])
+        self.assertEqual(prahy, [660, 820, 960, build.SLIDER_VYSOKE_OKNO])
         self.assertEqual(''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:960px)')).strip(),
                          '.uvod-h1{font-size:min(clamp(1.75rem,9.8cqi,4rem),6svh)}')
         self.assertEqual(re.findall(r'@media \(min-width:1024px\) and \(min-height:(\d+)px\)', css),
@@ -2626,7 +2649,9 @@ console.log(JSON.stringify({ neskoro: beh('neskoro'), chyba: beh('chyba') }));
         self.assertEqual(build.KONTAKT_SIROKE, ('Sídlo', 'Zápis'))
         for cesta in ('', 'kontakt/', 'realizacie/'):
             dl = self.info(cesta)['telo'].split('<dl class="fakty kontakt-fakty', 1)[1].split('</dl>', 1)[0]
-            bunky = re.findall(r'<div( class="fakt-siroky")?><dt>([^<]+)</dt>', dl)
+            # fakt-ucet (Bankové spojenie a Číslo účtu cez oba stĺpce len do 359 px, doladenie-3) je pri 360 až 767 px
+            # úzka bunka ako ostatné
+            bunky = [(t == 'siroky', k) for t, k in re.findall(r'<div(?: class="fakt-(siroky|ucet)")?><dt>([^<]+)</dt>', dl)]
             self.assertEqual(len(bunky), 8, cesta)
             self.assertEqual([k for t, k in bunky if t], ['Sídlo', 'Zápis'], cesta)
             # v dvoch stĺpcoch bez diery: úzke bunky medzi širokými po pároch
@@ -2698,6 +2723,310 @@ console.log(JSON.stringify({ neskoro: beh('neskoro'), chyba: beh('chyba') }));
             doslova = self.info(f'{slug}/')['telo'].split('sluzba-doslova">', 1)[1].split('<aside', 1)[0]
             porovnaj(c['polozky'], polozky(doslova), f'/{slug}/')
         self.assertEqual([bez(w) for _, w in nadpisy], [bez(z) for z, _ in nadpisy])
+
+    # ---------------------------------------------------------------- doladenie 3 (overenie 3, krasa-8, 25. 11. 2026)
+
+    def test_doladenie3_bok_sluzby_na_tablete(self):
+        """Doladenie-3, overenie 3 nález vážne (/stavebny-manazment/, /stavebny-dozor/, /stavbyveduci/ pri 768 až 959 px:
+        box s dokladom SKSI vedľa textu mal 258 až 302 px, tabuľka v ňom ostala 252 px, obsah vytŕčal cez rámik až o 18 px
+        a slová sa lámali uprostred, stavebnýc|h, Osvedčeni|e, 00912*10|*, 5. 11. 200|3): na tablete text cez celú šírku
+        a box pod ním na 5 z 8 stĺpcov, od 1024 px vedľa seba ako doteraz (1/7 a 8/-1). Geometria podľa styl.css (okraj,
+        medzera, 8 a 12 stĺpcov, odsadenie boxu clamp(20px,3vw,36px), rámik 1 px, štítok 7,5 em, medzera 16 px
+        a rezerva hodnoty 12 px): hodnota má pri každej šírke 360 až 1100 px aspoň 120 px; najdlhšie slovo dokladov má
+        v Chrome 108,2 px pri 18 px a 102,2 px pri 17 px (stavbyvedúci). Do 359 px je štítok nad hodnotou (test
+        test_doladenie3_najuzsie_okno_320). Prehliadač (doladenie/meraj.mjs bok, 18 šírok 320 až 1440 px a 3 stránky,
+        po oprave 0 rozdelených slov a obsah vnútri rámika): DOLADENIE-3.md."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        tablet = ''.join(css_bloky(css, '@media (min-width:768px)'))
+        pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
+        self.assertIn('.sluzba-obal .sluzba-hlavne{grid-column:1/-1}', tablet)
+        self.assertIn('.sluzba-obal .sluzba-bok{grid-column:1/6}', tablet)
+        self.assertIn('.sluzba-obal .sluzba-hlavne{grid-column:1/7}', pc)
+        self.assertIn('.sluzba-obal .sluzba-bok{grid-column:8/-1}', pc)
+        self.assertNotIn('.sluzba-obal .sluzba-bok{grid-column:6/-1}', css)
+        self.assertIn('.kalkulacka{margin-top:clamp(40px,5vw,64px);padding:clamp(20px,3vw,36px);border:1px solid', css)
+        self.assertIn('.fakty>div{display:grid;grid-template-columns:minmax(7.5em,32%) minmax(0,1fr);gap:var(--m-16);', css)
+        self.assertIn('.fakty dd{margin:0;padding-right:var(--m-12);', css)
+
+        def hodnota(vw):
+            okraj = min(64.0, max(16.0, 0.039 * vw))
+            medzera = min(24.0, max(12.0, 0.016 * vw))
+            obsah = min(1760.0, vw - 2 * okraj)
+            if vw >= 1024:
+                bok = 5 * (obsah - 11 * medzera) / 12 + 4 * medzera
+            elif vw >= 768:
+                bok = 5 * (obsah - 7 * medzera) / 8 + 4 * medzera
+            else:
+                bok = obsah
+            pismo = 18 if vw >= 768 else 17
+            vnutro = bok - 2 * min(36.0, max(20.0, 0.03 * vw)) - 2
+            return vnutro - max(7.5 * pismo, 0.32 * vnutro) - 16 - 12, bok
+        for vw in range(360, 1101):
+            self.assertGreaterEqual(hodnota(vw)[0], 120, vw)
+        # Chrome (meraj.mjs bok): box pri 768 px 437 px (predtým 258), pri 1023 px 583 px, od 1024 px bez zmeny 384 px
+        self.assertAlmostEqual(hodnota(768)[1], 437.5, delta=1.5)
+        self.assertAlmostEqual(hodnota(1023)[1], 583, delta=1.5)
+        self.assertAlmostEqual(hodnota(1024)[1], 384, delta=1.5)
+        for k in self.texty['sluzby']:
+            telo = self.info(f'{k}/')['telo']
+            # box je v DOM za textom: na mobile a tablete pod ním
+            self.assertLess(telo.index('<div class="sluzba-hlavne'), telo.index('<aside class="kalkulacka sluzba-bok"'), k)
+
+    def test_doladenie3_nizke_okno_hrdina(self):
+        """Doladenie-3, overenie 3 nález vážne (sweep 525 okien, šírka 1024 až 2560 px, výška 600 až 1400 px: pri výške
+        600 px a šírke 1024 až 1600 px tlačidlá Zavolať a Napísať e-mail, štítok stavby aj ovládanie slidera 19 až 22 px
+        pod spodkom okna a fotka 35 až 38 px pod ním; jemný sweep po 2 px: fotka pod oknom až do výšky 648 px, pri 560 px
+        65 až 68 px): pri výške okna do 660 px hustejší pravý stĺpec hrdinu, riadky nad a pod ním najmenej 4 px (pri voľnom
+        mieste rastú ako doteraz), údaje 4 a 5 px, menšie odstupy, spolu asi 78 px; obsah ani H1 (6 % výšky okna) sa
+        nemenia a fotka ostáva po spodok okna (žiadne vlastné min-height). Prehliadač po oprave (doladenie/meraj.mjs prva,
+        11 šírok 1024 až 1920 px a výšky 540 až 700 px po 2 px; 25 šírok a výšky 600 až 1400 px po 40 px; čerstvé
+        načítanie 1344 x 600, 1366 x 610, 1280 x 640, 1024 x 600, 1600 x 600): pozri DOLADENIE3_NIZKE."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        blok = ''.join(css_bloky(css, '@media (min-width:1024px) and (max-height:660px)'))
+        for kus in ('.uvod-mriezka{grid-template-rows:minmax(var(--m-4),1fr) auto auto minmax(var(--m-4),1fr) auto}',
+                    '.uvod-h1{margin-top:var(--m-8)}', '.firma-udaje{margin-top:var(--m-8)}',
+                    '.udaj,.udaj-siroky{padding:4px 0 5px}', '.udaj dd{margin-top:0}', '.firma-zdroj{margin-top:var(--m-4)}',
+                    '.firma-media{margin-top:var(--m-4)}', '.uvod-akcie{margin-top:var(--m-12)}'):
+            self.assertIn(kus, blok)
+        # fotka po spodok okna ako vo vyšších oknách, H1 bez zmeny (len pravidlo do 960 px výšky)
+        self.assertNotIn('.snimky{', blok)
+        self.assertNotIn('font-size', blok)
+        self.assertNotIn('display:none', blok)
+        # blok je za oboma blokmi do 820 px výšky (prepíše ich hodnoty)
+        self.assertLess(css.rindex('@media (min-width:1024px) and (max-height:820px){'),
+                        css.index('@media (min-width:1024px) and (max-height:660px){'))
+        # Chrome po oprave: okno -> (spodok fotky pod oknom px, najmenšia rezerva tlačidiel, štítka a ovládania px)
+        for okno, (dole, rezerva) in self.DOLADENIE3_NIZKE.items():
+            self.assertEqual(dole, 0, okno)
+            self.assertGreaterEqual(rezerva, 4, okno)
+
+    def test_doladenie3_rytmus_sluzieb(self):
+        """Doladenie-3, overenie 3 nález drobný (na stránkach služieb sa na hranici blokov sčítal spodný a horný rytmus:
+        od posledného textu po nadpis ďalšej sekcie 338 až 392 px pri 1366 až 1920 px, pri 1728 x 1000 po prvom posune asi
+        80 % okna prázdnych; pred Kontaktom 296 px): od 1024 px text služby, karty realizácií a otázky zo zákona po 48 až
+        76 px (5vw), Kontakt so svojím odsadením 64 až 120 px (doladenie-1); do 1023 px bez zmeny. Chrome po oprave
+        (doladenie/meraj.mjs medzery): DOLADENIE3_MEDZERY, cieľ 150 až 190 px ako /realizacie/ (173 px pri 1440 px)."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
+        self.assertIn('.sluzba-obal{padding-bottom:clamp(var(--m-48),5vw,76px)}', pc)
+        self.assertIn('.sluzba-obal~.sekcia-karty,.sluzba-obal~.otazky-sekcia{padding-block:clamp(var(--m-48),5vw,76px)}', pc)
+        zaklad = css_bez_blokov(css)
+        self.assertIn('.sluzba-obal{row-gap:40px;padding-bottom:var(--rytmus)}', zaklad)
+        self.assertIn('.sekcia{padding-block:var(--rytmus)}', zaklad)
+        # Kontakt si odsadenie nechá (pravidlo služby ho nesmie zachytiť)
+        self.assertIn('.kontakt{background:var(--vapno-2);--tlmeny:#5d5d58;padding-block:clamp(var(--m-64),7vw,120px)}', zaklad)
+        self.assertNotIn('.sluzba-obal~.sekcia{', css)
+        for k in self.texty['sluzby']:
+            telo = self.info(f'{k}/')['telo']
+            # za obalom textu služby karty realizácií alebo otázky zo zákona, potom Kontakt (súrodenci v main)
+            self.assertRegex(telo, r'<div class="obsah mriezka sluzba-obal">.*?</aside></div>\s*'
+                                   r'<section class="sekcia (?:sekcia-karty|otazky-sekcia)"', k)
+            self.assertRegex(telo, r'</section>\s*<section class="sekcia kontakt"', k)
+        for kluc, medzera in self.DOLADENIE3_MEDZERY.items():
+            self.assertLessEqual(medzera, 200, kluc)
+            self.assertGreaterEqual(medzera, 120, kluc)
+            self.assertIn(kluc[0], self.texty['sluzby'], kluc)
+
+    def test_doladenie3_register_do_639(self):
+        """Doladenie-3, overenie 3 nález vážne (/opravnenia/ pri 320 a 360 px: stĺpec auto so zdrojom si vzal asi 245 px,
+        nadpisu Obchodný register ostalo 20 a 60 px, písmená išli pod seba, pri 360 px Obcho|dný registe|r, pri 375 px
+        Obchod|ný): do 639 px jeden stĺpec, nadpis cez celý riadok, zdroj pod textom ako v hrdinovi (poradie v DOM: nadpis,
+        text, zdroj); od 640 px vedľa seba ako doteraz. Prehliadač (meraj.mjs register, 320 až 1440 px): DOLADENIE-3.md."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        mobil = ''.join(css_bloky(css, '@media (max-width:639px)'))
+        self.assertIn('.register .sluzba{grid-template-columns:minmax(0,1fr)}', mobil)
+        self.assertIn('.register .cena{grid-column:1;grid-row:auto}', mobil)
+        zaklad = css_bez_blokov(css)
+        self.assertIn('.sluzba{display:grid;grid-template-columns:minmax(0,1fr) auto;', zaklad)
+        self.assertIn('.cena{grid-column:2;grid-row:1;', zaklad)
+        self.assertIn('.register .cena{font-size:15px;white-space:normal;text-align:left}', zaklad)
+        li = self.info('opravnenia/')['telo'].split('<ul class="cennik register">', 1)[1].split('</ul>', 1)[0]
+        self.assertRegex(li, r'^<li class="sluzba"><h2 class="nadpis-maly" id="obchodny-register">[^<]+</h2>'
+                             r'<p class="sluzba-opis">[^<]+</p><p class="cena"><small>Zdroj: <a ')
+
+    def test_doladenie3_najuzsie_okno_320(self):
+        """Doladenie-3, overenie 3 nález drobný (320 px): číslo účtu v Kontakte 9127/110|0 (bunka 136 px, pevné medzery
+        čísla), v boku služby stavbyvedú|ci (hodnota 90 px vedľa štítka 7,5 em), v detaile Cakovandpartner|s, a
+        www.bytyrosnicka.s|k. Do 359 px Bankové spojenie a Číslo účtu cez oba stĺpce (trieda fakt-ucet) a v tabuľkách
+        údajov podstránok štítok nad hodnotou; od 360 px bez zmeny. Prehliadač (meraj.mjs ucet a slova): DOLADENIE-3.md."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        uzke = ''.join(css_bloky(css, '@media (max-width:359px)'))
+        self.assertIn('.kontakt-fakty>.fakt-ucet{grid-column:1/-1}', uzke)
+        self.assertIn('.fakty>div{grid-template-columns:minmax(0,1fr);row-gap:var(--m-4)}', uzke)
+        self.assertNotIn('fakt-ucet', css_bez_blokov(css))
+        for blok in ('@media (max-width:767px)', '@media (min-width:768px)', '@media (min-width:1024px)'):
+            self.assertNotIn('fakt-ucet', ''.join(css_bloky(css, blok)), blok)
+        self.assertEqual(build.KONTAKT_UCET, ('Bankové spojenie', 'Číslo účtu'))
+        for cesta in ('', 'kontakt/', 'realizacie/', 'stavebny-dozor/', 'realizacie/vila-x-bratislava/'):
+            t = self.info(cesta)
+            dl = t['telo'].split('<dl class="fakty kontakt-fakty', 1)[1].split('</dl>', 1)[0]
+            self.assertEqual(re.findall(r'<div class="fakt-ucet"><dt>([^<]+)</dt>', dl), list(build.KONTAKT_UCET), cesta)
+            # pravidlo pre Kontakt je v spoločnej časti štýlu (úvod nemá úsek podstránok)
+            self.assertIn('.kontakt-fakty>.fakt-ucet{grid-column:1/-1}', t['html'], cesta)
+
+    def test_doladenie3_menu_zavrie_pri_odchode_fokusu(self):
+        """Doladenie-3, overenie 3 nález drobný (WCAG 2.2, bod 2.4.11): Tab za posledným odkazom otvoreného mobilného menu
+        presunul fokus na prvok pod panelom (na úvode odkaz štítka RD Ahoj), menu ostalo otvorené a fokus nebolo vidno.
+        app.js časť 1: focusout s novým prvkom mimo menu menu zavrie (bez návratu fokusu na tlačidlo); bez nového prvku
+        (relatedTarget null: ťuk na plochu panela, odchod z okna, odkaz na iOS bez fokusu) a s prvkom v menu ostane
+        otvorené, ťuk na odkaz tak vždy naviguje. Simulácia časti 1 v node nad falošným DOM; prehliadač (meraj.mjs menu,
+        360 až 1099 px): DOLADENIE-3.md."""
+        js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        self.assertIn("menu.addEventListener('focusout'", js)
+        cast = '// 1. Mobilné menu' + js.split('// 1. Mobilné menu', 1)[1].split('// 2. Spodná lišta', 1)[0]
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('node nie je k dispozícii')
+        import subprocess
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const fokus = [];
+function prvok(meno) {
+  return { meno, nodeType: 1, poslucha: {}, addEventListener(t, f) { (this.poslucha[t] = this.poslucha[t] || []).push(f); },
+    getAttribute() { return this.href || null; }, focus() { fokus.push(meno); } };
+}
+const tl = prvok('summary'); tl.textContent = 'Menu';
+const odkaz = prvok('odkaz'); odkaz.href = 'realizacie/';
+const kotva = prvok('kotva'); kotva.href = '#cinnost';
+const vonku = prvok('vonku');
+const menu = prvok('menu'); menu.open = false;
+menu.querySelector = (s) => (s === 'summary' ? tl : null);
+menu.querySelectorAll = (s) => (s === 'a[href]' ? [odkaz, kotva] : []);
+menu.contains = (x) => x === menu || x === tl || x === odkaz || x === kotva;
+const dok = prvok('document');
+dok.querySelectorAll = (s) => (s === 'details.menu-m' ? [menu] : []);
+const ctx = { d: dok, vsetky: (sel, koren) => Array.prototype.slice.call((koren || dok).querySelectorAll(sel)) };
+vm.createContext(ctx);
+vm.runInContext(kod, ctx);
+const fo = (kam) => { (menu.poslucha.focusout || []).forEach((f) => f({ relatedTarget: kam })); return menu.open; };
+const v = {};
+menu.open = true; v.vnutri = fo(odkaz);
+menu.open = true; v.tlacidlo = fo(tl);
+menu.open = true; v.bez_prvku = fo(null);
+menu.open = true; v.vonku = fo(vonku);
+v.fokus_po_vonku = fokus.slice();
+menu.open = false; v.zatvorene = fo(vonku);
+menu.open = true; v.nie_prvok = fo({ nodeType: 3 });
+console.log(JSON.stringify(v));
+"""
+        p = subprocess.run([node, '-e', sim], input=json.dumps(cast), capture_output=True, text=True, encoding='utf-8',
+                           timeout=60)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(json.loads(p.stdout), {'vnutri': True, 'tlacidlo': True, 'bez_prvku': True, 'vonku': False,
+                                                'fokus_po_vonku': [], 'zatvorene': False, 'nie_prvok': True})
+
+    def test_hlavna_slider_od_okraja_s_posuvnikom(self):
+        """Kontrola 3 v prehliadači (nález drobné, 25. 11. 2026): odsadenie slidera k ľavej hrane okna počítalo so 100vw,
+        ktoré vo Windows zahŕňa aj posuvník 17 px, kým .obsah sa centruje v šírke bez neho; od šírky 1889 px začínal
+        slider 8,5 px za ľavým okrajom a štítok stavby bol 7,5 px od okraja. Od 1024 px je .uvod kontajner a slider
+        ráta so 100cqw (šírka sekcie bez posuvníka); 100vw ostáva pred ním ako záloha pre prehliadač bez cqw."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
+        self.assertIn('.uvod{container-type:inline-size}', pc)
+        self.assertIn('.slider{margin-left:calc(-1 * max(var(--okraj), (100vw - var(--sirka)) / 2));'
+                      'margin-left:calc(-1 * max(var(--okraj), (100cqw - var(--sirka)) / 2))}', pc)
+        # v .uvod nie je nič s position fixed ani sticky (kontajner by im zmenil obsahujúci blok)
+        uvod = self.info('')['telo'].split('<section class="uvod"', 1)[1].split('</section>', 1)[0]
+        for trieda in ('lista', 'lightbox', 'hlava', 'cinnost-hlava'):
+            self.assertNotIn(f'class="{trieda}', uvod)
+
+    def test_hlavna_menu_esc_mimo_menu(self):
+        """Kontrola 3 v prehliadači (nález drobné): po ťuknutí na prázdnu plochu otvoreného mobilného menu prešiel fokus
+        na body a Esc menu nezavrel (posluch bol len na menu). Esc teraz počúva dokument: pri otvorenom menu ho zavrie
+        a vráti fokus na tlačidlo, pri zatvorenom nerobí nič. Simulácia časti 1 app.js v node nad falošným DOM."""
+        js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
+        cast = '// 1. Mobilné menu' + js.split('// 1. Mobilné menu', 1)[1].split('// 2. Spodná lišta', 1)[0]
+        self.assertIn("d.addEventListener('keydown'", cast)
+        self.assertNotIn("menu.addEventListener('keydown'", cast)
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('node nie je k dispozícii')
+        import subprocess
+        sim = r"""
+const vm = require('vm');
+const kod = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const fokus = [];
+function prvok(meno) {
+  return { meno, nodeType: 1, poslucha: {}, addEventListener(t, f) { (this.poslucha[t] = this.poslucha[t] || []).push(f); },
+    getAttribute() { return null; }, focus() { fokus.push(meno); } };
+}
+const tl = prvok('summary'); tl.textContent = 'Menu';
+const menu = prvok('menu'); menu.open = false;
+menu.querySelector = (s) => (s === 'summary' ? tl : null);
+menu.querySelectorAll = () => [];
+menu.contains = (x) => x === menu || x === tl;
+const dok = prvok('document');
+dok.querySelectorAll = (s) => (s === 'details.menu-m' ? [menu] : []);
+const ctx = { d: dok, vsetky: (sel, koren) => Array.prototype.slice.call((koren || dok).querySelectorAll(sel)) };
+vm.createContext(ctx);
+vm.runInContext(kod, ctx);
+const kl = (key) => { let p = false; (dok.poslucha.keydown || []).forEach((f) => f({ key, preventDefault() { p = true; } })); return p; };
+const v = {};
+menu.open = true; v.esc_zabranene = kl('Escape'); v.otvorene_po_esc = menu.open; v.fokus = fokus.slice();
+menu.open = true; kl('Enter'); v.otvorene_po_enter = menu.open;
+menu.open = false; fokus.length = 0; v.zatvorene_esc_zabranene = kl('Escape'); v.fokus_zatvorene = fokus.slice();
+console.log(JSON.stringify(v));
+"""
+        p = subprocess.run([node, '-e', sim], input=json.dumps(cast), capture_output=True, text=True, encoding='utf-8',
+                           timeout=60)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(json.loads(p.stdout), {'esc_zabranene': True, 'otvorene_po_esc': False, 'fokus': ['summary'],
+                                                'otvorene_po_enter': True, 'zatvorene_esc_zabranene': False,
+                                                'fokus_zatvorene': []})
+
+    def test_hlavna_bok_tlacidlo_320(self):
+        """Kontrola 3 v prehliadači (nález drobné): pri 320 px bolo tlačidlo Zavolať s číslom v boku služby (251,8 px)
+        širšie ako vnútro boxu (246 px). Do 359 px sa číslo zalomí pod slovo."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        self.assertIn('.bok-tlacidlo .tlacidlo{flex-wrap:wrap;row-gap:2px;padding-block:10px}',
+                      ''.join(css_bloky(css, '@media (max-width:359px)')))
+
+    def test_doladenie3_realizacie_len_roky(self):
+        """Doladenie-3, overenie 3 nálezy vážne (pri realizáciách len rok alebo roky, nikde mesiac ani deň; ZMENY-KOLO-1.md
+        5.2): UFO „Kolaudácia v novembri 2025.“, Dom Betliarska „Skolaudované 12/2013.“ a RD Jarovce „Skolaudované
+        09/2014.“ boli na stránke aj v description JSON-LD; CreativeWork mal datePublished (deň príspevku na Facebooku,
+        Dvojdom S 2026-10-04 pri stavbe 2021 až 2022) a dateModified 2026-11-24. Build vety nahradí podľa nastavenia
+        text_len_roky (obsah sa nemení) a dátumy do CreativeWork nedáva. Na žiadnej stránke realizácie nie je v texte,
+        meta description ani v JSON-LD stavby názov mesiaca, MM/RRRR, D. M. RRRR ani dátum RRRR-MM; výnimka je blok
+        V médiách pri Lumière (číslo časopisu ASB „február 2024“ a datePublished 2024-02 v subjectOf je dátum vydania
+        časopisu, nie stavby) a foundingDate firmy."""
+        nast = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8'))
+        for slug, dvojice in nast['text_len_roky'].items():
+            d = self.realizacie.get(slug)
+            for stara, nova in dvojice:
+                self.assertIsNotNone(build.MESIAC_V_TEXTE.search(stara), stara)
+                self.assertIsNone(build.MESIAC_V_TEXTE.search(nova), nova)
+                if d is not None:
+                    # pôvodná veta je v obsahu (inak nahradenie nič nerobí a build varuje)
+                    self.assertIn(stara, build.cisty(d.get('text')), slug)
+        for slug, cakane in (('ufo-most-snp-bratislava', 'Kolaudácia v roku 2025.'),
+                             ('dom-betliarska-bratislava-petrzalka', 'Skolaudované v roku 2013.'),
+                             ('rd-jarovce-bratislava', 'Skolaudované v roku 2014.')):
+            t = self.info(f'realizacie/{slug}/')
+            self.assertIn(cakane, html.unescape(re.sub(r'<[^>]+>', '', t['telo'])).replace(' ', ' '), slug)
+            dielo = [u for u in t['ld'] if u.get('@type') == 'CreativeWork'][0]
+            self.assertIn(cakane, dielo['description'], slug)
+        datum_ld = re.compile(r'\b(?:19|20)\d{2}-\d{2}')
+        for slug in self.realizacie:
+            t = self.info(f'realizacie/{slug}/')
+            telo = re.sub(r'<section class="sekcia media-sekcia".*?</section>', '', t['telo'], flags=re.S)
+            telo = re.sub(r'<script.*?</script>|<style.*?</style>', '', telo, flags=re.S)
+            # viditeľný text aj atribúty (popisy fotiek v lightboxe)
+            text = html.unescape(re.sub(r'<[^>]+?>', ' ', telo) + ' ' + ' '.join(re.findall(r'="([^"]*)"', telo)))
+            m = build.MESIAC_V_TEXTE.search(text.replace(' ', ' '))
+            self.assertIsNone(m, (slug, m and m.group(0)))
+            hlava = t['html'].split('</head>', 1)[0]
+            for obsah in [t['desc']] + re.findall(r'<meta (?:property|name)="(?:og|twitter):description" content="([^"]*)"', hlava):
+                self.assertIsNone(build.MESIAC_V_TEXTE.search(html.unescape(obsah)), slug)
+            for u in t['ld']:
+                if u.get('@type') in ('CreativeWork', 'WebPage', 'BreadcrumbList'):
+                    bez = {k: v for k, v in u.items() if k != 'subjectOf'}
+                    s = json.dumps(bez, ensure_ascii=False)
+                    self.assertIsNone(build.MESIAC_V_TEXTE.search(s), (slug, u.get('@type')))
+                    self.assertIsNone(datum_ld.search(s), (slug, u.get('@type')))
+            dielo = [u for u in t['ld'] if u.get('@type') == 'CreativeWork'][0]
+            self.assertFalse({'datePublished', 'dateModified', 'dateCreated'} & set(dielo), slug)
 
     def test_krasa8_asb_vyrez(self):
         """krasa-8, agent Kontakt (brána 3: výrez tabuľky ASB pri Lumière mal pri 1440 px 765 x 720 px, písmená 30 až
@@ -3710,12 +4039,12 @@ console.log(JSON.stringify({ neskoro: beh('neskoro'), chyba: beh('chyba') }));
         ns = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
         for u in ET.parse(self.ostry / 'sitemap.xml').getroot().findall(f'{ns}url'):
             self.assertGreaterEqual(u.find(f'{ns}lastmod').text, vydanie, u.find(f'{ns}loc').text)
+        # realizácia bez datePublished a dateModified (doladenie-3, overenie 3 nález vážne: pri realizáciách len roky,
+        # dátum príspevku na Facebooku nie je dátum stavby); lastmod v sitemap ostáva
         for slug, d in self.realizacie.items():
             dielo = [u for u in self.info(f'realizacie/{slug}/')['ld'] if u.get('@type') == 'CreativeWork'][0]
-            if d.get('zdroj') == 'web' or not d.get('datum'):
-                self.assertNotIn('datePublished', dielo, slug)
-            elif build.platny_datum(d.get('datum')):
-                self.assertEqual(dielo.get('datePublished'), d['datum'], slug)
+            self.assertNotIn('datePublished', dielo, slug)
+            self.assertNotIn('dateModified', dielo, slug)
 
     def test_jsonld_graf(self):
         for p in stranky(self.ostry):
@@ -4284,7 +4613,36 @@ class TestDocasnyObsah(unittest.TestCase):
         self.assertEqual(postav(web, self.obsah)[0], 0)
         mapa = (web / 'sitemap.xml').read_text(encoding='utf-8')
         self.assertIn('<url><loc>https://bmbuilding.sk/realizacie/plna/</loc><lastmod>2030-01-02</lastmod></url>', mapa)
-        self.assertIn('"dateModified":"2030-01-02"', (web / 'realizacie' / 'plna' / 'index.html').read_text(encoding='utf-8'))
+        # JSON-LD realizácie bez dňa úpravy a dňa príspevku (doladenie-3: pri realizáciách len roky)
+        s = (web / 'realizacie' / 'plna' / 'index.html').read_text(encoding='utf-8')
+        self.assertNotIn('dateModified', s)
+        self.assertNotIn('datePublished', s)
+        self.assertNotIn('2030-01-02', s)
+
+    def test_doladenie3_text_len_roky(self):
+        """Doladenie-3 (overenie 3: pri realizáciách len roky): veta s mesiacom sa pri zostave nahradí podľa nastavenia
+        text_len_roky (obsah sa nemení), v texte stránky, description JSON-LD aj meta description; pôvodná veta, ktorá
+        v texte nie je, zlá položka nastavenia a text zverejnenej realizácie s mesiacom bez nahradenia sú varovania,
+        zostavu nezhodia; skrytá a neexistujúca realizácia v nastavení nič nerobia."""
+        self.uprav('plna', text='Bytový dom. Skolaudované 12/2013.\nDruhý odsek z novembra 2020.')
+        self.uprav('skryta', text='Skolaudované 01/2010.')
+        sablona = sablona_s_nastaveniami(self.tmp, **NASTAVENIA_MALY, text_len_roky={
+            'plna': [['Skolaudované 12/2013.', 'Skolaudované v roku 2013.'], ['Veta, ktorá nie je.', 'Nič.'], 'zlé'],
+            'skryta': [['Skolaudované 01/2010.', 'Skolaudované v roku 2010.']], 'neexistuje': [['a', 'b']]})
+        web = self.tmp / 'web'
+        with mock.patch.object(build, 'SABLONA', sablona):
+            kod, out, err = postav(web, self.obsah)
+        self.assertEqual(kod, 0, err)
+        s = (web / 'realizacie' / 'plna' / 'index.html').read_text(encoding='utf-8')
+        self.assertNotIn('12/2013', s)
+        self.assertIn('"description":"Bytový dom. Skolaudované v roku 2013. Druhý odsek z novembra 2020."', s)
+        self.assertIn('Skolaudované v roku 2013.', s)
+        self.assertIn("text_len_roky: veta 'Veta, ktorá nie je.' v texte realizácie plna nie je", err)
+        self.assertIn("text_len_roky: plna 'zlé' nie je dvojica", err)
+        # druhá veta s mesiacom v nastavení nie je: varovanie s nájdeným slovom
+        self.assertIn("realizácia plna: text má mesiac alebo deň ('novembra')", err)
+        self.assertEqual([r for r in err.splitlines() if 'skryta' in r or 'neexistuje' in r], [])
+        self.assertFalse((web / 'realizacie' / 'skryta').exists())
 
     def test_skratenie_titulku(self):
         dlhy = 'Rekonštrukcia a nadstavba bytového domu na rohu ulíc pri starom moste č. 15 a 17 pre investora'
@@ -6250,6 +6608,38 @@ class TestPresnostFotky(unittest.TestCase):
         ros = next(z for z in man.values() if z['rel'] == 'bytovy-dom-rosnicka-bratislava/14.jpg')
         self.assertTrue(ros.get('titulna'))
         self.assertGreaterEqual(build.orez_rozmer(1224, 918, (4, 5))[0] * pw.ZDROJ_LANCZOS_MAX_TITULNE, 960)
+
+    def test_rd_ahoj_03_bez_rozmazanych_ploch(self):
+        """Overenie 3 krasa-8 (nález drobné, 25. 11. 2026): tretia fotka galérie RD Ahoj (03, brána zblízka) mala tie isté
+        dve rozmazané plochy na gabióne ako 01 (číslo domu a menovka, rozmazané už v zdroji z Facebooku). Retušovaná
+        predloha 1440 x 1920 (bez zväčšenia, pole retus) ich zakrýva klonom gabiónu z okolia. Žiadny súbor webu nesmie
+        mať v mieste plôch hladkú plochu: jemná kresba vnútri oboch plôch aspoň 0,4 kresby gabiónu 110 px pod nimi
+        (zmerané 25. 11.: zdroj 0,016 a 0,013, retušovaná predloha 0,885 a 0,912)."""
+        from PIL import ImageChops, ImageFilter, ImageStat
+        man = json.loads((KOREN / 'fotky-web' / 'manifest.json').read_text(encoding='utf-8'))['fotky']
+        z = next(z for z in man.values() if z['rel'] == 'rd-ahoj-bratislava-nove-mesto/03.jpg')
+        self.assertTrue(z['predloha'].get('retus'))
+        pw_, ph_ = z['predloha']['w'], z['predloha']['h']
+        self.assertEqual((pw_, ph_), (1440, 1920))
+        plochy = [(1035, 1022, 1072, 1071), (1094, 1015, 1179, 1074)]  # vnútro plôch, px predlohy (= zdroja)
+        self.assertTrue(z['subory'])
+        for kluc, s in z['subory'].items():
+            orez = kluc.split('|')[0]
+            with Image.open(KOREN / 'fotky-web' / s['subor']) as im:
+                g = im.convert('L')
+            dy = 0
+            if orez:
+                ch = build.orez_rozmer(pw_, ph_, build.OREZY[orez])[1]
+                dy = (ph_ - ch) // 2
+            k = g.width / pw_
+            jemne = ImageChops.difference(g, g.filter(ImageFilter.GaussianBlur(1.5)))
+
+            def kresba(b, posun=0):
+                box = (round(b[0] * k), round((b[1] + posun - dy) * k), round(b[2] * k), round((b[3] + posun - dy) * k))
+                return ImageStat.Stat(jemne.crop(box)).mean[0]
+            for b in plochy:
+                pomer = kresba(b) / max(kresba(b, 110), 1e-6)
+                self.assertGreater(pomer, 0.4, (kluc, b, round(pomer, 3)))
 
     def test_rd_ahoj_bez_rozmazanych_ploch(self):
         # RD Ahoj 01 (prvá fotka slidera): dve rozmazané plochy na gabióne (číslo domu a menovka, rozmazané už v zdroji)

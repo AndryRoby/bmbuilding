@@ -31,6 +31,12 @@
  "instagram": "https://www.instagram.com/mariobulko/",
  "_novinky": "Novinky z webu preč (Andrej 24. 11. 2026 večer, ops/weby-na-mieru/klienti/bmbuilding/kolo-1/ZMENY-KOLO-1.md 5.7: novinky ostali len kvôli časopisu, ten je teraz pri realizácii Lumière a v hrdinovi úvodu). false: nezostaví sa /novinky/ ani detail novinky, nie sú v menu, v sitemap ani v odkazoch. Súbory v obsah/novinky/ ostávajú; true (alebo bez kľúča) vráti Novinky ako predtým.",
  "novinky": false,
+ "_text_len_roky": "Pri realizáciách len rok alebo roky, nikde mesiac ani deň (ZMENY-KOLO-1.md 5.2, overenie 3 krasa-8, 25. 11. 2026): veta textu realizácie s mesiacom sa pri zostave nahradí vetou len s rokom, obsah sa nemení (sťahovač ho prepisuje). slug -> [[pôvodná veta, nová veta], ...]. Roky sedia s poľom roky (UFO 2025, Betliarska 2012 až 2013, Jarovce 2013 až 2014). Ak Mário potvrdí kolaudáciu Mosta UFO až vo februári 2026, druhá veta UFO bude „Kolaudácia v roku 2026.“ a roky v obsahu 2025 až 2026. Pôvodná veta, ktorá v texte nie je, je varovanie zostavy; text zverejnenej realizácie s mesiacom tiež (build.py MESIAC_V_TEXTE).",
+ "text_len_roky": {
+  "ufo-most-snp-bratislava": [["Kolaudácia v novembri 2025.", "Kolaudácia v roku 2025."]],
+  "dom-betliarska-bratislava-petrzalka": [["Skolaudované 12/2013.", "Skolaudované v roku 2013."]],
+  "rd-jarovce-bratislava": [["Skolaudované 09/2014.", "Skolaudované v roku 2014."]]
+ },
  "_v_mediach": "Zmienky v médiách pri realizácii (ZMENY-KOLO-1.md 5.7, prieskum ops/weby-na-mieru/klienti/bmbuilding/novinky-navrh/MEDIA.md, zápis kolo-1/novinky/NOVINKY-ASB.md): slug zverejnenej realizácie -> kotva bloku na jej stránke, nadtitulok, nadpis, text (vlastné vety, fakty bez rozpočtu), odkazy (len https na asb.sk, linkedin.com a archinfo.sk; citat = doslovná veta zo zdroja), tabulka a strany (obrázky zo sablona/media/, popis pod obrázkom a v lightboxe), clanok (JSON-LD subjectOf) a uvod (text údaja V médiách v hrdinovi úvodu, odkaz na kotvu). Online článok na asb.sk je iný článok o tej istej rekonštrukcii, BM Building v ňom nie je, preto odkaz bez takého tvrdenia. Tabuľka so Stavebný dozor BM Building je len v tlačenom ASB č. 244, s. 77 (Máriova fotka strany z LinkedInu, výrez narovnaný a zväčšený Upscaylom upscayl-standard-4x, bez riadku Rozpočet). Fotky dvojstrán sú Máriove z LinkedInu, zápis z kontrolného dňa vedľa časopisu je rozmazaný. Snímky z webu asb.sk na web nejdú.",
  "v_mediach": {
   "filmovy-klub-lumiere-spitalska-bratislava": {

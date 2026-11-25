@@ -65,8 +65,18 @@
       if (spat) tl.focus();
     }
     menu.addEventListener('toggle', function () { tl.textContent = menu.open ? 'Zavrieť' : povodny; });
-    menu.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); zavri(true); }
+    // Esc zavrie otvorené menu aj vtedy, keď fokus nie je v ňom (ťuk na prázdnu plochu panela presunie fokus na body;
+    // kontrola 3 v prehliadači, nález drobné), a vráti fokus na tlačidlo
+    d.addEventListener('keydown', function (e) {
+      if (menu.open && (e.key === 'Escape' || e.key === 'Esc')) { e.preventDefault(); zavri(true); }
+    });
+    // fokus odíde z menu na prvok mimo neho (Tab za posledným odkazom panela, Shift+Tab pred tlačidlom): menu sa zavrie,
+    // aby fokus nebol pod otvoreným panelom (doladenie-3, overenie 3 nález drobný, WCAG 2.2 bod 2.4.11). Bez nového
+    // prvku s fokusom (ťuk na plochu panela, odchod z okna, odkaz na iOS nedostane fokus) sa nič nedeje, ťuk na odkaz
+    // v paneli tak vždy naviguje.
+    menu.addEventListener('focusout', function (e) {
+      var kam = e.relatedTarget;
+      if (menu.open && kam && kam.nodeType === 1 && !menu.contains(kam)) zavri(false);
     });
     vsetky('a[href]', menu).forEach(function (a) {
       a.addEventListener('click', function () {

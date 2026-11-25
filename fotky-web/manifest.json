@@ -6561,12 +6561,13 @@
   },
   "483d8dfe7dccd511cd158f9f53f0dffc0871c5aa468543b71885ecc624d636ce": {
    "rel": "rd-ahoj-bratislava-nove-mesto/03.jpg",
-   "kluc": "c9511e352fd380abe85b",
+   "kluc": "10be9c4f611c6bfd92a0",
    "predloha": {
     "w": 1440,
     "h": 1920,
-    "model": "obsah",
-    "sha256": ""
+    "model": "lanczos",
+    "sha256": "164cf649bd441790a401e5c94fd3f06579f27fbfba6dfeb4f590fef08ad7ac1b",
+    "retus": true
    },
    "kvalita": {
     "avif": 74,
@@ -6581,64 +6582,64 @@
      "subor": "483d8dfe7dccd511/1440.avif",
      "w": 1440,
      "h": 1920,
-     "bajty": 254680,
-     "sha256": "0045b7173a1a08cedff4145943784a57701cf2730f8eb0797c2a527451092169"
+     "bajty": 258295,
+     "sha256": "8fd0e9ec39ee10b29aeeed790df622f8cdcad3813cd1014d2681fb9926787d71"
     },
     "|1440|webp": {
      "subor": "483d8dfe7dccd511/1440.webp",
      "w": 1440,
      "h": 1920,
-     "bajty": 359850,
-     "sha256": "78e896c8600714cf7107b94657b8407d79d64607a51b29c168030f11e31facfe"
+     "bajty": 362824,
+     "sha256": "10a698cee9235755b23c316b2eacc3304e860dc0243d352fe25b6f1938847a44"
     },
     "|480|avif": {
      "subor": "483d8dfe7dccd511/480.avif",
      "w": 480,
      "h": 640,
-     "bajty": 32649,
-     "sha256": "e1d3ac11ccd284c5d99bf255dcdb236cb3cd446ec9abf3a7be5e6e20f9b5ef3e"
+     "bajty": 32802,
+     "sha256": "00aec8d80cecbfc004e5278d4a2d9160c0831311aa387a9ec8ae6e1067d1913b"
     },
     "|480|webp": {
      "subor": "483d8dfe7dccd511/480.webp",
      "w": 480,
      "h": 640,
-     "bajty": 40210,
-     "sha256": "d0685ce35c5ead1205cac445955e00a96915243d4a144bb4e88742d8ed7170b6"
+     "bajty": 40428,
+     "sha256": "a5d0cd43c9e255aa80f23ad1637ddfa0bce6a18c921adb42e2b1c2363144469b"
     },
     "|720|avif": {
      "subor": "483d8dfe7dccd511/720.avif",
      "w": 720,
      "h": 960,
-     "bajty": 79401,
-     "sha256": "32967f35531e9027a1b8b2d493899002ab57d1e760e1882a37c81789a433f3ef"
+     "bajty": 80037,
+     "sha256": "9254002ebc4cbf1dd01a61eb05e6222acb5e6935f5030f9d1aaed9f22cc1ba12"
     },
     "|720|webp": {
      "subor": "483d8dfe7dccd511/720.webp",
      "w": 720,
      "h": 960,
-     "bajty": 102054,
-     "sha256": "82ab210f5f17c1f3b0e56275dd671eb16460ba775fb1b68d1ec42c1eda876d14"
+     "bajty": 102552,
+     "sha256": "add85eb9a7757a488e2e9bfbf989233a88d3925e1ba8c78a2ebaa8047708b7ad"
     },
     "|960|avif": {
      "subor": "483d8dfe7dccd511/960.avif",
      "w": 960,
      "h": 1280,
-     "bajty": 142932,
-     "sha256": "d1f7b371f38ff12569a337adf21eef645996c5602f3a71a1b2200b8ddd4be092"
+     "bajty": 144205,
+     "sha256": "370008a900fdcc698c05a4f89e2b7a39f703cd1fc03997d74404435b613257a1"
     },
     "|960|webp": {
      "subor": "483d8dfe7dccd511/960.webp",
      "w": 960,
      "h": 1280,
-     "bajty": 171400,
-     "sha256": "72a6af1043048fdef0ecc29b4a851081f2e561585896e07c05df51ff1e72184e"
+     "bajty": 172648,
+     "sha256": "bb350d4b47aa31d16dcefd5dcc71950405f3b3b74d9b0332a017752b95eeb0c3"
     }
    },
    "hladanie": {
     "avif": {
      "ref_sirka": 1440,
-     "zhoda": 0.99526,
-     "bajty_ref": 238800,
+     "zhoda": 0.99527,
+     "bajty_ref": 241951,
      "kodovani": 12,
      "kontrola": {
       "sirka": 480,
@@ -6647,12 +6648,12 @@
     },
     "webp": {
      "ref_sirka": 1440,
-     "zhoda": 0.99604,
-     "bajty_ref": 359850,
+     "zhoda": 0.99605,
+     "bajty_ref": 362824,
      "kodovani": 6,
      "kontrola": {
       "sirka": 480,
-      "zhoda": 0.99549
+      "zhoda": 0.99548
      }
     }
    }
