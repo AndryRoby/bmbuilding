@@ -1712,6 +1712,12 @@ class Web:
         self.instagram = bezpecna_url(self.nastavenia.get('instagram'), ['instagram.com'])
         # LinkedIn konateľa (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): len https na linkedin.com, inak sa ikona nezobrazí
         self.linkedin = bezpecna_url(self.nastavenia.get('linkedin'), ['linkedin.com'])
+        # overenie Google Search Console metaznačkou na úvode a kľúč IndexNow (26. 11. 2026, sablona/nastavenia.json);
+        # len bezpečné znaky, inak sa nepoužijú
+        g = str(self.nastavenia.get('google_overenie') or '')
+        self.google_overenie = g if re.fullmatch(r'[A-Za-z0-9_-]{20,100}', g) else ''
+        k = str(self.nastavenia.get('indexnow_kluc') or '')
+        self.indexnow_kluc = k if re.fullmatch(r'[0-9a-f]{32}', k) else ''
         self.firma = nacitaj_firmu(obsah)
         self.realizacie = nacitaj_realizacie(obsah)
         self.text_len_roky()
@@ -2725,6 +2731,8 @@ class Web:
               f'<title>{esc(title)}</title>']
         if description:
             h.append(f'<meta name="description" content="{esc(description)}">')
+        if cesta == '' and not self.nahlad and not zaklad and self.google_overenie:
+            h.append(f'<meta name="google-site-verification" content="{esc(self.google_overenie)}">')
         if cesta is not None and not zaklad:
             h.append(f'<link rel="canonical" href="{esc(canon)}">')
         h += [f'<link rel="icon" href="{esc(pre)}favicon.svg" type="image/svg+xml">',
@@ -4568,6 +4576,9 @@ class Web:
                 riadky.append(f'<url><loc>{esc(self.abs_url(cesta))}</loc>' + (f'<lastmod>{lastmod}</lastmod>' if lastmod else '') + '</url>')
             riadky.append('</urlset>')
             self.subory['sitemap.xml'] = ('\n'.join(riadky) + '\n').encode('utf-8')
+            if self.indexnow_kluc:
+                # IndexNow: súbor s kľúčom v koreni (pred .htaccess, aby bol v zozname povolených mien)
+                self.subory[f'{self.indexnow_kluc}.txt'] = self.indexnow_kluc.encode('ascii')
             if self.hosting == 'apache':
                 # FTP na WebHouse: CNAME a .nojekyll sú len pre GitHub Pages; .htaccess až po všetkých súboroch webu
                 # (zoznam mien v koreni pre pravidlo 404)

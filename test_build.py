@@ -515,6 +515,19 @@ class TestSkutocnyObsah(unittest.TestCase):
         cls.kod_n, cls.out_n, cls.err_n = s['n']
         cls.realizacie = s['realizacie']
 
+    def test_google_overenie_a_indexnow_len_v_ostrom_behu(self):
+        """26. 11. 2026: Search Console sa overuje metaznačkou na úvode (DNS nemeníme), IndexNow kľúčom v koreni;
+        oboje len v ostrom behu pre bmbuilding.sk, náhľad nič z toho nemá."""
+        nast = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8'))
+        token, kluc = nast['google_overenie'], nast['indexnow_kluc']
+        znacka = f'<meta name="google-site-verification" content="{token}">'
+        self.assertIn(znacka, (self.ostry / 'index.html').read_text(encoding='utf-8'))
+        self.assertNotIn('google-site-verification', (self.ostry / 'kontakt' / 'index.html').read_text(encoding='utf-8'))
+        self.assertNotIn('google-site-verification', (self.nahlad / 'index.html').read_text(encoding='utf-8'))
+        self.assertEqual((self.ostry / f'{kluc}.txt').read_text(encoding='ascii'), kluc)
+        self.assertFalse((self.nahlad / f'{kluc}.txt').exists())
+        self.assertRegex(kluc, r'^[0-9a-f]{32}$')
+
     def test_beh_prejde(self):
         self.assertEqual(self.kod_o, 0, self.err_o)
         self.assertEqual(self.kod_n, 0, self.err_n)
