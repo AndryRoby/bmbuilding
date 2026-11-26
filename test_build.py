@@ -1607,18 +1607,26 @@ class TestStranky(unittest.TestCase):
 
     def test_socialne_siete_ikony(self):
         """1. kolo pripomienok 3.7 a 3A.6: siete ako vlastné SVG ikony s aria-label (kontakt na úvode, stránka Kontakt,
-        päta): Facebook z firma.json, LinkedIn a Instagram Mária z nastavení (len https na linkedin.com a instagram.com),
-        v novej karte s rel noopener; jedna sada ikon. krasa-8 (brána 3): ikona v štvorcovom čipe (span.siet-cip), glyf
-        24 px; v Kontakte za čipom názov siete (span.siet-meno, CSS ho ukáže len na počítači), v päte len čipy."""
+        päta): Facebook z firma.json, LinkedIn Mária a Instagram firmy z nastavení (len https na linkedin.com
+        a instagram.com), v novej karte s rel noopener; jedna sada ikon. krasa-8 (brána 3): ikona v štvorcovom čipe
+        (span.siet-cip), glyf 24 px; v Kontakte za čipom názov siete (span.siet-meno, CSS ho ukáže len na počítači),
+        v päte len čipy."""
         nast = json.loads((KOREN / 'sablona' / 'nastavenia.json').read_text(encoding='utf-8'))
         self.assertEqual(nast['linkedin'], 'https://www.linkedin.com/in/m%C3%A1rio-bulko-aa176ba0/')
-        # Andrej 24. 11. 2026 večer: „a ten instagram si tam prečo nedal? https://www.instagram.com/mariobulko“
-        self.assertEqual(nast['instagram'], 'https://www.instagram.com/mariobulko/')
+        # Andrej 26. 11. 2026: „zly ig som dal, dajme bmbuilding ig“ a „je to ono“ s odkazom z Google na profil
+        # firmy @bmbuilding; 24. 11. tu bol osobný profil konateľa (mariobulko), ten už nikde nie je
+        self.assertEqual(nast['instagram'], 'https://www.instagram.com/bmbuilding/')
         nova = 'target="_blank" rel="noopener"'
         cip = '<span class="siet-cip"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
         fb = f'<a class="siet" href="{self.firma["facebook"]}" {nova} aria-label="Facebook BM Building">{cip}'
         li = f'<a class="siet" href="{nast["linkedin"]}" {nova} aria-label="LinkedIn: {self.firma["konatel"]}">{cip}'
-        ig = f'<a class="siet" href="https://www.instagram.com/mariobulko/" {nova} aria-label="Instagram: {self.firma["konatel"]}">{cip}'
+        ig = f'<a class="siet" href="https://www.instagram.com/bmbuilding/" {nova} aria-label="Instagram BM Building">{cip}'
+        # JSON-LD: Facebook a Instagram sú profily firmy (sameAs firmy), LinkedIn je profil konateľa (employee)
+        uzol = [u for u in self.info('')['ld'] if 'Organization' in u.get('@type', [])][0]
+        self.assertEqual(uzol['sameAs'], [self.firma['facebook'], 'https://www.instagram.com/bmbuilding/'])
+        self.assertEqual(uzol['employee']['sameAs'], [nast['linkedin']])
+        for p in self.ostry.rglob('*.html'):
+            self.assertNotIn('mariobulko', p.read_text(encoding='utf-8'), p)
         for cesta in ('', 'kontakt', 'realizacie'):
             s = self.info(cesta)['html']
             kontakt = s.split('<section class="sekcia kontakt" id="kontakt"', 1)[1].split('</section>', 1)[0]
@@ -1653,14 +1661,14 @@ class TestStranky(unittest.TestCase):
         w = self.w
         povodne = w.instagram
         try:
-            for adresa, ma_byt in (('https://www.instagram.com/mariobulko/', True), (None, False),
-                                   ('http://www.instagram.com/mariobulko/', False),
-                                   ('https://instagram.com.zle.sk/mariobulko/', False), ('javascript:alert(1)', False)):
+            for adresa, ma_byt in (('https://www.instagram.com/bmbuilding/', True), (None, False),
+                                   ('http://www.instagram.com/bmbuilding/', False),
+                                   ('https://instagram.com.zle.sk/bmbuilding/', False), ('javascript:alert(1)', False)):
                 nast = copy.deepcopy(w.nastavenia)
                 nast['instagram'] = adresa
                 w.instagram = build.bezpecna_url(nast.get('instagram'), ['instagram.com'])
                 soc = ''.join(w.socialne())
-                self.assertEqual('aria-label="Instagram:' in soc, ma_byt, adresa)
+                self.assertEqual('aria-label="Instagram BM Building"' in soc, ma_byt, adresa)
                 self.assertEqual(soc.count('<a class="siet"'), 3 if ma_byt else 2, adresa)
                 for html_bloku in (w.siete('kontakt-siete', popisy=True), w.pata('', True), w.kontakt_sekcia('')):
                     self.assertEqual('instagram.com' in html_bloku, ma_byt, adresa)
@@ -2288,7 +2296,7 @@ class TestStranky(unittest.TestCase):
                       'height="17.5" rx="5"/><circle cx="12" cy="12" r="4.1"/></g>', build.SVG_INSTAGRAM)
         # adresy len z nastavení a firma.json, nič napevno v kóde
         kod = (KOREN / 'build.py').read_text(encoding='utf-8')
-        for url in ('facebook.com/BmBuilding', 'instagram.com/mariobulko', 'linkedin.com/in/m'):
+        for url in ('facebook.com/BmBuilding', 'instagram.com/bmbuilding', 'instagram.com/mariobulko', 'linkedin.com/in/m'):
             self.assertNotIn(url, kod)
         w = self.w
         soc = ''.join(w.socialne(popisy=True))
@@ -5335,9 +5343,10 @@ class TestFotkyPravidla(unittest.TestCase):
             self.assertNotIn('javascript:', s)
             self.assertNotIn('evil.example', s)
             uzol = [u for u in stranka_info(self.tmp / 'web' / 'index.html')['ld'] if 'Organization' in u.get('@type', [])][0]
-            # Instagram je profil konateľa (mariobulko, ÚVOD v3): patrí k osobe (employee), nie do sameAs firmy
-            self.assertNotIn('https://www.instagram.com/bmbuilding/', uzol.get('sameAs', []))
-            self.assertEqual('https://www.instagram.com/bmbuilding/' in uzol['employee'].get('sameAs', []), ma_byt, adresa)
+            # Instagram je profil firmy (@bmbuilding, Andrej 26. 11. 2026): patrí s Facebookom do sameAs firmy, nie
+            # k osobe konateľa (employee)
+            self.assertEqual('https://www.instagram.com/bmbuilding/' in uzol.get('sameAs', []), ma_byt, adresa)
+            self.assertNotIn('https://www.instagram.com/bmbuilding/', uzol['employee'].get('sameAs', []))
 
     def test_ostrost_ako_audit(self):
         # rozptyl Laplaciánu (4-susedné jadro) na šedej verzii so šírkou 960: Pillow sa zhoduje s priamym výpočtom

@@ -1707,7 +1707,8 @@ class Web:
         # odkaz na náhľad poslaný cez WhatsApp mal obrázok (na bmbuilding.sk do spustenia beží starý web a súbory
         # zostavy tam nie sú); canonical, og:url, JSON-LD a sitemap ostávajú na doméne. Len https, inak doména
         self.adresa_nahladu = bezpecna_url(self.nastavenia.get('adresa_nahladu')).rstrip('/')
-        # Instagram len s istou adresou (dizajn-olovnica/INSTAGRAM.md); adresa je v šablóne, nie v obsahu
+        # Instagram firmy (@bmbuilding, Andrej 26. 11. 2026; dizajn-olovnica/INSTAGRAM.md), len s istou adresou; adresa je
+        # v šablóne, nie v obsahu
         self.instagram = bezpecna_url(self.nastavenia.get('instagram'), ['instagram.com'])
         # LinkedIn konateľa (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): len https na linkedin.com, inak sa ikona nezobrazí
         self.linkedin = bezpecna_url(self.nastavenia.get('linkedin'), ['linkedin.com'])
@@ -2439,7 +2440,7 @@ class Web:
     def socialne(self, popisy=False):
         """Sociálne siete ako ikony (1. kolo pripomienok, ZMENY-KOLO-1.md 3.7): Facebook z obsah/firma.json, LinkedIn
         konateľa z sablona/nastavenia.json (len https na linkedin.com), Instagram len keď je jeho adresa v nastaveniach
-        (profil konateľa, Andrej 24. 11. 2026 večer, len https na instagram.com, inak sa ikona vynechá). Ikona je vlastné
+        (profil firmy @bmbuilding, Andrej 26. 11. 2026, len https na instagram.com, inak sa ikona vynechá). Ikona je vlastné
         SVG z jednej sady v štvorcovom čipe (span.siet-cip, krasa-8), názov siete nesie aria-label odkazu; profil sa
         otvorí v novej karte (target _blank, rel noopener). popisy (Kontakt): za čipom názov siete (span.siet-meno), ktorý
         CSS ukáže len na počítači; aria-label ním začína, takže viditeľný popis je v prístupnom mene (WCAG 2.5.3)."""
@@ -2447,7 +2448,7 @@ class Web:
         kto = f['konatel'] or 'konateľ'
         siete = [(f['facebook'], 'Facebook BM Building', 'Facebook', SVG_FACEBOOK),
                  (self.linkedin, f'LinkedIn: {kto}', 'LinkedIn', SVG_LINKEDIN),
-                 (self.instagram, f'Instagram: {kto}', 'Instagram', SVG_INSTAGRAM)]
+                 (self.instagram, 'Instagram BM Building', 'Instagram', SVG_INSTAGRAM)]
         return [f'<a class="siet" href="{esc(url)}" target="_blank" rel="noopener" aria-label="{esc(meno)}">'
                 f'<span class="siet-cip">{svg}</span>' + (f'<span class="siet-meno">{T(kratke)}</span>' if popisy else '')
                 + '</a>' for url, meno, kratke, svg in siete if url]
@@ -2672,8 +2673,10 @@ class Web:
             uzol['telephone'] = f['tel']
         if f['email']:
             uzol['email'] = f['email']
-        if f['facebook']:
-            uzol['sameAs'] = [f['facebook']]
+        # Facebook aj Instagram (@bmbuilding, Andrej 26. 11. 2026) sú profily firmy: patria do sameAs firmy
+        firemne = [x for x in (f['facebook'], self.instagram) if x]
+        if firemne:
+            uzol['sameAs'] = firemne
         if f['ic_dph']:
             uzol['vatID'] = f['ic_dph']
         # IČO ako identifikátor organizácie (audit naplno 25. 11. 2026, položka 41; https://schema.org/identifier,
@@ -2685,10 +2688,9 @@ class Web:
             uzol['foundingDate'] = f['den_zapisu']
         if f['konatel']:
             uzol['employee'] = {'@type': 'Person', 'name': f['konatel'], 'jobTitle': 'konateľ'}
-            # LinkedIn aj Instagram (mariobulko) sú profily konateľa, nie firmy: patria k osobe, nie do sameAs firmy
-            osoba = [x for x in (self.linkedin, self.instagram) if x]
-            if osoba:
-                uzol['employee']['sameAs'] = osoba
+            # LinkedIn je profil konateľa, nie firmy: patrí k osobe, nie do sameAs firmy
+            if self.linkedin:
+                uzol['employee']['sameAs'] = [self.linkedin]
         return uzol
 
     def ld_breadcrumb(self, kroky):
