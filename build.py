@@ -619,12 +619,15 @@ def kategorie_realizacie(nazov, text, vlastna=None):
     return [hlavna] + dalsie
 
 
-def roky_realizacie(roky, datum):
-    """(rok, rok_od, rok_je_z_datumu): rok = najvyšší rok z poľa roky; bez neho rok z dátumu príspevku (karta ho
-    potom nikdy nepíše ako rok stavby); bez oboch 0 (skupina Bez roku na konci)."""
+def roky_realizacie(roky, datum, rok_prispevku=''):
+    """(rok, rok_od, rok_nie_je_rok_stavby) pre poradie: rok = najvyšší rok z poľa roky; bez neho rok príspevku
+    (rok_prispevku, inak rok dátumu príspevku), teda ten istý rok, aký ukazuje karta (Web.roky_karty); bez oboch 0
+    (skupina Bez roku na konci)."""
     ys = [int(x) for x in re.findall(r'\b(?:19|20)\d{2}\b', roky)]
     if ys:
         return max(ys), min(ys), False
+    if rok_prispevku:
+        return int(rok_prispevku), int(rok_prispevku), True
     if datum:
         return int(datum[:4]), int(datum[:4]), True
     return 0, 0, False
@@ -776,7 +779,11 @@ def nacitaj_realizacie(obsah):
             poradie = 10 ** 6
         fotky = nacitaj_fotky(obsah, d.get('fotky'), slug, nazov, jeden_riadok(d.get('miesto')))
         roky = jeden_riadok(d.get('roky'))
-        rok, rok_od, rok_z_datumu = roky_realizacie(roky, datum)
+        # rok_prispevku (obsah-zmeny.md): rok najnovšieho príspevku, len keď roky stavby chýbajú; na webe ho
+        # ukazujú karta, detail aj filter Roky ako rok bez slova príspevok (roky_karty, Andrej 26. 11. 2026)
+        rok_prispevku = jeden_riadok(d.get('rok_prispevku'))
+        rok_prispevku = rok_prispevku if re.match(r'^(19|20)\d{2}$', rok_prispevku) and not roky else ''
+        rok, rok_od, rok_z_datumu = roky_realizacie(roky, datum, rok_prispevku)
         text = cisty(d.get('text'))
         r = {
             'obr_dir': f'obrazky/{slug}',
@@ -803,10 +810,8 @@ def nacitaj_realizacie(obsah):
             'titulok': jeden_riadok(d.get('titulok')),
             'poradie': poradie,
             'fotky': fotky,
-            # rok_prispevku (obsah-zmeny.md): rok najnovšieho príspevku, len keď roky stavby chýbajú; od 1. kola
-            # pripomienok sa na webe neukazuje (roky_karty). obal_vizualizacia: realizácia bez skutočnej fotky (Devín)
-            'rok_prispevku': (jeden_riadok(d.get('rok_prispevku'))
-                              if re.match(r'^(19|20)\d{2}$', jeden_riadok(d.get('rok_prispevku'))) and not roky else ''),
+            # obal_vizualizacia: realizácia bez skutočnej fotky (Devín)
+            'rok_prispevku': rok_prispevku,
             'obal_vizualizacia': d.get('obal_vizualizacia') is True,
         }
         if len(r['titulok']) > 60:
@@ -2353,30 +2358,36 @@ class Web:
 
     @staticmethod
     def roky_karty(r):
-        """Roky na karte, v detaile a v popise slidera: len roky stavby z poľa roky. 1. kolo pripomienok (Mário na
-        stretnutí 24. 11. 2026, STRETNUTIE-2026-11-24.md: „slovo príspevok preč, rok príspevku preč, len roky“;
-        overenie-1, nález vážne): rok príspevku (rok_prispevku, rok dátumu z Facebooku) sa na webe neukazuje, lebo
-        bez slova príspevok vyzeral ako rok stavby a filter Roky ho aj tak radil do „rok neuvedený“. Pole
-        rok_prispevku ostáva v obsahu (sťahovač ho zachová), build ho už nezobrazuje."""
-        return r.get('roky') or ''
+        """Roky realizácie všade, kde web ukazuje roky: kóta karty (zoznam realizácií, stránky služieb), zoznam Ďalšie
+        realizácie, popis slidera, kóta a tabuľka údajov detailu (popisok Roky), description, llms.txt, lightbox,
+        obrázok OG, filter Roky a časová os. Roky stavby z poľa roky, bez nich rok príspevku (rok_prispevku z obsahu,
+        inak rok z poľa datum), vždy len rok: bez slova príspevok, bez mesiaca a dňa. Andrej 26. 11. 2026 pri snímke
+        /realizacie/ bez rokov: „veď tie roky som tam chcel všade, ale len takto napísané, že roky xxx tak ako
+        predtým“; zo stretnutia 24. 11. („slovo príspevok preč, rok príspevku preč, len roky“) sme mylne vyrozumeli,
+        že rok príspevku zmizne celý (kolo-1/brana-3/ROKY.md). Bez akéhokoľvek roku ''."""
+        roky = r.get('roky') or ''
+        if roky:
+            return roky
+        for rok in (r.get('rok_prispevku') or '', (r.get('datum') or '')[:4]):
+            if re.fullmatch(r'(19|20)\d{2}', rok):
+                return rok
+        return ''
 
     @classmethod
-    def roky_stitok(cls, r):
-        """Text kóty a údajov karty: len roky (1. kolo pripomienok, ZMENY-KOLO-1.md 5.2: slovo príspevok preč, napr.
-        „príspevok 2026“ na „2026“): roky stavby, bez nich rok z roky_karty. Detail ho má pod popiskom Rok."""
-        return cls.roky_karty(r)
+    def roky_cisla(cls, r):
+        """Roky z textu roky_karty ako čísla („2016 až 2018“: [2016, 2018]), pre filter Roky a časovú os."""
+        return [int(x) for x in re.findall(r'\b(?:19|20)\d{2}\b', cls.roky_karty(r))]
 
-    @staticmethod
-    def rok_filtra(r):
-        """Rok pre filter Roky a stránky po desaťročiach (data-rok): len skutočný rok realizácie z poľa roky.
-        Rok príspevku (rok_z_datumu) sa nemieša so skutočnými rokmi, ide do voľby „rok neuvedený“ (0)."""
-        return 0 if r.get('rok_z_datumu') else int(r.get('rok') or 0)
+    @classmethod
+    def rok_filtra(cls, r):
+        """Rok pre filter Roky a stránky po desaťročiach (data-rok): najvyšší rok z rokov na karte (roky_karty), aby
+        voľba a karta sedeli; 0 (voľba „rok neuvedený“) len pri realizácii bez akéhokoľvek roku."""
+        return max(cls.roky_cisla(r), default=0)
 
     def kedy(self, r):
-        """Roky stavby; bez nich rok (roky_stitok), nikdy slovo príspevok ani Facebook na karte."""
-        if r['roky']:
-            return f'<span class="roky">{T(r["roky"])}</span>'
-        return T(self.roky_stitok(r))
+        """Roky do zoznamu Ďalšie realizácie (roky_karty), nikdy slovo príspevok ani Facebook."""
+        roky = self.roky_karty(r)
+        return f'<span class="roky">{T(roky)}</span>' if roky else ''
 
     def kat_nazov(self, k):
         return dict(KATEGORIE).get(k, k)
@@ -2822,8 +2833,9 @@ class Web:
         else:
             # realizácia bez jedinej ostrej fotky (skutočný obsah taký nemá, test_kazda_karta_ma_fotku)
             foto = self.znak_karty(pre)
-        roky = self.roky_stitok(r)
-        # zoznam realizácií (data): kóta bez pretáčania číslic, kratšie HTML pri desiatkach kariet
+        roky = self.roky_karty(r)
+        # zoznam realizácií (data): kóta bez pretáčania číslic, kratšie HTML pri desiatkach kariet; realizácia bez
+        # akéhokoľvek roku (ani roky, ani rok príspevku, ani dátum) má v riadku kóty len vlasovú čiaru
         kota = self.kota(roky, staticka=data) if roky else '<span class="kota kota-prazdna" aria-hidden="true"></span>'
         udaje = BODKA.join(T(x) for x in (self.druh_karty(r), r['miesto']) if x)
         atributy = ''
@@ -3026,7 +3038,7 @@ class Web:
         r = self.realizacia_novinky(n)
         stavba = ''
         if r:
-            stavba = BODKA.join(T(x) for x in (r['nazov'], self.roky_stitok(r)) if x)
+            stavba = BODKA.join(T(x) for x in (r['nazov'], self.roky_karty(r)) if x)
         return (f'<li class="novinka-karta projekt projekt-svetly{"" if f else " karta-bez-fotky"}"><figure>'
                 f'<a class="projekt-foto{"" if f else " projekt-znak"}" href="{url}" tabindex="-1" aria-hidden="true">{foto}{stitok}</a>'
                 f'<figcaption>{self.kota(datum_text(n["datum"]))}<{nadpis} class="novinka-nazov"><a href="{url}">{T(n["nadpis"])}</a></{nadpis}>'
@@ -3116,17 +3128,18 @@ class Web:
 
     def mierka(self, pre):
         """Časová mierka (grafická mierka z ukážky preložená na roky): os od najstaršieho po najnovší rok realizácie,
-        dielik na každý rok, výška dielika podľa počtu realizácií ukončených v tom roku. Len realizácie so známymi
-        rokmi (rok z dátumu príspevku nie je rok stavby). Rastie s obsahom, nič nie je natvrdo."""
-        so_rokmi = [r for r in self.realizacie if r['rok'] and not r['rok_z_datumu']]
+        dielik na každý rok, výška dielika podľa počtu realizácií, ktorých posledný rok na karte je ten rok. Roky
+        z karty (roky_karty: roky stavby, bez nich rok príspevku), takže os sedí s kartami aj s filtrom Roky (Andrej
+        26. 11. 2026, ROKY.md); realizácia bez akéhokoľvek roku na osi nie je. Rastie s obsahom, nič nie je natvrdo."""
+        so_rokmi = [ys for ys in (self.roky_cisla(r) for r in self.realizacie) if ys]
         if len(so_rokmi) < 2:
             return ''
-        od, do = min(r['rok_od'] for r in so_rokmi), max(r['rok'] for r in so_rokmi)
+        od, do = min(min(ys) for ys in so_rokmi), max(max(ys) for ys in so_rokmi)
         if do - od < 2:
             return ''
         pocty = {}
-        for r in so_rokmi:
-            pocty[r['rok']] = pocty.get(r['rok'], 0) + 1
+        for ys in so_rokmi:
+            pocty[max(ys)] = pocty.get(max(ys), 0) + 1
         mx = max(pocty.values())
         popisy = {od, do} | {y for y in range(od, do + 1) if y % 10 == 0 and y - od >= 3 and do - y >= 3}
         bunky = []
@@ -3136,7 +3149,7 @@ class Web:
             bunky.append(f'<span class="m-rok v{v}">' + (f'<b>{y}</b>' if y in popisy else '') + '</span>')
         # na zozname realizácií (Stavba 2) je mierka pod filtrom ako popis, nie odkaz na tú istú stránku
         return (f'<div class="casova-mierka"><span class="mierka-os" aria-hidden="true">{"".join(bunky)}</span>'
-                f'<span class="mierka-pozn">{T(f"Realizácie so známymi rokmi podľa roku ukončenia, {od} až {do}. Modrý dielik: počet stavieb v tom roku.")}</span></div>')
+                f'<span class="mierka-pozn">{T(f"Realizácie podľa posledného roku na karte, {od} až {do}. Modrý dielik: počet stavieb v tom roku.")}</span></div>')
 
     # --- úvod (1. kolo pripomienok 24. 11. 2026): hrdina so sliderom a O firme, Činnosť, Kontakt (pás prác preč, 3A.6)
     def foto_nastavenia(self, kluc):
@@ -3202,11 +3215,11 @@ class Web:
     @staticmethod
     def udaje_lightboxu(r):
         """Údaje stavby pod fotkou v lightboxe, časti oddelené LB_ODDELOVAC: rola BM Building (malým písmenom uprostred
-        vety), projektant, roky. app.js pri vizualizácii vynechá projektanta, ak je to ten istý človek ako autor
-        (overenie kolo 1: „autor X, … projektant X“ dvakrát a „Stavebný dozor“ s veľkým písmenom uprostred vety)."""
+        vety), projektant, roky (roky_karty). app.js pri vizualizácii vynechá projektanta, ak je to ten istý človek ako
+        autor (overenie kolo 1: „autor X, … projektant X“ dvakrát a „Stavebný dozor“ s veľkým písmenom uprostred vety)."""
         return LB_ODDELOVAC.join(x for x in (f'rola BM Building: {male(r["rola"])}' if r['rola'] else '',
                                              f'projektant {r["projektant"]}' if r['projektant'] else '',
-                                             f'autor {r["autor"]}' if r.get('autor') else '', r['roky']) if x)
+                                             f'autor {r["autor"]}' if r.get('autor') else '', Web.roky_karty(r)) if x)
 
     def lightbox_dialog(self, pre, nazov, r, f):
         """Jeden dialog#lightbox na stránku (realizácia a novinka: jej galéria)."""
@@ -3663,7 +3676,7 @@ class Web:
         v hlave pred prvým vykreslením), zoznam ukazuje všetko v poradí od najnovších. Miesto filtra je v rozložení od
         prvého vykreslenia (doladenie-1, nález vážne: s atribútom hidden ho odkryl až app.js a pri pomalej sieti
         skočila časová os aj celý zoznam o 236 px nadol, CLS 0,155 pri 390 px). Druh z kategórií build.py, roky po
-        desaťročiach podľa najvyššieho roku v roky, mesto z poľa miesto."""
+        desaťročiach podľa najvyššieho roku na karte (rok_filtra), mesto z poľa miesto."""
         pocty = self.pocty_druhov(zoznam)
         druhy = [f'<button class="filter" type="button" data-druh="" aria-pressed="true">Všetky<span>{len(zoznam)}</span></button>']
         for k, nazov in KATEGORIE:
@@ -3672,7 +3685,8 @@ class Web:
                              f'<span>{pocty[k]}</span></button>')
         vyber = ''
         if roky_vyber:
-            # len skutočné roky realizácie; rok príspevku a chýbajúci rok spolu ako „rok neuvedený“ (nález 1 brány)
+            # roky z karty (rok_filtra: roky stavby, bez nich rok príspevku), voľby sedia so zobrazenými rokmi; „rok
+            # neuvedený“ len keď niektorá realizácia nemá žiadny rok (Andrej 26. 11. 2026, ROKY.md)
             dekady = {}
             for r in zoznam:
                 rok = self.rok_filtra(r)
@@ -3932,18 +3946,13 @@ class Web:
                        f'<span class="vh"> {slovo}:</span>{SVG_SIPKA}</span><b>{T(p[nazov_kluc])}</b></a>')
         return f'<nav class="susedia" aria-label="Ďalšie: {slovo}">{"".join(out)}</nav>' if out else ''
 
-    @staticmethod
-    def popisok_rokov(roky):
-        """Popisok rokov stavby: Rok pri jednom roku (UFO 2025, RD Kalvária 2009), inak Roky („2021 až 2022“). Audit
-        naplno 25. 11. 2026, položka 2: detail aj description písali „Roky 2025“ pri jednom roku."""
-        return 'Rok' if re.fullmatch(r'(19|20)\d{2}', (roky or '').strip()) else 'Roky'
-
     def udaje_realizacie(self, r):
         """Údaje realizácie v hlave stránky (dl.fakty ukážky): miesto, druh stavby, rola BM Building s osobou zo starého
-        webu, projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), roky stavby pod
-        popiskom Rok alebo Roky (popisok_rokov) a etapy. Bez rokov stavby riadok rokov nie je, rok príspevku na web
-        nejde (roky_karty, overenie-1). Termín výstavby s mesiacmi nie je (ZMENY-KOLO-1.md 5.2, len roky). Weby strán
-        ako text, nie odkaz (cudzie domény sa mohli od starého webu zmeniť).
+        webu, projektant, investor a zhotoviteľ s adresou a webom pod menom (sablona/stary-web.json), roky (roky_karty:
+        roky stavby, bez nich rok príspevku) pod popiskom Roky aj pri jednom roku a etapy. Popisok je vždy Roky ako
+        pred auditom (Andrej 26. 11. 2026: „roky xxx tak ako predtým“; audit naplno 25. 11. 2026, položka 2, ho pri
+        jednom roku menil na Rok, to je vrátené, ROKY.md). Termín výstavby s mesiacmi nie je (ZMENY-KOLO-1.md 5.2,
+        len roky). Weby strán ako text, nie odkaz (cudzie domény sa mohli od starého webu zmeniť).
         Druh stavby je ten istý ako na karte, v jednotnom čísle (druh_karty, audit naplno 25. 11. 2026, položka 2:
         detail písal názov filtra „Rodinné domy“ pri jednom dome). Keď ho názov ani text neurčí (Okánikova, Dom pod
         lesom), detail ukáže kategóriu filtra pod popiskom Kategória; Iné sa neukazuje."""
@@ -3970,10 +3979,10 @@ class Web:
                 ('Rola BM Building', rola),
                 ('Projektant', strana('projektant', r['projektant'])), ('Autor', T(r.get('autor') or '')),
                 ('Investor', strana('investor', r['investor'])),
-                ('Zhotoviteľ', strana('zhotovitel', r['zhotovitel'])), (self.popisok_rokov(r['roky']), T(r['roky']))]
+                ('Zhotoviteľ', strana('zhotovitel', r['zhotovitel'])), ('Roky', T(self.roky_karty(r)))]
         if r.get('etapy'):
             pole.append(('Etapy', ''.join(f'<span class="fakty-riadok">{T(e)}</span>' for e in r['etapy'])))
-        # bez rokov stavby nie je ani riadok Rok: rok príspevku na web nejde (roky_karty, overenie-1)
+        # realizácia bez akéhokoľvek roku nemá riadok Roky (prázdna hodnota sa vynechá)
         html_ =''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in pole if v)
         return f'<dl class="fakty udaje">{html_}</dl>' if html_ else ''
 
@@ -4009,8 +4018,8 @@ class Web:
                 f'<div class="detail-text atelier-text">{kota}{text}</div></div>')
 
     def vety_realizacie(self, r):
-        """Vety údajov realizácie bez názvu: rola, projektant alebo autor a roky stavby (pri jednom roku popisok Rok,
-        popisok_rokov, položka 2). Pre description stránky a popis odkazu v llms.txt."""
+        """Vety údajov realizácie bez názvu: rola, projektant alebo autor a roky (roky_karty, popisok Roky aj pri jednom
+        roku ako v detaile, ROKY.md). Pre description stránky a popis odkazu v llms.txt."""
         vety = []
         if r['rola']:
             vety.append(s_bodkou(f'Rola BM Building: {male(r["rola"])}'))
@@ -4018,8 +4027,9 @@ class Web:
             vety.append(s_bodkou(f'Projektant: {r["projektant"]}'))
         if r.get('autor'):
             vety.append(s_bodkou(f'Autor: {r["autor"]}'))
-        if r['roky']:
-            vety.append(s_bodkou(f'{self.popisok_rokov(r["roky"])}: {r["roky"]}'))
+        roky = self.roky_karty(r)
+        if roky:
+            vety.append(s_bodkou(f'Roky: {roky}'))
         return vety
 
     def popis_realizacie(self, r):
@@ -4061,8 +4071,8 @@ class Web:
             obal = r['obal'] or (r['galeria'][0] if r['galeria'] else None)
             og = self.og_cesta_realizacie(r)
             self.registruj_og(og, self.og_foto(obal), r['nazov'],
-                              ', '.join(x for x in (r['rola'], r['roky']) if x), 'BM Building, s.r.o., bmbuilding.sk')
-            telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_stitok(r), udaje=pole_html if pri_fotke else '')
+                              ', '.join(x for x in (r['rola'], self.roky_karty(r)) if x), 'BM Building, s.r.o., bmbuilding.sk')
+            telo_detail = self.detail_dvojstrana(pre, r, nm, text, self.roky_karty(r), udaje=pole_html if pri_fotke else '')
             # V médiách (ZMENY-KOLO-1.md 5.7) hneď pod textom, pred galériou; fotky bloku idú do toho istého dialógu
             # lightboxu ako galéria (iná skupina), bez galérie dostane stránka dialóg z prvého obrázka bloku
             media = self.v_mediach_blok(pre, r)
@@ -4086,7 +4096,8 @@ class Web:
             # bez datePublished a dateModified (overenie 3, nález vážne): pri realizáciách len rok alebo roky, nikde
             # mesiac ani deň (ZMENY-KOLO-1.md 5.2). datum je deň príspevku na Facebooku alebo článku starého webu, nie
             # dátum stavby (Dvojdom S: 2026-10-04 pri stavbe 2021 až 2022), upravene je deň úpravy obsahu; vyhľadávač
-            # by ich mohol ukázať pri výsledku. Roky stavby nesie text a description stránky, lastmod ostáva v sitemap.
+            # by ich mohol ukázať pri výsledku. Roky (roky_karty) nesie kóta, tabuľka údajov a description stránky,
+            # lastmod ostáva v sitemap.
             if self.ld_media(r):
                 dielo['subjectOf'] = self.ld_media(r)
             self.podstranka(cesta, kroky, title, desc, telo, 'realizacie/' + r['slug'], [dielo], og=og,
@@ -4118,13 +4129,13 @@ class Web:
             if fb:
                 odseky += f'<p class="tlmene"><a href="{esc(fb)}">{T("Pôvodný príspevok na Facebooku")}</a></p>'
             galeria = self.galeria(pre_n, n, n['nadpis'], datum_text(n['datum']))
-            # údaje vpravo v hlave: dátum a stavba, ku ktorej novinka patrí, s rokmi stavby (pole realizacia)
+            # údaje vpravo v hlave: dátum a stavba, ku ktorej novinka patrí, s rokmi stavby (pole realizacia, roky_karty)
             r_n = self.realizacia_novinky(n)
             fakty = [('Dátum', f'<span class="cisla">{T(datum_text(n["datum"]))}</span>')]
             if r_n:
                 fakty.append(('Stavba', f'<a href="{esc(self.rel(pre_n, "realizacie/" + r_n["slug"] + "/"))}">{T(r_n["nazov"])}</a>'))
                 if self.roky_karty(r_n):
-                    fakty.append((self.popisok_rokov(self.roky_karty(r_n)), T(self.roky_karty(r_n))))
+                    fakty.append(('Roky', T(self.roky_karty(r_n))))
             bok_n = '<dl class="fakty udaje">' + ''.join(f'<div><dt>{T(k)}</dt><dd>{v}</dd></div>' for k, v in fakty) + '</dl>'
             dvoj = self.detail_dvojstrana(pre_n, n, n['nadpis'], odseky)
             telo_n = (self.hlava_stranky(pre_n, kroky_n, n['nadpis'], datum_text(n['datum']), bok=bok_n, trieda='hlava-detail')

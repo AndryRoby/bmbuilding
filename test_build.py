@@ -1547,8 +1547,9 @@ class TestStranky(unittest.TestCase):
             self.assertNotRegex(text, r'Rok|Roky|Termín')
             if r['miesto']:
                 self.assertTrue(text.startswith(r['miesto']), (slug, text))
-            if build.Web.roky_karty(r):
-                self.assertTrue(text.endswith(build.Web.roky_karty(r)), (slug, text))
+            # roky pri každej stavbe slidera, bez rokov stavby rok príspevku (RD Ahoj a Vila Holubyho 2026, ROKY.md)
+            self.assertTrue(build.Web.roky_karty(r), slug)
+            self.assertTrue(text.endswith(build.Web.roky_karty(r)), (slug, text))
         self.assertIn('<ul class="slider-popisy" aria-live="off">', slider)
         # ovládanie: počítadlo ako kóta 01 / 11, Predchádzajúca, Pozastaviť (aria-pressed), Ďalšia; bez JS skryté cez
         # CSS html:not(.js), nie atribútom hidden (doladenie-1: miesto v rozložení od prvého vykreslenia, CLS na mobile)
@@ -3044,6 +3045,23 @@ console.log(JSON.stringify(v));
         lum = self.info('realizacie/filmovy-klub-lumiere-spitalska-bratislava/')['telo']
         self.assertIn('<a href="#galeria">Galéria,\u00a08\u00a0fotiek</a>', lum.replace('&nbsp;', '\u00a0'))
 
+    def test_hlavna_kontakt_lavy_stlpec_ako_24_11(self):
+        """Andrej 26. 11. 2026 (porovnanie s náhľadom c80df1f z 24. 11.): „tá ľavá strana bola plnšia, krajšia“, ikony
+        ostávajú. Od 1024 px sú fakturačné údaje v ľavom stĺpci pod tlačidlami a sieťami v jednom stĺpci, siete hneď pod
+        tlačidlami (nie na spodku stĺpca) a vizitka vpravo cez oba riadky; tablet a mobil bez zmeny."""
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        pc = ''.join(css_bloky(css, '@media (min-width:1024px)'))
+        for kus in ('.kontakt-udaje{grid-column:1/7;grid-row:2}', '.kontakt-mapa{grid-row:1 / span 2}',
+                    '.kontakt-siete{margin-top:var(--m-24)}', '.kontakt-fakty{display:block;max-width:none}'):
+            self.assertIn(kus, pc)
+        # nové pravidlá sú za pôvodnými pravidlami od 1024 px, takže ich prebijú (rovnaká špecifickosť)
+        self.assertGreater(css.index('.kontakt-fakty{display:block;max-width:none}'),
+                           css.index('.kontakt-fakty{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column'))
+        # Kontakt na úvode aj na stránke Kontakt: údaje sú v DOM za vizitkou (mobil: text, vizitka, údaje)
+        for cesta in ('', 'kontakt/'):
+            sek = self.info(cesta)['telo'].split('id="kontakt"', 1)[1]
+            self.assertLess(sek.index('class="kontakt-mapa"'), sek.index('class="kontakt-udaje"'), cesta)
+
     def test_hlavna_bok_tlacidlo_320(self):
         """Kontrola 3 v prehliadači (nález drobné): pri 320 px bolo tlačidlo Zavolať s číslom v boku služby (251,8 px)
         širšie ako vnútro boxu (246 px). Do 359 px sa číslo zalomí pod slovo."""
@@ -3178,17 +3196,18 @@ console.log(JSON.stringify(v));
         self.assertEqual(css.count(':has(>.otoc'), pohyb.count(':has(>.otoc'))
 
     def test_roky_na_kartach(self):
-        # karta zoznamu ukáže len roky stavby; bez nich prázdnu kótu, rok príspevku nie (Mário 24. 11. 2026: „rok
-        # príspevku preč, len roky“, overenie-1); slovo Facebook v karte nie je (zadanie, Obsah 2)
+        # karta zoznamu ukáže roky stavby, bez nich rok príspevku bez slova príspevok (Andrej 26. 11. 2026: „roky
+        # xxx tak ako predtým“, ROKY.md); prázdna kóta len pri realizácii bez akéhokoľvek roku (dnes žiadna); slovo
+        # Facebook v karte nie je (zadanie, Obsah 2)
         zoznam = self.info('realizacie/')['telo']
         for r in self.w.realizacie:
             karta = zoznam.split(f'realizacie/{r["slug"]}/"', 1)[1].split('</li>', 1)[0]
             self.assertNotIn('Facebook', karta)
-            if r['roky']:
-                # zoznam má statickú kótu (slovo „až“ v span.kota-slovo): porovnáva sa text bez značiek
-                self.assertIn(r['roky'], re.sub(r'<[^>]+>', '', karta).replace('\u00a0', ' '), r['slug'])
-            else:
-                self.assertIn('<span class="kota kota-prazdna" aria-hidden="true"></span>', karta, r['slug'])
+            roky = self.w.roky_karty(r)
+            self.assertTrue(roky, r['slug'])
+            # zoznam má statickú kótu (slovo „až“ v span.kota-slovo): porovnáva sa text bez značiek
+            self.assertIn(roky, re.sub(r'<[^>]+>', '', karta).replace('\u00a0', ' '), r['slug'])
+            self.assertNotIn('kota-prazdna', karta, r['slug'])
 
     def test_kazda_karta_ma_fotku_obal_a_velka(self):
         # žiadna karta zoznamu bez fotky; vizualizácia ako fotka karty alebo obal len pri obal_vizualizacia, veľká fotka
@@ -3327,18 +3346,17 @@ console.log(JSON.stringify(v));
             self.assertIn(kus, js)
 
     def test_roky_na_kartach_a_strankach(self):
-        # karty (zoznam, služby) a stránky realizácií ukazujú len roky stavby; bez nich nič (rok príspevku preč,
-        # Mário 24. 11. 2026, overenie-1), nikdy slovo Facebook
+        # karty (zoznam, služby) a stránky realizácií ukazujú roky stavby, bez nich rok príspevku (rok_prispevku, inak
+        # rok z poľa datum) bez slova príspevok (Andrej 26. 11. 2026, ROKY.md), nikdy slovo Facebook
         for cesta in ['realizacie/'] + [f'{k}/' for k in self.texty['sluzby']]:
             for _, karta in self.karty_zoznamu(cesta):
                 slug = re.search(r'realizacie/([a-z0-9-]+)/', karta).group(1)
                 r = [x for x in self.w.realizacie if x['slug'] == slug][0]
                 self.assertNotIn('Facebook', karta)
                 ocak = self.w.roky_karty(r)
-                self.assertEqual(ocak, r['roky'], slug)
-                if not ocak:
-                    self.assertIn('kota-prazdna', karta, slug)
-                    continue
+                self.assertEqual(ocak, r['roky'] or r['rok_prispevku'] or r['datum'][:4], slug)
+                self.assertRegex(ocak, r'^(19|20)\d{2}( až (19|20)\d{2})?$', slug)
+                self.assertNotIn('kota-prazdna', karta, slug)
                 if cesta == 'realizacie/':
                     # zoznam realizácií: statická kóta bez pretáčania (kratšie HTML pri desiatkach kariet, bmb-fb-uplnost)
                     kota = re.search(r'<span class="kota"><span class="kota-text">(.*?)</span></span>', karta).group(1)
@@ -3350,45 +3368,45 @@ console.log(JSON.stringify(v));
             telo = self.info(f'realizacie/{r["slug"]}/')['telo'].replace('\u00a0', ' ')
             ocak = self.w.roky_karty(r)
             detail = telo.split('class="obsah mriezka detail', 1)[1].split('</div></div>', 1)[0]
-            if r['roky']:
-                self.assertIn(f'<span class="kota kota-detail"><span class="kota-text otoc"><span class="vh">{ocak}</span>', detail, r['slug'])
-            else:
-                self.assertNotIn('kota-detail', detail, r['slug'])
-                for zle in ('<dt>Rok</dt>', 'Rok príspevku', '<dt>Roky</dt>'):
-                    self.assertNotIn(zle, telo, (r['slug'], zle))
+            self.assertIn(f'<span class="kota kota-detail"><span class="kota-text otoc"><span class="vh">{ocak}</span>', detail, r['slug'])
+            # popisok vždy Roky, aj pri jednom roku (ROKY.md); Rok ani Rok príspevku nikde
+            self.assertIn(f'<dt>Roky</dt><dd>{ocak}</dd>', telo, r['slug'])
+            for zle in ('<dt>Rok</dt>', 'Rok príspevku'):
+                self.assertNotIn(zle, telo, (r['slug'], zle))
 
-    def test_rok_prispevku_nie_je_rok_realizacie(self):
-        # 1. kolo pripomienok (ZMENY-KOLO-1.md 5.2 a Mário na stretnutí: „slovo príspevok preč, rok príspevku preč,
-        # len roky“; overenie-1, nález vážne): rok príspevku nie je na karte, v detaile ani v popise slidera, karta
-        # s ním má prázdnu kótu a filter Roky ju radí do „rok neuvedený“ (data-rok 0), takže voľba a karta sa
-        # nebijú; voľby filtra len zo skutočných rokov
-        s_prispevkom = [r for r in self.w.realizacie if not r['roky'] and (r['rok_prispevku'] or r['zdroj'] == 'fb')]
+    def test_rok_prispevku_bez_slova_prispevok(self):
+        # Andrej 26. 11. 2026 pri snímke /realizacie/ (RD Ahoj, Vila Holubyho a Dom pod lesom bez roku): „veď tie roky
+        # som tam chcel všade, ale len takto napísané, že roky xxx tak ako predtým“ (ROKY.md). Zo stretnutia 24. 11.
+        # („slovo príspevok preč, rok príspevku preč, len roky“) platí len: slovo príspevok preč. Realizácia bez rokov
+        # stavby má rok príspevku (rok_prispevku, inak rok z poľa datum) na karte, v detaile, v popise slidera a vo
+        # filtri Roky (data-rok je ten istý rok, voľba sedí s kartou), bez slova príspevok, mesiaca a dňa
+        s_prispevkom = [r for r in self.w.realizacie if not r['roky']]
         self.assertTrue(s_prispevkom)
         zoznam = self.info('realizacie/')['telo'].replace('\u00a0', ' ')
         uvod = self.info('')['telo'].replace('\u00a0', ' ')
         for r in s_prispevkom:
-            self.assertEqual(self.w.roky_karty(r), '', r['slug'])
+            rok = r['rok_prispevku'] or r['datum'][:4]
+            self.assertRegex(rok, r'^(19|20)\d{2}$', r['slug'])
+            self.assertEqual(self.w.roky_karty(r), rok, r['slug'])
             pred, za = zoznam.split(f'realizacie/{r["slug"]}/"', 1)
             li, karta = pred.rsplit('<li ', 1)[1], za.split('</li>', 1)[0]
-            self.assertIn('<span class="kota kota-prazdna" aria-hidden="true"></span>', karta, r['slug'])
-            self.assertIsNone(re.search(r'<span class="kota"><span class="kota-text">', karta), r['slug'])
-            self.assertIn('data-rok="0"', li, r['slug'])
-            rok = r['rok_prispevku'] or r['datum'][:4]
+            self.assertIn(f'<span class="kota"><span class="kota-text">{rok}</span></span>', karta, r['slug'])
+            self.assertNotIn('kota-prazdna', karta, r['slug'])
+            self.assertIn(f'data-rok="{rok}"', li, r['slug'])
             telo = self.info(f'realizacie/{r["slug"]}/')['telo'].replace('\u00a0', ' ')
             hlava = telo.split('<dl class="fakty udaje">', 1)[1].split('</dl>', 1)[0]
-            self.assertNotIn(f'<dd>{rok}</dd>', hlava, r['slug'])
-            self.assertNotIn('<dt>Rok</dt>', hlava, r['slug'])
-            # slider úvodu: popis len s miestom (RD Ahoj a Vila Holubyho)
+            self.assertIn(f'<dt>Roky</dt><dd>{rok}</dd>', hlava, r['slug'])
+            # slider úvodu: miesto a rok (RD Ahoj a Vila Holubyho)
             popis = re.search(rf'<li class="slider-popis[^"]*"><a href="realizacie/{r["slug"]}/">.*?</li>', uvod)
             if popis:
-                self.assertNotIn(rok, re.sub(r'<[^>]+>', '', popis.group(0)), r['slug'])
-                self.assertNotIn('class="cisla"', popis.group(0), r['slug'])
+                self.assertTrue(popis.group(0).endswith(f'<span class="cisla nz">{rok}</span></span></li>'), r['slug'])
         vyber = zoznam.split('<select data-roky>', 1)[1].split('</select>', 1)[0]
-        self.assertIn('<option value="0">rok neuvedený</option>', vyber)
-        skutocne = {r['rok'] for r in self.w.realizacie if r['roky'] and not r['rok_z_datumu']}
+        # každá realizácia má rok: voľba „rok neuvedený“ nie je; voľby len z rokov, ktoré ukazujú karty
+        self.assertNotIn('rok neuvedený', vyber)
+        na_kartach = {y for r in self.w.realizacie for y in self.w.roky_cisla(r)}
         for text in re.findall(r'<option value="\d{4}">([^<]+)</option>', vyber):
             for rok in re.findall(r'\d{4}', text):
-                self.assertIn(int(rok), skutocne, text)
+                self.assertIn(int(rok), na_kartach, text)
         # nikde pri realizáciách slovo príspevok ani Termín výstavby: úvod (pás), zoznam, služby, každý detail
         stranky = ['', 'realizacie/'] + [f'{k}/' for k in self.texty['sluzby']] + [f'realizacie/{r["slug"]}/' for r in self.w.realizacie]
         for cesta in stranky:
@@ -3745,8 +3763,9 @@ console.log(JSON.stringify(v));
             karta = mriezka.split(f'href="../realizacie/{slug}/"', 1)[1].split('</li>', 1)[0]
             self.assertIn(f'obrazky/{slug}/{r["karta"]["nn"]}-', karta)
             self.assertIn('<span class="stitok-viz">Vizualizácia</span>', karta)
-            # bez rokov stavby prázdna kóta: rok príspevku na web nejde (Mário 24. 11. 2026, overenie-1)
-            self.assertEqual('kota-prazdna' in karta, not r['roky'], slug)
+            # bez rokov stavby rok príspevku ako pri ostatných kartách, nie prázdna kóta (Andrej 26. 11. 2026, ROKY.md)
+            self.assertNotIn('kota-prazdna', karta, slug)
+            self.assertIn(f'<span class="kota"><span class="kota-text">{self.w.roky_karty(r)}</span></span>', karta, slug)
 
     def test_novinka_asb(self):
         # ZMENY-KOLO-1.md 2.4: novinka ASB (časopis, nie Facebook) bez id, 3 obrázky, pri stavbe Lumière; stránka bez
@@ -4029,8 +4048,9 @@ console.log(JSON.stringify(v));
                 # rola malým písmenom uprostred vety „rola BM Building: stavebný dozor“ (oprava 1)
                 if r['rola']:
                     self.assertIn('rola BM Building: ' + build.male(r['rola']), a['data-udaje'])
-                if r['roky']:
-                    self.assertIn(r['roky'], a['data-udaje'])
+                # roky pri každej realizácii, bez rokov stavby rok príspevku (ROKY.md)
+                self.assertTrue(self.w.roky_karty(r), slug)
+                self.assertIn(self.w.roky_karty(r), a['data-udaje'], slug)
                 if r['projektant']:
                     self.assertIn(r['projektant'], a['data-udaje'])
             dialog = [a for t, a in rz.prvky if t == 'dialog']
@@ -4182,12 +4202,20 @@ console.log(JSON.stringify(v));
         z = build.zorad_chronologicky([r('a', '2010 až 2012', '2025-01-01'), r('b', '2011 až 2012', '2013-01-09'),
                                        r('c', '', '2019-05-05'), r('d', '', ''), r('e', '2012', '2001-01-01', 1)])
         self.assertEqual([x['slug'] for x in z], ['c', 'e', 'b', 'a', 'd'])
-        # realizácia bez rokov stavby: prázdna kóta, rok príspevku ani slovo Facebook nie (Mário 24. 11. 2026, overenie-1)
+        # bez rokov stavby radí rok príspevku (rok_prispevku, inak rok dátumu), ten istý rok ako na karte (ROKY.md)
+        self.assertEqual(build.roky_realizacie('', '2019-05-05', '2018'), (2018, 2018, True))
+        self.assertEqual(build.roky_realizacie('', '2019-05-05'), (2019, 2019, True))
+        self.assertEqual(build.roky_realizacie('2012 až 2014', '2019-05-05', ''), (2014, 2012, False))
+        self.assertEqual(build.roky_realizacie('', ''), (0, 0, False))
+        # realizácia bez rokov stavby: rok príspevku na karte, slovo Facebook ani príspevok nie (Andrej 26. 11. 2026)
+        zoznam = self.info('realizacie/')['telo']
         for x in self.w.realizacie:
             if not x['roky'] and x['zdroj'] == 'fb' and x['datum']:
-                karta = self.info('realizacie/')['telo'].split(f'realizacie/{x["slug"]}/"', 1)[1].split('</li>', 1)[0]
+                karta = zoznam.split(f'realizacie/{x["slug"]}/"', 1)[1].split('</li>', 1)[0]
                 self.assertNotIn('Facebook', karta)
-                self.assertIn('kota-prazdna', karta, x['slug'])
+                self.assertNotIn('príspev', karta)
+                self.assertNotIn('kota-prazdna', karta, x['slug'])
+                self.assertEqual(x['rok'], int(self.w.roky_karty(x)), x['slug'])
 
     def test_404(self):
         s = (self.ostry / '404.html').read_text(encoding='utf-8')
@@ -4306,6 +4334,10 @@ console.log(JSON.stringify(v));
         self.assertEqual(build.Web.udaje_lightboxu(r),
                          'rola BM Building: stavebný dozor · projektant Ing. arch. Ilja Skoček · 2019 až 2020')
         self.assertEqual(build.Web.udaje_lightboxu({'rola': 'TDI', 'projektant': '', 'roky': ''}), 'rola BM Building: TDI')
+        # bez rokov stavby rok príspevku, inak rok z poľa datum, nikdy mesiac a deň (ROKY.md)
+        self.assertEqual(build.Web.udaje_lightboxu({'rola': 'TDI', 'projektant': '', 'roky': '', 'rok_prispevku': '2026',
+                                                    'datum': '2025-08-25'}), 'rola BM Building: TDI · 2026')
+        self.assertEqual(build.Web.udaje_lightboxu({'rola': '', 'projektant': '', 'roky': '', 'datum': '2024-04-08'}), '2024')
         js = (KOREN / 'sablona' / 'app.js').read_text(encoding='utf-8')
         self.assertIn(f".split('{build.LB_ODDELOVAC}')", js)
         self.assertIn("x === 'projektant ' + autor", js)
@@ -5003,6 +5035,49 @@ class TestDocasnyObsah(unittest.TestCase):
         self.assertNotIn('datePublished', s)
         self.assertNotIn('2030-01-02', s)
 
+    def test_rok_prispevku_z_obsahu_alebo_z_datumu(self):
+        """ROKY.md (Andrej 26. 11. 2026): bez rokov stavby má realizácia rok príspevku, rok_prispevku z obsahu má
+        prednosť pred rokom z poľa datum, vždy len rok bez mesiaca a dňa (karta, data-rok, detail pod popiskom Roky,
+        description, poradie); realizácia bez rokov aj dátumu (hola) má len vlasovú čiaru (audit naplno položka 15),
+        bez riadku Roky a filter Roky má voľbu „rok neuvedený“; časová os ide od najstaršieho po najnovší rok kariet."""
+        self.uprav('plna', roky='', datum='2023-06-15')
+        (self.obsah / 'realizacie' / 'rok.json').write_text(json.dumps(
+            {'slug': 'rok', 'nazov': 'Rodinný dom Rok', 'datum': '2021-03-04', 'rok_prispevku': '2022', 'zverejnene': True},
+            ensure_ascii=False), encoding='utf-8')
+        web = self.tmp / 'web'
+        kod, out, err = postav(web, self.obsah, rychle=True)
+        self.assertEqual(kod, 0, err)
+        telo = stranka_info(web / 'realizacie' / 'index.html')['telo']
+        karty = {re.search(r'realizacie/([a-z0-9-]+)/', o).group(1): (a, o)
+                 for a, o in re.findall(r'<li class="dlazdica[^"]*"([^>]*)><figure>(.*?)</figure></li>', telo, re.S)}
+        for slug, rok in (('plna', '2023'), ('rok', '2022'), ('xss', '2020')):
+            a, o = karty[slug]
+            self.assertIn(f'<span class="kota"><span class="kota-text">{rok}</span></span>', o, slug)
+            self.assertIn(f'data-rok="{rok}"', a, slug)
+            info = stranka_info(web / 'realizacie' / slug / 'index.html')
+            self.assertIn(f'<dt>Roky</dt><dd>{rok}</dd>', info['telo'], slug)
+        # kóta nad textom detailu (realizácia rok nemá fotku ani text, dvojstrana s kótou sa nezostaví)
+        plna = stranka_info(web / 'realizacie' / 'plna' / 'index.html')
+        self.assertIn('<span class="kota kota-detail"><span class="kota-text otoc"><span class="vh">2023</span>', plna['telo'])
+        self.assertIn('Roky: 2023.', plna['desc'])
+        a, o = karty['hola']
+        self.assertIn('<span class="kota kota-prazdna" aria-hidden="true"></span>', o)
+        self.assertIn('data-rok="0"', a)
+        self.assertNotIn('<dt>Roky</dt>', stranka_info(web / 'realizacie' / 'hola' / 'index.html')['telo'])
+        vyber = telo.split('<select data-roky>', 1)[1].split('</select>', 1)[0]
+        self.assertEqual(re.findall(r'<option value="(\d*)">([^<]+)</option>', vyber),
+                         [('', 'všetky'), ('2020', '2020 až 2023'), ('0', 'rok neuvedený')])
+        os_ = telo.split('<div class="casova-mierka">', 1)[1].split('</div>', 1)[0]
+        self.assertEqual(re.findall(r'<b>(\d{4})</b>', os_), ['2020', '2023'])
+        self.assertEqual(len(re.findall(r'<span class="m-rok v[1-4]">', os_)), 3)
+        # poradie podľa toho istého roku ako na karte (2023, 2022, 2020), realizácia bez roku na konci
+        poradie = sorted(karty, key=lambda s: int(re.search(r'data-poradie="(\d+)"', karty[s][0]).group(1)))
+        self.assertEqual(poradie, ['plna', 'rok', 'xss', 'hola'])
+        for p in web.rglob('*.html'):
+            s = p.read_text(encoding='utf-8')
+            for d in ('2023-06-15', '2021-03-04'):
+                self.assertNotIn(d, s, p)
+
     def test_doladenie3_text_len_roky(self):
         """Doladenie-3 (overenie 3: pri realizáciách len roky): veta s mesiacom sa pri zostave nahradí podľa nastavenia
         text_len_roky (obsah sa nemení), v texte stránky, description JSON-LD aj meta description; pôvodná veta, ktorá
@@ -5047,8 +5122,9 @@ class TestDocasnyObsah(unittest.TestCase):
         web = self.tmp / 'web'
         self.assertEqual(postav(web, self.obsah)[0], 0)
         d = stranka_info(web / 'realizacie' / 'plna' / 'index.html')['desc']
-        # jeden rok pod popiskom Rok (audit naplno 25. 11. 2026, položka 2)
-        self.assertIn('Projektant: Kappa 1 s.r.o. Rok: 2019.', d)
+        # jeden rok tiež pod popiskom Roky ako predtým (Andrej 26. 11. 2026: „roky xxx“, ROKY.md)
+        self.assertIn('Projektant: Kappa 1 s.r.o. Roky: 2019.', d)
+        self.assertNotIn('Rok:', d)
         self.assertNotIn('Termín', d)
         self.assertNotIn('..', d)
 
@@ -7309,10 +7385,12 @@ class TestAuditNaplno(unittest.TestCase):
         return {html.unescape(re.sub(r'<[^>]+>', '', k)): html.unescape(re.sub(r'<[^>]+>', '', v)).replace('\u00a0', ' ')
                 for k, v in re.findall(r'<dt>(.*?)</dt><dd>(.*?)</dd>', dl, re.S)}
 
-    def test_2_druh_stavby_a_rok_v_detaile(self):
-        """Položka 2: detail má druh stavby z karty v jednotnom čísle (nie názov filtra „Rodinné domy“), pri jednom
-        roku popisok Rok (detail aj description); Apartmánový dom v DRUHY_KARTY mení len Ventúrsku, Betliarska ostáva
-        Bytový dom; bez druhu z názvu a textu (Okánikova, Dom pod lesom) kategória filtra pod popiskom Kategória."""
+    def test_2_druh_stavby_a_roky_v_detaile(self):
+        """Položka 2: detail má druh stavby z karty v jednotnom čísle (nie názov filtra „Rodinné domy“); Apartmánový
+        dom v DRUHY_KARTY mení len Ventúrsku, Betliarska ostáva Bytový dom; bez druhu z názvu a textu (Okánikova, Dom
+        pod lesom) kategória filtra pod popiskom Kategória. Popisok Rok pri jednom roku z tej istej položky je vrátený:
+        popisok je vždy Roky v detaile aj v description, aj pri jednom roku a pri roku príspevku (Andrej 26. 11. 2026:
+        „roky xxx tak ako predtým“, ROKY.md)."""
         ocak = {'rd-ahoj-bratislava-nove-mesto': ('Druh stavby', 'Rodinný dom'),
                 'rd-kalvaria-bratislava': ('Druh stavby', 'Rodinný dom'),
                 'rekonstrukcia-venturska-bratislava': ('Druh stavby', 'Apartmánový dom'),
@@ -7336,25 +7414,24 @@ class TestAuditNaplno(unittest.TestCase):
             if druh:
                 self.assertTrue(udaje_karty == druh or udaje_karty.startswith(druh + '\u00a0· '), (r['slug'], udaje_karty))
                 self.assertNotIn('Kategória', u, r['slug'])
-            if r['roky']:
-                popisok = 'Rok' if re.fullmatch(r'\d{4}', r['roky']) else 'Roky'
-                self.assertEqual(u.get(popisok), r['roky'], r['slug'])
-                self.assertNotIn({'Rok': 'Roky', 'Roky': 'Rok'}[popisok], u, r['slug'])
-                if r['roky'] in info['desc']:
-                    self.assertIn(f'{popisok}: {r["roky"]}.', info['desc'], r['slug'])
-            else:
-                self.assertNotIn('Rok', u, r['slug'])
-                self.assertNotIn('Roky', u, r['slug'])
+            roky = self.w.roky_karty(r)
+            self.assertTrue(roky, r['slug'])
+            self.assertEqual(u.get('Roky'), roky, r['slug'])
+            self.assertNotIn('Rok', u, r['slug'])
+            if roky in info['desc']:
+                self.assertIn(f'Roky: {roky}.', info['desc'], r['slug'])
+            self.assertNotIn('Rok:', info['desc'], r['slug'])
         ufo = self.stranka('realizacie/ufo-most-snp-bratislava/')
-        self.assertEqual(self.udaje(ufo['telo']).get('Rok'), '2025')
-        self.assertTrue(ufo['desc'].endswith('Rok: 2025.'), ufo['desc'])
+        self.assertEqual(self.udaje(ufo['telo']).get('Roky'), '2025')
+        self.assertTrue(ufo['desc'].endswith('Roky: 2025.'), ufo['desc'])
+        self.assertEqual(self.udaje(self.stranka('realizacie/rd-kalvaria-bratislava/')['telo']).get('Roky'), '2009')
         # Iné (most, kino, SFÚ) bez druhu aj bez kategórie
         for k in ('Druh stavby', 'Kategória'):
             self.assertNotIn(k, self.udaje(ufo['telo']))
         nazvy = [n for n, _ in build.DRUHY_KARTY]
         self.assertLess(nazvy.index('Apartmánový dom'), nazvy.index('Bytový dom'))
-        self.assertEqual([build.Web.popisok_rokov(x) for x in ('2025', '2013 až 2014', '2009', '2021\u00a0až\u00a02022')],
-                         ['Rok', 'Roky', 'Rok', 'Roky'])
+        # funkcia popisok_rokov (Rok pri jednom roku) je preč, popisok rokov je jeden
+        self.assertFalse(hasattr(build.Web, 'popisok_rokov'))
 
     def test_3_10_otazky_zo_zakona_v_oboch_zneniach(self):
         """Položky 3 a 10: odpoveď „Čo robí stavebný dozor?“ platí pre znenie § 36 ods. 1 do 31. 12. 2026 („je
@@ -7425,13 +7502,18 @@ class TestAuditNaplno(unittest.TestCase):
                 + [f'https://bmbuilding.sk/realizacie/{r["slug"]}/' for r in self.w.realizacie]
                 + [f'https://bmbuilding.sk/{c}' for c in ('realizacie/', 'opravnenia/', 'kontakt/', 'ochrana-udajov/')])
         self.assertEqual(sorted(ciele), sorted(ocak))
-        # údaje firmy z firma.json, popis realizácie z jej údajov (rola zo zápisu na webe, Rok pri jednom roku)
+        # údaje firmy z firma.json, popis realizácie z jej údajov (rola zo zápisu na webe, Roky aj pri jednom roku)
         for kus in (self.firma['telefon'], self.firma['email'], self.firma['ico'], self.firma['ic_dph'],
                     'Podhorská 9, 902 01 Pezinok', self.firma['zapis_or'], 'stavbyvedúci, vydané 5. 11. 2003'):
             self.assertIn(kus, llms)
         self.assertIn('(https://bmbuilding.sk/realizacie/ufo-most-snp-bratislava/): Rola BM Building: projektový manažment '
                       'a stavebný dozor.', llms)
-        self.assertIn('Rok: 2025.', llms)
+        self.assertIn('Roky: 2025.', llms)
+        self.assertNotIn('Rok:', llms)
+        # realizácia bez rokov stavby má v llms.txt rok príspevku bez slova príspevok (ROKY.md)
+        ahoj = [x for x in riadky if '(https://bmbuilding.sk/realizacie/rd-ahoj-bratislava-nove-mesto/)' in x]
+        self.assertEqual(len(ahoj), 1)
+        self.assertTrue(ahoj[0].endswith('Roky: 2026.'), ahoj[0])
         for zle in ('!', '\u2013', '\u2014', '\u00a0', 'manažér a stavebný dozor'):
             self.assertNotIn(zle, llms)
         skryte = set(self.obsah_vsetky()) - {r['slug'] for r in self.w.realizacie}
@@ -7695,7 +7777,9 @@ class TestAuditRozhranie(unittest.TestCase):
 
     # šírky textu v Chrome 158 (Geist, merané 25. 11. 2026 cez canvas measureText v prehliadači, rozhranie/funkcie.mjs):
     # najdlhšie voľby roliet pri písme 14 px a texty tlačidla Menu pri 15 px. Nová voľba s dlhším textom sa musí premerať.
-    VOLBY_PX = {'všetky': 42.3, '2020 až 2025': 93.5, '2012 až 2018': 85.3, '2004 až 2009': 93.7, 'rok neuvedený': 93.8,
+    # „2020 až 2026“ (roky príspevku RD Ahoj a Vila Holubyho vo filtri) premerané 26. 11. 2026 tým istým spôsobom pri
+    # 390 px, ostatné voľby vtedy vyšli rovnako ako 25. 11. („2020 až 2025“ 93,5; ROKY.md, roky/snimky.mjs)
+    VOLBY_PX = {'všetky': 42.3, '2020 až 2026': 93.0, '2012 až 2018': 85.3, '2004 až 2009': 93.7, 'rok neuvedený': 93.8,
                 'Bratislava (22)': 91.3, 'Ivanka pri Dunaji (1)': 122.2, 'Nitrianske Hrnčiarovce (1)': 161.4,
                 'Pezinok (1)': 67.8, 'najnovšie': 61.0, 'najstaršie': 62.8, 'abecedne': 63.0}
     ZAVRIET_PX = 49.9
@@ -7927,18 +8011,15 @@ const tah = (typ, dx, dy) => { pusti(plocha, 'pointerdown', { isPrimary: true, p
         self.assertNotIn('.detail-s-udajmi .detail-foto{', self.zaklad)
 
     def test_15_karta_bez_rokov_len_vlasova_ciara(self):
-        """Položka 15: karta bez rokov má v riadku kóty len vlasovú čiaru farby čiar webu na celú šírku karty, bez šikmých
-        koncov (karty v rade ostávajú v spoločných riadkoch); predtým prázdna kótovacia čiara."""
+        """Položka 15: karta bez akéhokoľvek roku má v riadku kóty len vlasovú čiaru farby čiar webu na celú šírku
+        karty, bez šikmých koncov (karty v rade ostávajú v spoločných riadkoch); predtým prázdna kótovacia čiara. Od
+        26. 11. 2026 (ROKY.md) má každá skutočná realizácia rok (roky stavby alebo rok príspevku), vlasovú čiaru má
+        len realizácia bez rokov aj bez dátumu (malý obsah, realizácia hola, test_rok_prispevku_z_obsahu_alebo_z_datumu)."""
         self.assertEqual(deklaracie(self.zaklad, '.kota-prazdna'),
                          {'margin-inline': '0', 'background-image': 'linear-gradient(var(--beton),var(--beton))'})
         self.assertIn('.kota-prazdna::before,.kota-prazdna::after{content:none}', self.zaklad)
-        bez = [r for r in self.w.realizacie if not self.w.roky_stitok(r)]
-        self.assertTrue(bez)
-        telo = self.info('realizacie/')['telo']
-        for r in bez:
-            # medzi odkazom fotky a odkazom nadpisu karty: fotka, kóta
-            karta = telo.split(f'realizacie/{r["slug"]}/"', 2)[1]
-            self.assertIn('<span class="kota kota-prazdna" aria-hidden="true"></span>', karta, r['slug'])
+        self.assertEqual([r['slug'] for r in self.w.realizacie if not self.w.roky_karty(r)], [])
+        self.assertNotIn('kota-prazdna', self.info('realizacie/')['telo'])
 
     def test_17_36_maly_zvysok_a_fokus_v_okne(self):
         """Položky 17 a 36: zvyšok najviac polovica dávky (6 pri 12) sa ukáže hneď s dávkou: pri 26 kartách prvé
@@ -9162,14 +9243,17 @@ class TestOpravaPoOvereni(unittest.TestCase):
             self.assertFalse((KOREN / 'skuska-htaccess').exists())
 
     def test_dokumenty_po_overeni(self):
-        """Nálezy (zadanie, spustenie): README r. 7 netvrdí „popisok Roky“ ani „prázdnu kótu“ (opravy položiek 2 a 15),
+        """Nálezy (zadanie, spustenie): README r. 7 netvrdí „prázdnu kótu“ (oprava položky 15) ani popisok Rok pri jednom
+        roku (od 26. 11. 2026 vždy Roky, roky všade a bez nich rok príspevku, ROKY.md),
         README opisuje commit v zozname zostavy, server simulácie a skúšku .htaccess; postup SPUSTENIE-FTP.md (len keď je
         repozitár ARLing vedľa, v GitHub Actions nie je) má bránu commitu, zálohu mimo priečinkov AI, skúšku .htaccess,
         poradie prepnutia, návrat s robots.txt, sitemap.xml a llms.txt a správu Viliamovi pre cestu FTP."""
         readme = (KOREN / 'README.md').read_text(encoding='utf-8')
         self.assertNotIn('karta bez rokov má prázdnu kótu', readme)
         self.assertNotIn('(popisok Roky, bez slova príspevok', readme)
-        for kus in ('popisok Rok pri jednom roku a Roky pri rozsahu', 'len vlasovú čiaru', 'commit_repozitara',
+        self.assertNotIn('popisok Rok pri jednom roku a Roky pri rozsahu', readme)
+        self.assertNotIn('sa od opravy 1 neukazuje vôbec', readme)
+        for kus in ('pod popiskom Roky aj pri jednom roku', 'bez nich rok príspevku', 'len vlasovú čiaru', 'commit_repozitara',
                     'htaccess_simulacia.py --web DIR --server', 'nastroje/htaccess_skuska.py', 'SPUSTENIE-FTP.md časť 1.1'):
             self.assertIn(kus, readme)
         postup = KOREN.parents[1] / 'ops' / 'weby-na-mieru' / 'klienti' / 'bmbuilding' / 'kolo-1' / 'SPUSTENIE-FTP.md'
@@ -9192,6 +9276,237 @@ class TestOpravaPoOvereni(unittest.TestCase):
         t = (f['vystup'] / 'ochrana-udajov' / 'index.html').read_text(encoding='utf-8').replace('\u00a0', ' ')
         self.assertIn('WebHouse, Ochrana osobných údajov, body 1 a 7', t)
         self.assertNotIn('Ochrana osobných údajov, bod 7<', t)
+
+
+class TestRokyAkoPredtym(unittest.TestCase):
+    """Andrej 26. 11. 2026 pri snímke /realizacie/, kde RD Ahoj, Vila Holubyho a Dom pod lesom nemali rok a len UFO
+    mal na kóte 2025: „prečo tam nie su tie roky? veď tie roky som tam chcel všade, ale len takto napísané, že roky
+    xxx tak ako predtým. aj tuto aj na stranke projektov“. Každá realizácia má rok všade, kde web roky ukazuje
+    (build.py roky_karty): roky stavby, bez nich rok príspevku (rok_prispevku, inak rok z poľa datum), bez slova
+    príspevok, mesiaca a dňa; popisok v detaile vždy Roky. Záznam ops/weby-na-mieru/klienti/bmbuilding/kolo-1/
+    brana-3/ROKY.md."""
+
+    # realizácie bez rokov stavby v obsahu 26. 11. 2026 a ich rok príspevku (rok_prispevku, rovnaký ako rok poľa datum)
+    BEZ_ROKOV_STAVBY = {'digitalizacne-pracovisko-sfu-spitalska-bratislava': '2024', 'dom-pod-lesom': '2024',
+                        'rd-ahoj-bratislava-nove-mesto': '2026', 'rd-devin-bratislava': '2024',
+                        'rd-sklenarska-bratislava': '2024', 'rekonstrukcia-vila-holubyho-bratislava': '2026'}
+    ROKY_RE = re.compile(r'^(?:19|20)\d{2}(?: až (?:19|20)\d{2})?$')
+    DATUM_RE = re.compile(r'\b(?:19|20)\d{2}-\d{2}(?:-\d{2})?\b')
+
+    @classmethod
+    def setUpClass(cls):
+        s = skutocny()
+        cls.ostry, cls.w, cls.obsah = s['ostry'], s['web'], s['realizacie']
+        cls.sluzby = list(json.loads((KOREN / 'sablona' / 'texty.json').read_text(encoding='utf-8'))['sluzby'])
+
+    def info(self, cesta):
+        return stranka_info(self.ostry / cesta / 'index.html' if cesta else self.ostry / 'index.html')
+
+    @staticmethod
+    def text(s):
+        return html.unescape(re.sub(r'<[^>]+>', '', s)).replace('\u00a0', ' ').strip()
+
+    def karty(self, cesta):
+        """slug -> (atribúty li, obsah figure) kariet realizácií na stránke cesta."""
+        out = {}
+        for atr, obsah in re.findall(r'<li class="dlazdica[^"]*"([^>]*)><figure>(.*?)</figure></li>',
+                                     self.info(cesta)['telo'], re.S):
+            out[re.search(r'realizacie/([a-z0-9-]+)/', obsah).group(1)] = (atr, obsah)
+        return out
+
+    def kota_karty(self, obsah):
+        """Text kóty karty: statická kóta zoznamu alebo skrytý text kóty s valcami (stránky služieb); None bez kóty."""
+        m = (re.search(r'<span class="kota"><span class="kota-text">(.*?)</span></span>', obsah)
+             or re.search(r'<span class="kota"><span class="kota-text otoc"><span class="vh">(.*?)</span>', obsah))
+        return self.text(m.group(1)) if m else None
+
+    def udaje_detailu(self, telo):
+        dl = telo.split('<dl class="fakty udaje">', 1)[1].split('</dl>', 1)[0]
+        return {self.text(k): self.text(v) for k, v in re.findall(r'<dt>(.*?)</dt><dd>(.*?)</dd>', dl, re.S)}
+
+    def dalsie(self, cesta):
+        """slug -> text údajov v zozname Ďalšie realizácie na stránke služby."""
+        telo = self.info(cesta)['telo']
+        if '<ul class="zoznam-dalsie">' not in telo:
+            return {}
+        z = telo.split('<ul class="zoznam-dalsie">', 1)[1].split('</ul>', 1)[0]
+        return {s: self.text(u) for s, u in
+                re.findall(r'<li><a href="[^"]*realizacie/([a-z0-9-]+)/">.*?</a><span>(.*?)</span></li>', z)}
+
+    def test_kazda_realizacia_ma_rok_na_karte_a_v_detaile(self):
+        """Každá zverejnená realizácia (26 v obsahu 26. 11. 2026) má rok na karte /realizacie/ (kóta, data-rok) aj
+        v detaile: kóta nad textom a tabuľka údajov pod popiskom Roky aj pri jednom roku, nikde Rok ani Rok
+        príspevku; description má vetu Roky, keď sa zmestí do 155 znakov (rovnako ako pri rokoch stavby)."""
+        self.assertEqual(sorted(r['slug'] for r in self.w.realizacie), sorted(self.obsah))
+        karty = self.karty('realizacie/')
+        self.assertEqual(sorted(karty), sorted(self.obsah))
+        for r in self.w.realizacie:
+            slug, roky = r['slug'], self.w.roky_karty(r)
+            self.assertRegex(roky, self.ROKY_RE, slug)
+            atr, obsah = karty[slug]
+            self.assertEqual(self.kota_karty(obsah), roky, slug)
+            self.assertNotIn('kota-prazdna', obsah, slug)
+            najnovsi = max(int(y) for y in re.findall(r'\d{4}', roky))
+            self.assertIn(f'data-rok="{najnovsi}"', atr, slug)
+            info = self.info(f'realizacie/{slug}/')
+            self.assertIn(f'<span class="kota kota-detail"><span class="kota-text otoc"><span class="vh">{roky}</span>',
+                          info['telo'].replace('\u00a0', ' '), slug)
+            u = self.udaje_detailu(info['telo'])
+            self.assertEqual(u.get('Roky'), roky, slug)
+            for zle in ('Rok', 'Rok príspevku', 'Roky stavby'):
+                self.assertNotIn(zle, u, (slug, zle))
+            veta = f'Roky: {roky}.'
+            self.assertIn(veta, self.w.vety_realizacie(r), slug)
+            self.assertEqual(info['desc'], self.w.popis_realizacie(r), slug)
+            if veta not in info['desc']:
+                self.assertGreater(len(info['desc']) + 1 + len(veta), 155, (slug, info['desc']))
+            self.assertNotIn('Rok:', info['desc'], slug)
+
+    def test_sest_bez_rokov_stavby_ma_rok_prispevku(self):
+        """Šesť realizácií bez rokov stavby má rok príspevku (rok_prispevku, inak rok z poľa datum) bez slova príspevok
+        na karte zoznamu aj stránok služieb, v zozname Ďalšie realizácie, v detaile (kóta, Roky, description, keď sa
+        zmestí), v lightboxe, v popise slidera a v llms.txt; po oprave 1 kola 1 tam rok nebol vôbec."""
+        bez = {r['slug']: r for r in self.w.realizacie if not r['roky']}
+        self.assertEqual(sorted(bez), sorted(self.BEZ_ROKOV_STAVBY))
+        karty = self.karty('realizacie/')
+        sluzby = {c: (self.karty(f'{c}/'), self.dalsie(f'{c}/')) for c in self.sluzby}
+        uvod = self.info('')['telo'].replace('\u00a0', ' ')
+        llms = (self.ostry / 'llms.txt').read_text(encoding='utf-8').splitlines()
+        na_sluzbach, v_lightboxe, v_slideri = 0, 0, []
+        for slug, rok in self.BEZ_ROKOV_STAVBY.items():
+            r = bez[slug]
+            self.assertEqual((r['rok_prispevku'], r['datum'][:4], self.w.roky_karty(r), r['rok'], self.w.rok_filtra(r)),
+                             (rok, rok, rok, int(rok), int(rok)), slug)
+            atr, obsah = karty[slug]
+            self.assertEqual(self.kota_karty(obsah), rok, slug)
+            self.assertIn(f'data-rok="{rok}"', atr, slug)
+            for c, (kk, dd) in sluzby.items():
+                if slug in kk:
+                    self.assertEqual(self.kota_karty(kk[slug][1]), rok, (c, slug))
+                    na_sluzbach += 1
+                if slug in dd:
+                    self.assertTrue(dd[slug].endswith(f' · {rok}'), (c, slug, dd[slug]))
+                    na_sluzbach += 1
+            info = self.info(f'realizacie/{slug}/')
+            self.assertIn(f'<span class="kota kota-detail"><span class="kota-text otoc"><span class="vh">{rok}</span>',
+                          info['telo'], slug)
+            self.assertEqual(self.udaje_detailu(info['telo']).get('Roky'), rok, slug)
+            veta = f'Roky: {rok}.'
+            if veta not in info['desc']:
+                self.assertGreater(len(info['desc']) + 1 + len(veta), 155, (slug, info['desc']))
+            for u in re.findall(r'data-udaje="([^"]*)"', info['telo']):
+                self.assertTrue(html.unescape(u).endswith(rok), (slug, u))
+                v_lightboxe += 1
+            popis = re.search(rf'<li class="slider-popis[^"]*"><a href="realizacie/{slug}/">.*?</li>', uvod)
+            if popis:
+                self.assertTrue(popis.group(0).endswith(f'<span class="cisla nz">{rok}</span></span></li>'), slug)
+                v_slideri.append(slug)
+            riadok = [x for x in llms if f'(https://bmbuilding.sk/realizacie/{slug}/)' in x]
+            self.assertEqual(len(riadok), 1, slug)
+            self.assertTrue(riadok[0].endswith(veta), riadok[0])
+            for t in (obsah, info['telo']):
+                self.assertNotIn('príspev', html.unescape(re.sub(r'<[^>]+>', ' ', t)).lower(), slug)
+        self.assertGreater(na_sluzbach, 0)
+        self.assertGreater(v_lightboxe, 0)
+        self.assertEqual(sorted(v_slideri), ['rd-ahoj-bratislava-nove-mesto', 'rekonstrukcia-vila-holubyho-bratislava'])
+        self.assertIn('Roky: 2026.', self.info('realizacie/rd-ahoj-bratislava-nove-mesto/')['desc'])
+
+    def test_nikde_mesiac_ani_den(self):
+        """Pri realizáciách len rok alebo roky, nikde mesiac ani deň (ZMENY-KOLO-1.md 5.2, doladenie-3): text kariet
+        (zoznam, služby), zoznam Ďalšie realizácie, popis slidera, tabuľka údajov, description a lightbox detailu
+        (bez bloku V médiách s číslom časopisu), riadky realizácií v llms.txt; dátum príspevku (pole datum) nie je
+        v žiadnom HTML ani v llms.txt (lastmod v sitemap nie je text stránky)."""
+        kusy = []
+        for cesta in ['realizacie/'] + [f'{c}/' for c in self.sluzby]:
+            for slug, (_, obsah) in self.karty(cesta).items():
+                self.assertRegex(self.kota_karty(obsah) or '', self.ROKY_RE, (cesta, slug))
+                kusy.append((cesta, slug, self.text(obsah.split('<figcaption>', 1)[1])))
+            for slug, u in self.dalsie(cesta).items():
+                self.assertRegex(u.rsplit(' · ', 1)[1], self.ROKY_RE, (cesta, slug))
+                kusy.append((cesta, slug, u))
+        uvod = self.info('')['telo']
+        for slug, u in re.findall(r'<li class="slider-popis[^"]*"><a href="realizacie/([a-z0-9-]+)/">.*?</a>(.*?)</li>', uvod):
+            kusy.append(('uvod', slug, self.text(u)))
+        for r in self.w.realizacie:
+            info = self.info(f'realizacie/{r["slug"]}/')
+            telo = re.sub(r'<section class="sekcia media-sekcia".*?</section>', '', info['telo'], flags=re.S)
+            u = self.udaje_detailu(telo)
+            self.assertRegex(u['Roky'], self.ROKY_RE, r['slug'])
+            kusy += [(r['slug'], 'udaje', ' '.join(f'{k} {v}' for k, v in u.items())), (r['slug'], 'desc', info['desc'])]
+            kusy += [(r['slug'], 'lightbox', html.unescape(x)) for x in re.findall(r'data-udaje="([^"]*)"', telo)]
+        llms = (self.ostry / 'llms.txt').read_text(encoding='utf-8')
+        kusy += [('llms', '', x) for x in llms.splitlines() if '/realizacie/' in x]
+        self.assertGreater(len(kusy), 3 * len(self.w.realizacie))
+        for kde, slug, t in kusy:
+            m = build.MESIAC_V_TEXTE.search(t) or self.DATUM_RE.search(t)
+            self.assertIsNone(m, (kde, slug, t, m and m.group(0)))
+        datumy = {r['datum'] for r in self.w.realizacie if r['datum']}
+        self.assertTrue(datumy)
+        for subor in sorted(self.ostry.rglob('*.html')) + [self.ostry / 'llms.txt']:
+            s = subor.read_text(encoding='utf-8')
+            for d in datumy:
+                self.assertNotIn(d, s, (subor, d))
+
+    def test_filter_roky_a_casova_os(self):
+        """Filter Roky a časová os na /realizacie/ sedia so zobrazenými rokmi: voľby desaťročí od najnovšieho, text od
+        najmenšieho po najväčší rok kariet v desaťročí (2020 až 2026 s rokom príspevku RD Ahoj a Vila Holubyho),
+        „rok neuvedený“ len pri realizácii bez roku (dnes žiadna); os od najstaršieho roku kariet po najnovší, dielik
+        na posledný rok každej karty, roky šiestich realizácií bez rokov stavby na osi."""
+        telo = self.info('realizacie/')['telo']
+        vyber = telo.split('<select data-roky>', 1)[1].split('</select>', 1)[0]
+        volby = re.findall(r'<option value="(\d*)">([^<]+)</option>', vyber)
+        roky = [self.w.rok_filtra(r) for r in self.w.realizacie]
+        self.assertNotIn(0, roky)
+        dekady = {}
+        for y in roky:
+            dekady.setdefault(y - y % 10, []).append(y)
+        ocak = [('', 'všetky')] + [(str(d), f'{min(v)} až {max(v)}' if min(v) != max(v) else str(v[0]))
+                                   for d, v in sorted(dekady.items(), reverse=True)]
+        self.assertEqual(volby, ocak)
+        self.assertNotIn('rok neuvedený', vyber)
+        self.assertIn(('2020', '2020 až 2026'), volby)
+        for slug, rok in self.BEZ_ROKOV_STAVBY.items():
+            self.assertIn(str(int(rok) - int(rok) % 10), dict(volby), slug)
+        m = re.search(r'<div class="casova-mierka"><span class="mierka-os" aria-hidden="true">(.*?)</span>'
+                      r'<span class="mierka-pozn">(.*?)</span></div>', telo, re.S)
+        self.assertIsNotNone(m)
+        bunky = re.findall(r'<span class="m-rok v(\d)">(?:<b>(\d{4})</b>)?</span>', m.group(1))
+        cisla = [self.w.roky_cisla(r) for r in self.w.realizacie]
+        od, do = min(min(c) for c in cisla), max(max(c) for c in cisla)
+        self.assertGreaterEqual(do, 2026)
+        self.assertEqual(len(bunky), do - od + 1)
+        self.assertEqual((bunky[0][1], bunky[-1][1]), (str(od), str(do)))
+        pocty = {}
+        for c in cisla:
+            pocty[max(c)] = pocty.get(max(c), 0) + 1
+        mx = max(pocty.values())
+        for i, (v, _) in enumerate(bunky):
+            n = pocty.get(od + i, 0)
+            self.assertEqual(int(v), max(1, min(4, round(n / mx * 4))) if n else 0, od + i)
+        for rok in set(self.BEZ_ROKOV_STAVBY.values()):
+            self.assertNotEqual(bunky[int(rok) - od][0], '0', rok)
+        self.assertEqual(self.text(m.group(2)), f'Realizácie podľa posledného roku na karte, {od} až {do}. '
+                                                'Modrý dielik: počet stavieb v tom roku.')
+
+    def test_slider_roky_pri_kazdej_stavbe(self):
+        """Popis slidera na úvode má pri každej stavbe miesto a roky (span.cisla.nz na konci), RD Ahoj a Vila Holubyho
+        rok príspevku 2026 (predtým len miesto)."""
+        uvod = self.info('')['telo']
+        popisy = re.findall(r'<li class="slider-popis[^"]*"><a href="realizacie/([a-z0-9-]+)/">.*?</a>'
+                            r'<span class="slider-udaje">(.*?)</span></li>', uvod)
+        with redirect_stderr(io.StringIO()):
+            fotky = self.w.slider_fotky()
+        self.assertEqual([s for s, _ in popisy], [r['slug'] for r, _, _ in fotky])
+        self.assertEqual(len(popisy), 11)
+        podla = {r['slug']: r for r in self.w.realizacie}
+        for slug, udaje in popisy:
+            roky = self.w.roky_karty(podla[slug])
+            self.assertRegex(roky, self.ROKY_RE, slug)
+            self.assertTrue(udaje.replace('\u00a0', ' ').endswith(f'<span class="cisla nz">{roky}</span>'), (slug, udaje))
+            self.assertNotIn('príspev', udaje)
+        d = dict(popisy)
+        for slug in ('rd-ahoj-bratislava-nove-mesto', 'rekonstrukcia-vila-holubyho-bratislava'):
+            self.assertTrue(d[slug].endswith('<span class="cisla nz">2026</span>'), d[slug])
 
 
 def copy_realizacie(r):
